@@ -1,0 +1,803 @@
+// Datos iniciales de demostración gastronómica completa
+export const initialData = {
+  users: [
+    {
+      id: "u_admin",
+      name: "Rodrigo (Encargado / Admin)",
+      role: "admin",
+      pin: "9999",
+      email: "admin@gastrogestion.com",
+      avatar: "👑"
+    },
+    {
+      id: "u_cajero",
+      name: "Martín (Cajero Principal)",
+      role: "cajero",
+      pin: "2222",
+      email: "caja@gastrogestion.com",
+      avatar: "💵"
+    },
+    {
+      id: "u_mozo1",
+      name: "Lucas (Mozo Salón)",
+      role: "mozo",
+      pin: "1111",
+      email: "lucas@gastrogestion.com",
+      avatar: "🤵"
+    },
+    {
+      id: "u_mozo2",
+      name: "Sofía (Moza Terraza)",
+      role: "mozo",
+      pin: "1112",
+      email: "sofia@gastrogestion.com",
+      avatar: "💁‍♀️"
+    }
+  ],
+
+  // Insumos y Materias Primas para el Recetario / Escandallo
+  ingredients: [
+    {
+      id: "ing_muzza",
+      name: "Queso Muzzarella en Barra",
+      category: "Lácteos",
+      unit: "kg",
+      stock: 18.5,
+      minStock: 5.0,
+      costPerUnit: 7800, // $ por kg
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_salsa_tomate",
+      name: "Salsa de Tomate Pomodoro Artesanal",
+      category: "Conservas",
+      unit: "kg",
+      stock: 14.2,
+      minStock: 4.0,
+      costPerUnit: 2400, // $ por kg
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_bollo_pizza",
+      name: "Bollo de Masa Madre Pizza",
+      category: "Panadería",
+      unit: "u",
+      stock: 45,
+      minStock: 15,
+      costPerUnit: 950, // $ por bollo
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_aceitunas_verdes",
+      name: "Aceitunas Verdes Descarozadas",
+      category: "Conservas",
+      unit: "u",
+      stock: 350,
+      minStock: 80,
+      costPerUnit: 45, // $ por aceituna
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_jamon_cocido",
+      name: "Jamón Cocido Feteado Primera Calidad",
+      category: "Fiambrería",
+      unit: "kg",
+      stock: 6.8,
+      minStock: 2.0,
+      costPerUnit: 9200,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_morron_conserva",
+      name: "Morrones Asados en Conserva",
+      category: "Conservas",
+      unit: "kg",
+      stock: 4.2,
+      minStock: 1.5,
+      costPerUnit: 6500,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_carne_smash",
+      name: "Medallón de Carne Smash 80g (Blend)",
+      category: "Carnicería",
+      unit: "u",
+      stock: 60,
+      minStock: 20,
+      costPerUnit: 1400,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_pan_brioche",
+      name: "Pan de Hamburguesa Brioche con Sésamo",
+      category: "Panadería",
+      unit: "u",
+      stock: 40,
+      minStock: 15,
+      costPerUnit: 680,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_cheddar_fetas",
+      name: "Queso Cheddar Americano en Fetas",
+      category: "Lácteos",
+      unit: "u",
+      stock: 120,
+      minStock: 30,
+      costPerUnit: 350,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_panceta_ahumada",
+      name: "Panceta Ahumada Crocante",
+      category: "Fiambrería",
+      unit: "kg",
+      stock: 5.4,
+      minStock: 1.5,
+      costPerUnit: 11500,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_papas_baston",
+      name: "Papas Bastón Pre-fritas",
+      category: "Congelados",
+      unit: "kg",
+      stock: 28.0,
+      minStock: 8.0,
+      costPerUnit: 2900,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_cerveza_ipa",
+      name: "Barril Cerveza Artesanal IPA (Litros)",
+      category: "Bebidas",
+      unit: "l",
+      stock: 42.5,
+      minStock: 15.0,
+      costPerUnit: 1900, // $ por litro
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_coca_cola_lata",
+      name: "Coca Cola Sabor Original 354ml Lata",
+      category: "Bebidas",
+      unit: "u",
+      stock: 72,
+      minStock: 24,
+      costPerUnit: 980,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_agua_mineral",
+      name: "Agua Mineral Sin Gas 500ml",
+      category: "Bebidas",
+      unit: "u",
+      stock: 50,
+      minStock: 20,
+      costPerUnit: 650,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_disco_empanada",
+      name: "Discos de Empanadas Caseros",
+      category: "Panadería",
+      unit: "u",
+      stock: 96,
+      minStock: 24,
+      costPerUnit: 220,
+      lastUpdated: new Date().toISOString()
+    },
+    {
+      id: "ing_relleno_carne",
+      name: "Relleno Empanadas Carne a Cuchillo",
+      category: "Cocina Preparados",
+      unit: "kg",
+      stock: 8.5,
+      minStock: 2.0,
+      costPerUnit: 6200,
+      lastUpdated: new Date().toISOString()
+    }
+  ],
+
+  // Productos del Menú con sus Recetas e Ingredientes vinculados
+  products: [
+    {
+      id: "prod_pizza_muzzi_gde",
+      name: "Pizza Muzzarella Grande",
+      category: "Pizzas",
+      price: 13500,
+      description: "8 porciones, salsa pomodoro, 250g de muzzarella artesanal, orégano y aceitunas verdes.",
+      badge: "🍕",
+      recipe: [
+        { ingredientId: "ing_bollo_pizza", quantity: 1, unit: "u" },
+        { ingredientId: "ing_salsa_tomate", quantity: 0.08, unit: "kg" }, // 80g
+        { ingredientId: "ing_muzza", quantity: 0.25, unit: "kg" }, // 250g
+        { ingredientId: "ing_aceitunas_verdes", quantity: 8, unit: "u" }
+      ]
+    },
+    {
+      id: "prod_pizza_muzzi_chica",
+      name: "Pizza Muzzarella Individual / Chica",
+      category: "Pizzas",
+      price: 8200,
+      description: "4 porciones, 1/2 bollo de pizza, 125g muzzarella, salsa y 4 aceitunas.",
+      badge: "🍕",
+      recipe: [
+        { ingredientId: "ing_bollo_pizza", quantity: 0.5, unit: "u" }, // 1/2 bollo de pizza
+        { ingredientId: "ing_salsa_tomate", quantity: 0.04, unit: "kg" }, // 40g
+        { ingredientId: "ing_muzza", quantity: 0.125, unit: "kg" }, // 125g
+        { ingredientId: "ing_aceitunas_verdes", quantity: 4, unit: "u" }
+      ]
+    },
+    {
+      id: "prod_pizza_especial_gde",
+      name: "Pizza Especial con Jamón y Morrones Grande",
+      category: "Pizzas",
+      price: 16800,
+      description: "Masa madre, salsa pomodoro, 250g muzzarella, 150g jamón cocido y morrones asados.",
+      badge: "🍕",
+      recipe: [
+        { ingredientId: "ing_bollo_pizza", quantity: 1, unit: "u" },
+        { ingredientId: "ing_salsa_tomate", quantity: 0.08, unit: "kg" },
+        { ingredientId: "ing_muzza", quantity: 0.25, unit: "kg" },
+        { ingredientId: "ing_jamon_cocido", quantity: 0.15, unit: "kg" },
+        { ingredientId: "ing_morron_conserva", quantity: 0.08, unit: "kg" },
+        { ingredientId: "ing_aceitunas_verdes", quantity: 8, unit: "u" }
+      ]
+    },
+    {
+      id: "prod_burger_doble_cheddar",
+      name: "Hamburguesa Doble Smash Cheddar & Bacon",
+      category: "Hamburguesas",
+      price: 11900,
+      description: "Pan brioche, doble medallón smash (160g), 4 fetas de cheddar y panceta crocante.",
+      badge: "🍔",
+      recipe: [
+        { ingredientId: "ing_pan_brioche", quantity: 1, unit: "u" },
+        { ingredientId: "ing_carne_smash", quantity: 2, unit: "u" },
+        { ingredientId: "ing_cheddar_fetas", quantity: 4, unit: "u" },
+        { ingredientId: "ing_panceta_ahumada", quantity: 0.04, unit: "kg" } // 40g
+      ]
+    },
+    {
+      id: "prod_burger_clasica",
+      name: "Hamburguesa Simple Clásica",
+      category: "Hamburguesas",
+      price: 8900,
+      description: "Pan brioche, un medallón smash (80g), 2 fetas de cheddar.",
+      badge: "🍔",
+      recipe: [
+        { ingredientId: "ing_pan_brioche", quantity: 1, unit: "u" },
+        { ingredientId: "ing_carne_smash", quantity: 1, unit: "u" },
+        { ingredientId: "ing_cheddar_fetas", quantity: 2, unit: "u" }
+      ]
+    },
+    {
+      id: "prod_papas_cheddar_bacon",
+      name: "Papas Rústicas Cheddar & Panceta",
+      category: "Minutas & Entradas",
+      price: 7900,
+      description: "350g de papas bastón con abundante queso cheddar fundido y lluvia de panceta crocante.",
+      badge: "🍟",
+      recipe: [
+        { ingredientId: "ing_papas_baston", quantity: 0.35, unit: "kg" },
+        { ingredientId: "ing_cheddar_fetas", quantity: 3, unit: "u" },
+        { ingredientId: "ing_panceta_ahumada", quantity: 0.03, unit: "kg" }
+      ]
+    },
+    {
+      id: "prod_empanada_carne",
+      name: "Empanada de Carne a Cuchillo",
+      category: "Minutas & Entradas",
+      price: 1900,
+      description: "Relleno criollo suave con carne cortada a cuchillo, horneada al momento.",
+      badge: "🥟",
+      recipe: [
+        { ingredientId: "ing_disco_empanada", quantity: 1, unit: "u" },
+        { ingredientId: "ing_relleno_carne", quantity: 0.08, unit: "kg" } // 80g
+      ]
+    },
+    {
+      id: "prod_cerveza_pinta_ipa",
+      name: "Cerveza Artesanal IPA (Pinta 500ml)",
+      category: "Bebidas",
+      price: 4500,
+      description: "Pinta tirada de 500cc, amargor medio, notas cítricas y resinosas.",
+      badge: "🍺",
+      recipe: [
+        { ingredientId: "ing_cerveza_ipa", quantity: 0.5, unit: "l" }
+      ]
+    },
+    {
+      id: "prod_coca_cola",
+      name: "Coca Cola Sabor Original 354ml",
+      category: "Bebidas",
+      price: 2500,
+      description: "Lata 354ml servida bien fría con o sin hielo y limón.",
+      badge: "🥤",
+      recipe: [
+        { ingredientId: "ing_coca_cola_lata", quantity: 1, unit: "u" }
+      ]
+    },
+    {
+      id: "prod_agua_mineral",
+      name: "Agua Mineral 500ml",
+      category: "Bebidas",
+      price: 2100,
+      description: "Botella 500ml fría o natural.",
+      badge: "💧",
+      recipe: [
+        { ingredientId: "ing_agua_mineral", quantity: 1, unit: "u" }
+      ]
+    }
+  ],
+
+  // Mesas del Restaurante organizadas por sectores
+  tables: [
+    { id: "m1", number: 1, sector: "Salón Principal", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m2", number: 2, sector: "Salón Principal", capacity: 4, status: "ocupada", activeOrderId: "ord_demo_1", diners: 3, waiterId: "u_mozo1", openedAt: new Date(Date.now() - 45 * 60000).toISOString() },
+    { id: "m3", number: 3, sector: "Salón Principal", capacity: 4, status: "cuenta_pedida", activeOrderId: "ord_demo_2", diners: 2, waiterId: "u_mozo1", openedAt: new Date(Date.now() - 70 * 60000).toISOString() },
+    { id: "m4", number: 4, sector: "Salón Principal", capacity: 6, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m5", number: 5, sector: "Terraza", capacity: 4, status: "ocupada", activeOrderId: "ord_demo_3", diners: 4, waiterId: "u_mozo2", openedAt: new Date(Date.now() - 25 * 60000).toISOString() },
+    { id: "m6", number: 6, sector: "Terraza", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m7", number: 7, sector: "Terraza", capacity: 4, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m8", number: 8, sector: "Vereda", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m9", number: 9, sector: "Barra", capacity: 1, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
+    { id: "m10", number: 10, sector: "Barra", capacity: 1, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null }
+  ],
+
+  // Comandas activas e históricas para probar de inmediato
+  orders: [
+    {
+      id: "ord_demo_1",
+      orderNumber: 101,
+      channel: "mesa",
+      tableId: "m2",
+      tableNumber: 2,
+      customerName: null,
+      customerPhone: null,
+      deliveryAddress: null,
+      deliveryFee: 0,
+      driverName: null,
+      waiterId: "u_mozo1",
+      waiterName: "Lucas",
+      status: "abierto",
+      kitchenStatus: "en_preparacion",
+      diners: 3,
+      items: [
+        {
+          id: "item_1",
+          productId: "prod_pizza_muzzi_gde",
+          productName: "Pizza Muzzarella Grande",
+          quantity: 1,
+          unitPrice: 13500,
+          subtotal: 13500,
+          notes: "Bien dorada la masa"
+        },
+        {
+          id: "item_2",
+          productId: "prod_cerveza_pinta_ipa",
+          productName: "Cerveza Artesanal IPA (Pinta 500ml)",
+          quantity: 2,
+          unitPrice: 4500,
+          subtotal: 9000,
+          notes: ""
+        },
+        {
+          id: "item_3",
+          productId: "prod_agua_mineral",
+          productName: "Agua Mineral 500ml",
+          quantity: 1,
+          unitPrice: 2100,
+          subtotal: 2100,
+          notes: "Con hielo y limón"
+        }
+      ],
+      subtotal: 24600,
+      discount: 0,
+      tip: 0,
+      total: 24600,
+      paymentMethod: null,
+      createdAt: new Date(Date.now() - 45 * 60000).toISOString(),
+      closedAt: null,
+      closedBy: null
+    },
+    {
+      id: "ord_demo_2",
+      orderNumber: 102,
+      channel: "mesa",
+      tableId: "m3",
+      tableNumber: 3,
+      customerName: null,
+      customerPhone: null,
+      deliveryAddress: null,
+      deliveryFee: 0,
+      driverName: null,
+      waiterId: "u_mozo1",
+      waiterName: "Lucas",
+      status: "cuenta_pedida", // Cuenta ya pedida por el mozo!
+      kitchenStatus: "entregado",
+      diners: 2,
+      items: [
+        {
+          id: "item_4",
+          productId: "prod_burger_doble_cheddar",
+          productName: "Hamburguesa Doble Smash Cheddar & Bacon",
+          quantity: 2,
+          unitPrice: 11900,
+          subtotal: 23800,
+          notes: "Punto jugoso"
+        },
+        {
+          id: "item_5",
+          productId: "prod_papas_cheddar_bacon",
+          productName: "Papas Rústicas Cheddar & Panceta",
+          quantity: 1,
+          unitPrice: 7900,
+          subtotal: 7900,
+          notes: ""
+        },
+        {
+          id: "item_6",
+          productId: "prod_coca_cola",
+          productName: "Coca Cola Sabor Original 354ml",
+          quantity: 2,
+          unitPrice: 2500,
+          subtotal: 5000,
+          notes: ""
+        }
+      ],
+      subtotal: 36700,
+      discount: 0,
+      tip: 3670, // 10% propina sugerida
+      total: 40370,
+      paymentMethod: null,
+      createdAt: new Date(Date.now() - 70 * 60000).toISOString(),
+      closedAt: null,
+      closedBy: null
+    },
+    {
+      id: "ord_demo_3",
+      orderNumber: 103,
+      channel: "mesa",
+      tableId: "m5",
+      tableNumber: 5,
+      customerName: null,
+      customerPhone: null,
+      deliveryAddress: null,
+      deliveryFee: 0,
+      driverName: null,
+      waiterId: "u_mozo2",
+      waiterName: "Sofía",
+      status: "abierto",
+      kitchenStatus: "en_preparacion",
+      diners: 4,
+      items: [
+        {
+          id: "item_7",
+          productId: "prod_pizza_especial_gde",
+          productName: "Pizza Especial con Jamón y Morrones Grande",
+          quantity: 1,
+          unitPrice: 16800,
+          subtotal: 16800,
+          notes: ""
+        },
+        {
+          id: "item_8",
+          productId: "prod_empanada_carne",
+          productName: "Empanada de Carne a Cuchillo",
+          quantity: 4,
+          unitPrice: 1900,
+          subtotal: 7600,
+          notes: ""
+        },
+        {
+          id: "item_9",
+          productId: "prod_cerveza_pinta_ipa",
+          productName: "Cerveza Artesanal IPA (Pinta 500ml)",
+          quantity: 3,
+          unitPrice: 4500,
+          subtotal: 13500,
+          notes: ""
+        }
+      ],
+      subtotal: 37900,
+      discount: 0,
+      tip: 0,
+      total: 37900,
+      paymentMethod: null,
+      createdAt: new Date(Date.now() - 25 * 60000).toISOString(),
+      closedAt: null,
+      closedBy: null
+    },
+    {
+      id: "ord_demo_takeaway_1",
+      orderNumber: 104,
+      channel: "take_away",
+      tableId: null,
+      tableNumber: null,
+      customerName: "Mariano García",
+      customerPhone: "11-4567-8910",
+      deliveryAddress: null,
+      deliveryFee: 0,
+      driverName: null,
+      waiterId: "u_cajero",
+      waiterName: "Martín",
+      status: "abierto",
+      kitchenStatus: "listo",
+      diners: 1,
+      items: [
+        {
+          id: "item_10",
+          productId: "prod_pizza_muzzi_gde",
+          productName: "Pizza Muzzarella Grande",
+          quantity: 2,
+          unitPrice: 13500,
+          subtotal: 27000,
+          notes: "Cortar en 8 porciones"
+        }
+      ],
+      subtotal: 27000,
+      discount: 0,
+      tip: 0,
+      total: 27000,
+      paymentMethod: null,
+      createdAt: new Date(Date.now() - 20 * 60000).toISOString(),
+      closedAt: null,
+      closedBy: null
+    },
+    {
+      id: "ord_demo_delivery_1",
+      orderNumber: 105,
+      channel: "delivery",
+      tableId: null,
+      tableNumber: null,
+      customerName: "Florencia Rossi",
+      customerPhone: "11-9876-5432",
+      deliveryAddress: "Av. Corrientes 3450, Piso 4 B (Timbre Rossi)",
+      deliveryFee: 1800,
+      driverName: "Gastón (Moto 1)",
+      waiterId: "u_cajero",
+      waiterName: "Martín",
+      status: "abierto",
+      kitchenStatus: "en_camino",
+      diners: 1,
+      items: [
+        {
+          id: "item_11",
+          productId: "prod_burger_doble_cheddar",
+          productName: "Hamburguesa Doble Smash Cheddar & Bacon",
+          quantity: 1,
+          unitPrice: 11900,
+          subtotal: 11900,
+          notes: "Sin cebolla"
+        },
+        {
+          id: "item_12",
+          productId: "prod_coca_cola",
+          productName: "Coca Cola Sabor Original 354ml",
+          quantity: 1,
+          unitPrice: 2500,
+          subtotal: 2500,
+          notes: ""
+        }
+      ],
+      subtotal: 14400,
+      discount: 0,
+      tip: 0,
+      total: 16200, // 14400 + 1800 envío
+      paymentMethod: "mercadopago",
+      createdAt: new Date(Date.now() - 35 * 60000).toISOString(),
+      closedAt: null,
+      closedBy: null
+    }
+  ],
+
+  // Proveedores registrados
+  suppliers: [
+    {
+      id: "sup_1",
+      name: "Distribuidora Lácteos del Sur S.R.L.",
+      cuit: "30-71234567-9",
+      phone: "011-4301-8899",
+      email: "ventas@lacteosdelsur.com.ar",
+      category: "Lácteos y Quesos"
+    },
+    {
+      id: "sup_2",
+      name: "Molinos & Harinas San Martín",
+      cuit: "30-68991234-3",
+      phone: "011-4752-1100",
+      email: "pedidos@molinossanmartin.com",
+      category: "Panadería y Almacén"
+    },
+    {
+      id: "sup_3",
+      name: "Frigorífico Bovino Central",
+      cuit: "30-55443322-1",
+      phone: "011-4200-3344",
+      email: "carnes@bovinogourmet.com",
+      category: "Carnicería"
+    },
+    {
+      id: "sup_4",
+      name: "Cervecería & Bebidas Quilmes Directo",
+      cuit: "30-50001000-4",
+      phone: "0800-222-3344",
+      email: "atencion@distribebidas.com",
+      category: "Bebidas y Cervezas"
+    }
+  ],
+
+  // Compras y Facturas/Remitos cargados por el Cajero/Admin
+  purchases: [
+    {
+      id: "pur_101",
+      voucherType: "Factura A",
+      voucherNumber: "0003-00012489",
+      supplierId: "sup_1",
+      supplierName: "Distribuidora Lácteos del Sur S.R.L.",
+      date: new Date(Date.now() - 2 * 86400000).toISOString().split("T")[0],
+      items: [
+        {
+          ingredientId: "ing_muzza",
+          ingredientName: "Queso Muzzarella en Barra",
+          quantity: 20,
+          unit: "kg",
+          unitCost: 7800,
+          total: 156000
+        },
+        {
+          ingredientId: "ing_cheddar_fetas",
+          ingredientName: "Queso Cheddar Americano en Fetas",
+          quantity: 100,
+          unit: "u",
+          unitCost: 350,
+          total: 35000
+        }
+      ],
+      totalAmount: 191000,
+      paymentMethod: "transferencia",
+      paymentStatus: "pagado",
+      notes: "Entrega en cámara frigorífica 1",
+      registeredBy: "Martín (Cajero)"
+    },
+    {
+      id: "pur_102",
+      voucherType: "Remito Oficial",
+      voucherNumber: "R-0001-00004512",
+      supplierId: "sup_2",
+      supplierName: "Molinos & Harinas San Martín",
+      date: new Date(Date.now() - 1 * 86400000).toISOString().split("T")[0],
+      items: [
+        {
+          ingredientId: "ing_bollo_pizza",
+          ingredientName: "Bollo de Masa Madre Pizza",
+          quantity: 50,
+          unit: "u",
+          unitCost: 950,
+          total: 47500
+        },
+        {
+          ingredientId: "ing_disco_empanada",
+          ingredientName: "Discos de Empanadas Caseros",
+          quantity: 120,
+          unit: "u",
+          unitCost: 220,
+          total: 26400
+        }
+      ],
+      totalAmount: 73900,
+      paymentMethod: "efectivo",
+      paymentStatus: "pagado",
+      notes: "Ingreso directo a heladera de producción",
+      registeredBy: "Rodrigo (Admin)"
+    }
+  ],
+
+  // Turno de Caja actual / Arqueos
+  cashShifts: [
+    {
+      id: "shift_current",
+      shiftNumber: 42,
+      cashierId: "u_cajero",
+      cashierName: "Martín",
+      openedAt: new Date(Date.now() - 5 * 3600000).toISOString(),
+      initialCash: 45000, // $45.000 cambio inicial
+      status: "abierta",
+      movements: [
+        {
+          id: "mov_1",
+          type: "egreso",
+          amount: 3500,
+          reason: "Compra urgente 2 bolsas de hielo rolo",
+          createdAt: new Date(Date.now() - 3 * 3600000).toISOString(),
+          user: "Martín (Cajero)"
+        },
+        {
+          id: "mov_2",
+          type: "ingreso",
+          amount: 15000,
+          reason: "Refuerzo cambio de billetes chicos",
+          createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
+          user: "Rodrigo (Admin)"
+        }
+      ],
+      actualCash: null,
+      difference: null,
+      closedAt: null,
+      notes: ""
+    }
+  ],
+
+  // Historial de ventas cerradas para KPIs y gráficos
+  historicalSales: [
+    {
+      id: "sale_prev_1",
+      orderNumber: 98,
+      channel: "mesa",
+      tableNumber: 1,
+      total: 31200,
+      paymentMethod: "efectivo",
+      closedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
+      waiterName: "Lucas"
+    },
+    {
+      id: "sale_prev_2",
+      orderNumber: 99,
+      channel: "mostrador",
+      tableNumber: null,
+      total: 16000,
+      paymentMethod: "mercadopago",
+      closedAt: new Date(Date.now() - 3 * 3600000).toISOString(),
+      waiterName: "Martín"
+    },
+    {
+      id: "sale_prev_3",
+      orderNumber: 100,
+      channel: "delivery",
+      tableNumber: null,
+      total: 28500,
+      paymentMethod: "debito",
+      closedAt: new Date(Date.now() - 1 * 3600000).toISOString(),
+      waiterName: "Martín"
+    }
+  ],
+
+  // Historial de auditoría de movimientos de Stock
+  stockLog: [
+    {
+      id: "log_1",
+      timestamp: new Date(Date.now() - 5 * 3600000).toISOString(),
+      ingredientId: "ing_muzza",
+      ingredientName: "Queso Muzzarella en Barra",
+      type: "compra",
+      change: "+20 kg",
+      resultingStock: 19.5,
+      reason: "Factura A 0003-00012489",
+      user: "Martín"
+    },
+    {
+      id: "log_2",
+      timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+      ingredientId: "ing_muzza",
+      ingredientName: "Queso Muzzarella en Barra",
+      type: "consumo_comanda",
+      change: "-0.25 kg",
+      resultingStock: 18.5,
+      reason: "Comanda #101 (Pizza Muzzarella Grande)",
+      user: "Lucas"
+    },
+    {
+      id: "log_3",
+      timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+      ingredientId: "ing_bollo_pizza",
+      ingredientName: "Bollo de Masa Madre Pizza",
+      type: "consumo_comanda",
+      change: "-1 u",
+      resultingStock: 45,
+      reason: "Comanda #101 (Pizza Muzzarella Grande)",
+      user: "Lucas"
+    }
+  ]
+};

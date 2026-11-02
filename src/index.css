@@ -1,0 +1,98 @@
+@import "tailwindcss";
+
+@layer base {
+  * {
+    box-sizing: border-box;
+    -webkit-tap-highlight-color: transparent;
+  }
+  
+  body {
+    font-family: 'Plus Jakarta Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+    background-color: #09090b;
+    color: #f4f4f5;
+  }
+
+  /* Accessible interaction affordances (antislop R-39) */
+  a[href], 
+  button, 
+  summary, 
+  select, 
+  label[for], 
+  input[type="checkbox"], 
+  input[type="radio"],
+  input[type="button"], 
+  input[type="submit"] {
+    cursor: pointer;
+  }
+
+  button:disabled, 
+  input:disabled, 
+  select:disabled {
+    cursor: not-allowed;
+  }
+
+  /* Tabular numbers for all financial, table codes, and counters */
+  .font-mono, [data-tabular] {
+    font-family: 'JetBrains Mono', monospace;
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+/* Custom scrollbars for serious dark industrial theme */
+::-webkit-scrollbar {
+  width: 4px;
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: #09090b;
+}
+::-webkit-scrollbar-thumb {
+  background: #27272a;
+  border-radius: 2px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: #3f3f46;
+}
+
+/* Touch responsiveness */
+button, input, select, textarea {
+  touch-action: manipulation;
+}
+
+/* Precision Table Card Styles - ui-anti-slop-override specification */
+.table-card-cerrada {
+  background-color: #0e0e12;
+  border: 1px solid #1f1f24;
+  border-left: 3px solid #27272a;
+  opacity: 0.65;
+}
+.table-card-cerrada:hover {
+  border-color: #27272a;
+  border-left-color: #3f3f46;
+  opacity: 0.9;
+  background-color: #121216;
+}
+
+.table-card-abierta {
+  background-color: #121217;
+  border: 1px solid #27272a;
+  border-left: 3px solid #a1a1aa;
+  opacity: 1;
+}
+.table-card-abierta:hover {
+  border-color: #3f3f46;
+  border-left-color: #e4e4e7;
+  background-color: #16161c;
+}
+
+.table-card-pendiente {
+  background-color: #16161d;
+  border: 1px solid #3f3f46;
+  border-left: 3px solid #f4f4f5;
+  opacity: 1;
+}
+.table-card-pendiente:hover {
+  border-color: #52525b;
+  border-left-color: #ffffff;
+  background-color: #1a1a22;
+}
