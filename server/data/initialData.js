@@ -7,7 +7,7 @@ export const initialData = {
       role: "admin",
       pin: "9999",
       email: "admin@gastrogestion.com",
-      avatar: "👑"
+      avatar: "fa-solid fa-user-shield"
     },
     {
       id: "u_cajero",
@@ -15,7 +15,7 @@ export const initialData = {
       role: "cajero",
       pin: "2222",
       email: "caja@gastrogestion.com",
-      avatar: "💵"
+      avatar: "fa-solid fa-cash-register"
     },
     {
       id: "u_mozo1",
@@ -23,7 +23,7 @@ export const initialData = {
       role: "mozo",
       pin: "1111",
       email: "lucas@gastrogestion.com",
-      avatar: "🤵"
+      avatar: "fa-solid fa-user-tie"
     },
     {
       id: "u_mozo2",
@@ -31,7 +31,7 @@ export const initialData = {
       role: "mozo",
       pin: "1112",
       email: "sofia@gastrogestion.com",
-      avatar: "💁‍♀️"
+      avatar: "fa-solid fa-user-tie"
     }
   ],
 
@@ -207,7 +207,7 @@ export const initialData = {
       category: "Pizzas",
       price: 13500,
       description: "8 porciones, salsa pomodoro, 250g de muzzarella artesanal, orégano y aceitunas verdes.",
-      badge: "🍕",
+      badge: "fa-solid fa-pizza-slice",
       recipe: [
         { ingredientId: "ing_bollo_pizza", quantity: 1, unit: "u" },
         { ingredientId: "ing_salsa_tomate", quantity: 0.08, unit: "kg" }, // 80g
@@ -221,7 +221,7 @@ export const initialData = {
       category: "Pizzas",
       price: 8200,
       description: "4 porciones, 1/2 bollo de pizza, 125g muzzarella, salsa y 4 aceitunas.",
-      badge: "🍕",
+      badge: "fa-solid fa-pizza-slice",
       recipe: [
         { ingredientId: "ing_bollo_pizza", quantity: 0.5, unit: "u" }, // 1/2 bollo de pizza
         { ingredientId: "ing_salsa_tomate", quantity: 0.04, unit: "kg" }, // 40g
@@ -235,7 +235,7 @@ export const initialData = {
       category: "Pizzas",
       price: 16800,
       description: "Masa madre, salsa pomodoro, 250g muzzarella, 150g jamón cocido y morrones asados.",
-      badge: "🍕",
+      badge: "fa-solid fa-pizza-slice",
       recipe: [
         { ingredientId: "ing_bollo_pizza", quantity: 1, unit: "u" },
         { ingredientId: "ing_salsa_tomate", quantity: 0.08, unit: "kg" },
@@ -251,7 +251,7 @@ export const initialData = {
       category: "Hamburguesas",
       price: 11900,
       description: "Pan brioche, doble medallón smash (160g), 4 fetas de cheddar y panceta crocante.",
-      badge: "🍔",
+      badge: "fa-solid fa-burger",
       recipe: [
         { ingredientId: "ing_pan_brioche", quantity: 1, unit: "u" },
         { ingredientId: "ing_carne_smash", quantity: 2, unit: "u" },
@@ -265,7 +265,7 @@ export const initialData = {
       category: "Hamburguesas",
       price: 8900,
       description: "Pan brioche, un medallón smash (80g), 2 fetas de cheddar.",
-      badge: "🍔",
+      badge: "fa-solid fa-burger",
       recipe: [
         { ingredientId: "ing_pan_brioche", quantity: 1, unit: "u" },
         { ingredientId: "ing_carne_smash", quantity: 1, unit: "u" },
@@ -278,7 +278,7 @@ export const initialData = {
       category: "Minutas & Entradas",
       price: 7900,
       description: "350g de papas bastón con abundante queso cheddar fundido y lluvia de panceta crocante.",
-      badge: "🍟",
+      badge: "fa-solid fa-utensils",
       recipe: [
         { ingredientId: "ing_papas_baston", quantity: 0.35, unit: "kg" },
         { ingredientId: "ing_cheddar_fetas", quantity: 3, unit: "u" },
@@ -291,7 +291,7 @@ export const initialData = {
       category: "Minutas & Entradas",
       price: 1900,
       description: "Relleno criollo suave con carne cortada a cuchillo, horneada al momento.",
-      badge: "🥟",
+      badge: "fa-solid fa-utensils",
       recipe: [
         { ingredientId: "ing_disco_empanada", quantity: 1, unit: "u" },
         { ingredientId: "ing_relleno_carne", quantity: 0.08, unit: "kg" } // 80g
@@ -303,7 +303,7 @@ export const initialData = {
       category: "Bebidas",
       price: 4500,
       description: "Pinta tirada de 500cc, amargor medio, notas cítricas y resinosas.",
-      badge: "🍺",
+      badge: "fa-solid fa-beer-mug-empty",
       recipe: [
         { ingredientId: "ing_cerveza_ipa", quantity: 0.5, unit: "l" }
       ]
@@ -314,7 +314,7 @@ export const initialData = {
       category: "Bebidas",
       price: 2500,
       description: "Lata 354ml servida bien fría con o sin hielo y limón.",
-      badge: "🥤",
+      badge: "fa-solid fa-glass-water",
       recipe: [
         { ingredientId: "ing_coca_cola_lata", quantity: 1, unit: "u" }
       ]
@@ -325,7 +325,7 @@ export const initialData = {
       category: "Bebidas",
       price: 2100,
       description: "Botella 500ml fría o natural.",
-      badge: "💧",
+      badge: "fa-solid fa-bottle-water",
       recipe: [
         { ingredientId: "ing_agua_mineral", quantity: 1, unit: "u" }
       ]

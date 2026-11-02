@@ -82,10 +82,10 @@ class Store {
     const newUser = {
       id: 'u_' + Date.now(),
       name: userData.name,
-      role: userData.role, // 'mozo', 'cajero', 'admin'
+      role: userData.role,
       pin: userData.pin,
       email: userData.email || '',
-      avatar: userData.role === 'admin' ? '👑' : userData.role === 'cajero' ? '💵' : '🤵'
+      avatar: userData.avatar || (userData.role === 'admin' ? 'fa-solid fa-user-shield' : userData.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie')
     };
     this.data.users.push(newUser);
     this.save();
@@ -149,7 +149,7 @@ class Store {
       category: productData.category,
       price: Number(productData.price),
       description: productData.description || '',
-      badge: productData.badge || '🍽️',
+      badge: productData.badge || 'fa-solid fa-utensils',
       recipe: Array.isArray(productData.recipe) ? productData.recipe : []
     };
     this.data.products.push(newProduct);

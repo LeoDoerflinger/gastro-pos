@@ -1,23 +1,39 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function RecipeManager() {
-  const { products, ingredients, currentUser, showToast, refreshData } = useApp();
+  const { products, ingredients, showToast, refreshData } = useApp();
 
   const [selectedProduct, setSelectedProduct] = useState(products[0] || null);
   const [isEditing, setIsEditing] = useState(false);
   const [editedRecipe, setEditedRecipe] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // New product modal state
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
   const [newProductName, setNewProductName] = useState('');
   const [newProductCategory, setNewProductCategory] = useState('Pizzas');
   const [newProductPrice, setNewProductPrice] = useState('');
   const [newProductDesc, setNewProductDesc] = useState('');
 
-  // When selecting a product to edit
+  useEffect(() => {
+    if (!selectedProduct && products.length > 0) {
+      setSelectedProduct(products[0]);
+    } else if (selectedProduct) {
+      const updated = products.find(p => p.id === selectedProduct.id);
+      if (updated && !isEditing) setSelectedProduct(updated);
+    }
+  }, [products, selectedProduct, isEditing]);
+
+  useEffect(() => {
+    if (!isNewProductModalOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') setIsNewProductModalOpen(false);
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isNewProductModalOpen]);
+
   const handleSelectProduct = (prod) => {
     setSelectedProduct(prod);
     setIsEditing(false);
@@ -42,30 +58,30 @@ export default function RecipeManager() {
   };
 
   const handleRowChange = (index, field, value) => {
-    setEditedRecipe(prev => prev.map((item, i) => {
-      if (i === index) {
-        const updated = { ...item, [field]: value };
-        if (field === 'ingredientId') {
-          const ing = ingredients.find(ing => ing.id === value);
-          if (ing) updated.unit = ing.unit;
+    setEditedRecipe(prev =>
+      prev.map((item, i) => {
+        if (i === index) {
+          const updated = { ...item, [field]: value };
+          if (field === 'ingredientId') {
+            const ing = ingredients.find(x => x.id === value);
+            if (ing) updated.unit = ing.unit;
+          }
+          return updated;
         }
-        return updated;
-      }
-      return item;
-    }));
+        return item;
+      })
+    );
   };
 
-  // Cost calculations
-  const calculateRecipeCost = (recipeList) => {
-    return (recipeList || []).reduce((acc, item) => {
+  const calculateRecipeCost = (recipeList) =>
+    (recipeList || []).reduce((acc, item) => {
       const ing = ingredients.find(i => i.id === item.ingredientId);
       if (!ing) return acc;
-      return acc + (Number(item.quantity || 0) * (ing.costPerUnit || 0));
+      return acc + Number(item.quantity || 0) * (ing.costPerUnit || 0);
     }, 0);
-  };
 
-  const activeRecipeCost = isEditing 
-    ? calculateRecipeCost(editedRecipe) 
+  const activeRecipeCost = isEditing
+    ? calculateRecipeCost(editedRecipe)
     : calculateRecipeCost(selectedProduct?.recipe);
 
   const price = selectedProduct?.price || 0;
@@ -80,15 +96,12 @@ export default function RecipeManager() {
         unit: r.unit
       }));
 
-      await api.updateProduct(selectedProduct.id, {
-        recipe: cleanRecipe
-      });
-
-      showToast(`Receta de "${selectedProduct.name}" actualizada con éxito`);
+      await api.updateProduct(selectedProduct.id, { recipe: cleanRecipe });
+      showToast(`Receta de "${selectedProduct.name}" guardada`);
       setIsEditing(false);
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error guardando receta', 'error');
+      showToast(err.message || 'No se pudo guardar la receta', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -97,12 +110,17 @@ export default function RecipeManager() {
   const handleCreateProduct = async (e) => {
     e.preventDefault();
     if (!newProductName.trim() || !newProductPrice) {
-      showToast('Completa el nombre y precio del producto', 'error');
+      showToast('Completá el nombre y el precio de venta', 'error');
       return;
     }
     setSubmitting(true);
     try {
-      const badgeIcon = newProductCategory === 'Pizzas' ? 'fa-solid fa-pizza-slice' : newProductCategory === 'Hamburguesas' ? 'fa-solid fa-burger' : 'fa-solid fa-utensils';
+      const badgeIcon =
+        newProductCategory === 'Pizzas'
+          ? 'fa-solid fa-pizza-slice'
+          : newProductCategory === 'Hamburguesas'
+          ? 'fa-solid fa-burger'
+          : 'fa-solid fa-utensils';
       const created = await api.createProduct({
         name: newProductName,
         category: newProductCategory,
@@ -111,7 +129,7 @@ export default function RecipeManager() {
         badge: badgeIcon,
         recipe: []
       });
-      showToast(`Producto "${created.name}" creado correctamente`);
+      showToast(`Plato "${created.name}" agregado a la carta`);
       setIsNewProductModalOpen(false);
       setNewProductName('');
       setNewProductPrice('');
@@ -120,186 +138,197 @@ export default function RecipeManager() {
       setSelectedProduct(created);
       setIsEditing(true);
     } catch (err) {
-      showToast(err.message || 'Error creando producto', 'error');
+      showToast(err.message || 'No se pudo crear el plato', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="bg-[#121215] p-3 rounded border border-[#27272a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <section className="space-y-5" aria-label="Recetario y escandallos">
+      {/* Open Header */}
+      <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-100 flex items-center gap-2">
-            <i className="fa-solid fa-book text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Recetario & Escandallos de Producción</span>
+          <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+            Recetario y escandallos de cocina
           </h2>
-          <p className="text-[11px] text-zinc-400 mt-1 font-mono">
-            Vincula insumos a cada plato. El stock se descuenta automáticamente con cada comanda comandada.
+          <p className="text-sm text-[var(--text-secondary)]">
+            Definí qué cantidad de cada insumo lleva cada plato para descontar stock automáticamente al comandar.
           </p>
         </div>
 
         <button
+          type="button"
           onClick={() => setIsNewProductModalOpen(true)}
-          className="px-3 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold flex items-center gap-1.5 self-start sm:self-auto transition-all"
+          className="pos-btn-primary self-start sm:self-auto shrink-0"
         >
           <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
-          <span>Nuevo Plato</span>
+          <span>Nuevo plato</span>
         </button>
       </div>
 
-      {/* Main Two-Column Layout */}
-      <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-        {/* Left Column: Products List */}
-        <div className="md:col-span-5 lg:col-span-4 bg-[#121215] rounded border border-[#27272a] overflow-hidden flex flex-col">
-          <div className="p-2.5 bg-[#09090b] border-b border-[#27272a] flex items-center justify-between">
-            <span className="text-[10px] font-mono font-bold text-zinc-400 uppercase tracking-wider">
-              Platos del Menú ({products.length})
+      {/* Master-Detail Split */}
+      <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+        {/* Left: Menu Dishes List (Native <button> items per R-39) */}
+        <div className="lg:col-span-5 pos-panel overflow-hidden flex flex-col">
+          <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+            <span className="text-xs font-semibold text-[var(--text-secondary)]">
+              Carta activa ({products.length} platos)
             </span>
           </div>
 
-          <div className="p-1.5 overflow-y-auto max-h-[580px] space-y-1">
+          <div className="divide-y divide-[var(--border-subtle)] overflow-y-auto max-h-[600px]">
             {products.map(prod => {
               const isSelected = selectedProduct?.id === prod.id;
               const prodCost = calculateRecipeCost(prod.recipe);
               const margin = prod.price > 0 ? Math.round(((prod.price - prodCost) / prod.price) * 100) : 0;
 
               return (
-                <div
+                <button
                   key={prod.id}
+                  type="button"
                   onClick={() => handleSelectProduct(prod)}
-                  className={`p-2 rounded-sm cursor-pointer transition-colors border ${
+                  className={`w-full p-3.5 text-left transition-colors flex flex-col gap-1.5 min-h-[68px] ${
                     isSelected
-                      ? 'bg-zinc-800 border-zinc-600'
-                      : 'bg-[#09090b] border-[#27272a] hover:bg-[#18181c]'
+                      ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--accent-brand)]'
+                      : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
-                  <div className="flex items-start justify-between gap-1 mb-1">
-                    <h4 className={`text-xs font-bold leading-tight ${isSelected ? 'text-zinc-100' : 'text-zinc-200'}`}>
+                  <div className="flex items-start justify-between gap-2 w-full">
+                    <span className="font-bold text-sm text-[var(--text-primary)] leading-snug">
                       {prod.name}
-                    </h4>
-                    <span className="font-mono font-bold text-xs text-zinc-200 shrink-0 tabular-nums">
+                    </span>
+                    <span className="font-mono font-bold text-sm text-[var(--text-primary)] shrink-0">
                       ${prod.price.toLocaleString('es-AR')}
                     </span>
                   </div>
 
-                  <div className="flex items-center justify-between text-[10px] text-zinc-400 font-mono tabular-nums">
+                  <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] w-full font-mono">
                     <span>{prod.recipe?.length || 0} insumos</span>
-                    <span className="text-emerald-400">
-                      Costo: ${Math.round(prodCost).toLocaleString('es-AR')} ({margin}% margen)
+                    <span className="text-[var(--status-open-fg)]">
+                      Costo ${Math.round(prodCost).toLocaleString('es-AR')} · Margen {margin}%
                     </span>
                   </div>
-                </div>
+                </button>
               );
             })}
           </div>
         </div>
 
-        {/* Right Column: Recipe Details & Editor */}
-        <div className="md:col-span-7 lg:col-span-8 bg-[#121215] rounded border border-[#27272a] flex flex-col overflow-hidden">
+        {/* Right: Recipe Escandallo Editor */}
+        <div className="lg:col-span-7 pos-panel flex flex-col overflow-hidden">
           {selectedProduct ? (
             <div>
-              {/* Product Info Header */}
-              <div className="p-3 bg-[#09090b] border-b border-[#27272a] flex flex-col sm:flex-row sm:items-center justify-between gap-2.5">
+              <div className="p-4 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <h3 className="font-bold text-zinc-100 text-sm font-sans">{selectedProduct.name}</h3>
-                  <p className="text-[11px] text-zinc-400 font-mono uppercase tracking-wider">{selectedProduct.category}</p>
+                  <span className="text-xs font-semibold text-[var(--accent-brand)] block">
+                    {selectedProduct.category}
+                  </span>
+                  <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">
+                    {selectedProduct.name}
+                  </h3>
                 </div>
 
                 <div className="flex items-center gap-2">
                   {!isEditing ? (
                     <button
+                      type="button"
                       onClick={handleStartEdit}
-                      className="px-3 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs transition-all flex items-center gap-1.5"
+                      className="pos-btn-primary text-xs"
                     >
                       <i className="fa-solid fa-pen-to-square text-xs" aria-hidden="true"></i>
-                      <span>Modificar Receta</span>
+                      <span>Editar receta</span>
                     </button>
                   ) : (
-                    <div className="flex gap-2">
+                    <>
                       <button
+                        type="button"
                         onClick={() => setIsEditing(false)}
-                        className="px-2.5 py-1.5 rounded-sm bg-[#18181c] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                        className="pos-btn-secondary text-xs"
                       >
                         Cancelar
                       </button>
                       <button
+                        type="button"
                         disabled={submitting}
                         onClick={handleSaveRecipe}
-                        className="px-2.5 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs transition-all flex items-center gap-1.5"
+                        className="pos-btn-primary text-xs"
                       >
                         <i className="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
-                        <span>Guardar Cambios</span>
+                        <span>Guardar receta</span>
                       </button>
-                    </div>
+                    </>
                   )}
                 </div>
               </div>
 
-              {/* Cost & Profit Margin Bar */}
-              <div className="p-3 bg-[#121215] border-b border-[#27272a] grid grid-cols-3 divide-x divide-[#27272a] border-t border-[#27272a] text-center text-xs">
-                <div className="px-2">
-                  <span className="text-zinc-400 block text-[10px] uppercase font-mono tracking-wider">Precio Venta</span>
-                  <span className="font-bold text-sm text-zinc-100 font-mono tabular-nums">
+              {/* Financial Strip */}
+              <div className="grid grid-cols-3 divide-x divide-[var(--border-subtle)] border-b border-[var(--border-subtle)] text-center bg-[var(--bg-surface)]">
+                <div className="p-3.5">
+                  <span className="text-xs text-[var(--text-secondary)] block">Precio en carta</span>
+                  <span className="font-bold text-base font-mono text-[var(--text-primary)]">
                     ${selectedProduct.price?.toLocaleString('es-AR')}
                   </span>
                 </div>
-                <div className="px-2">
-                  <span className="text-zinc-400 block text-[10px] uppercase font-mono tracking-wider">Costo Insumos</span>
-                  <span className="font-bold text-sm text-zinc-200 font-mono tabular-nums">
+                <div className="p-3.5">
+                  <span className="text-xs text-[var(--text-secondary)] block">Costo receta</span>
+                  <span className="font-bold text-base font-mono text-[var(--text-primary)]">
                     ${Math.round(activeRecipeCost).toLocaleString('es-AR')}
                   </span>
                 </div>
-                <div className="px-2">
-                  <span className="text-zinc-400 block text-[10px] uppercase font-mono tracking-wider">Margen Bruto</span>
-                  <span className="font-bold text-sm font-mono text-emerald-400 tabular-nums">
+                <div className="p-3.5">
+                  <span className="text-xs text-[var(--text-secondary)] block">Margen bruto</span>
+                  <span className="font-bold text-base font-mono text-[var(--status-open-fg)]">
                     {marginGross}%
                   </span>
                 </div>
               </div>
 
-              {/* Recipe Ingredients Breakdown */}
-              <div className="p-3 space-y-3">
-                <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
-                  <h4 className="text-[11px] font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 font-mono">
-                    <i className="fa-solid fa-scale-balanced text-zinc-400 text-xs" aria-hidden="true"></i>
-                    <span>Insumos por Porción ({isEditing ? editedRecipe.length : (selectedProduct.recipe?.length || 0)})</span>
+              {/* Recipe Rows */}
+              <div className="p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-bold text-[var(--text-primary)]">
+                    Insumos descontados por unidad ({isEditing ? editedRecipe.length : (selectedProduct.recipe?.length || 0)})
                   </h4>
 
                   {isEditing && (
                     <button
                       type="button"
                       onClick={handleAddIngredientRow}
-                      className="text-xs text-zinc-200 hover:text-white font-mono uppercase tracking-wider flex items-center gap-1"
+                      className="pos-btn-secondary text-xs"
                     >
                       <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
-                      <span>Agregar Insumo</span>
+                      <span>Sumar insumo</span>
                     </button>
                   )}
                 </div>
 
-                {/* Ingredients List */}
-                <div className="space-y-1.5">
-                  {(isEditing ? editedRecipe : (selectedProduct.recipe || [])).length === 0 ? (
-                    <div className="p-8 text-center text-zinc-500 bg-[#09090b] rounded border border-[#27272a]">
-                      <i className="fa-solid fa-triangle-exclamation text-xl mb-2 text-zinc-600 block" aria-hidden="true"></i>
-                      <p className="text-xs font-mono font-bold text-zinc-400 uppercase tracking-wider">Sin receta asignada</p>
-                    </div>
-                  ) : (
-                    (isEditing ? editedRecipe : selectedProduct.recipe).map((item, idx) => {
+                {(isEditing ? editedRecipe : (selectedProduct.recipe || [])).length === 0 ? (
+                  <div className="pos-subpanel p-8 text-center space-y-2">
+                    <p className="text-sm font-semibold text-[var(--text-primary)]">
+                      Este plato todavía no tiene insumos asociados
+                    </p>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Tocá "Editar receta" para vincular materias primas y calcular su costo real.
+                    </p>
+                  </div>
+                ) : (
+                  <div className="divide-y divide-[var(--border-subtle)] border border-[var(--border-subtle)] rounded overflow-hidden">
+                    {(isEditing ? editedRecipe : selectedProduct.recipe).map((item, idx) => {
                       const ing = ingredients.find(i => i.id === item.ingredientId);
                       const unitCost = ing?.costPerUnit || 0;
                       const itemTotalCost = Number(item.quantity || 0) * unitCost;
 
                       if (isEditing) {
                         return (
-                          <div key={idx} className="flex flex-col sm:flex-row items-stretch sm:items-center gap-2 bg-[#09090b] p-2 rounded-sm border border-[#27272a]">
+                          <div key={idx} className="p-3 bg-[var(--bg-subtle)] flex flex-col sm:flex-row sm:items-center gap-2.5">
                             <div className="flex-1">
+                              <label htmlFor={`rec-ing-${idx}`} className="pos-label">Insumo:</label>
                               <select
+                                id={`rec-ing-${idx}`}
                                 value={item.ingredientId}
                                 onChange={(e) => handleRowChange(idx, 'ingredientId', e.target.value)}
-                                className="w-full bg-[#18181c] border border-[#27272a] rounded-sm p-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                                className="pos-input bg-[var(--bg-surface)]"
                               >
                                 {ingredients.map(i => (
                                   <option key={i.id} value={i.id}>{i.name} ({i.unit})</option>
@@ -307,100 +336,120 @@ export default function RecipeManager() {
                               </select>
                             </div>
 
-                            <div className="w-full sm:w-28 flex items-center gap-1">
+                            <div className="w-full sm:w-40">
+                              <label htmlFor={`rec-qty-${idx}`} className="pos-label">Cantidad ({item.unit || ing?.unit}):</label>
                               <input
+                                id={`rec-qty-${idx}`}
                                 type="number"
                                 step="0.001"
                                 min="0.001"
                                 value={item.quantity}
                                 onChange={(e) => handleRowChange(idx, 'quantity', e.target.value)}
-                                className="w-full bg-[#18181c] border border-[#27272a] rounded-sm p-1 text-xs font-mono text-center text-zinc-100 tabular-nums"
+                                className="pos-input bg-[var(--bg-surface)] font-mono text-center"
                               />
-                              <span className="text-xs text-zinc-400 font-mono font-bold shrink-0">{item.unit || ing?.unit}</span>
                             </div>
 
-                            <div className="w-full sm:w-24 text-right font-mono text-xs text-zinc-300 font-bold self-center tabular-nums">
-                              ${Math.round(itemTotalCost).toLocaleString('es-AR')}
-                            </div>
-
-                            <button
-                              type="button"
-                              onClick={() => handleRemoveRow(idx)}
-                              className="p-1 text-zinc-500 hover:text-rose-400 self-center transition-colors"
-                              aria-label="Eliminar insumo"
-                            >
-                              <i className="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
-                            </button>
-                          </div>
-                        );
-                      } else {
-                        return (
-                          <div key={idx} className="p-2.5 rounded-sm bg-[#09090b] border border-[#27272a] flex items-center justify-between text-xs">
-                            <div>
-                              <h5 className="font-semibold text-zinc-200">{ing?.name || 'Insumo'}</h5>
-                              <span className="text-[10px] text-zinc-500 font-mono tabular-nums">
-                                Stock actual: {ing?.stock} {ing?.unit}
+                            <div className="flex items-center justify-between sm:justify-end gap-2 sm:w-32">
+                              <span className="font-mono text-xs font-bold text-[var(--text-primary)]">
+                                ${Math.round(itemTotalCost).toLocaleString('es-AR')}
                               </span>
-                            </div>
-
-                            <div className="text-right font-mono tabular-nums">
-                              <div className="font-bold text-zinc-200">
-                                Descuenta: <span className="text-zinc-100 font-bold">{item.quantity} {item.unit}</span>
-                              </div>
-                              <div className="text-[10px] text-zinc-500">
-                                Costo: ${Math.round(itemTotalCost).toLocaleString('es-AR')}
-                              </div>
+                              <button
+                                type="button"
+                                onClick={() => handleRemoveRow(idx)}
+                                className="pos-btn-ghost text-[var(--text-muted)] hover:text-[var(--status-danger-fg)]"
+                                aria-label="Quitar insumo"
+                              >
+                                <i className="fa-solid fa-trash-can text-sm" aria-hidden="true"></i>
+                              </button>
                             </div>
                           </div>
                         );
                       }
-                    })
-                  )}
-                </div>
+
+                      return (
+                        <div key={idx} className="px-4 py-3 bg-[var(--bg-surface)] flex items-center justify-between gap-3">
+                          <div>
+                            <div className="font-semibold text-sm text-[var(--text-primary)]">
+                              {ing?.name || 'Insumo'}
+                            </div>
+                            <span className="text-xs text-[var(--text-muted)] font-mono">
+                              Disponible en depósito: {ing?.stock} {ing?.unit}
+                            </span>
+                          </div>
+
+                          <div className="text-right font-mono">
+                            <div className="text-sm font-bold text-[var(--text-primary)]">
+                              -{item.quantity} {item.unit}
+                            </div>
+                            <div className="text-xs text-[var(--text-secondary)]">
+                              ${Math.round(itemTotalCost).toLocaleString('es-AR')}
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
               </div>
             </div>
           ) : (
-            <div className="p-12 text-center text-zinc-500 font-mono">
-              <i className="fa-solid fa-book-open text-2xl mb-2 text-zinc-600 block" aria-hidden="true"></i>
-              <p className="text-xs font-bold text-zinc-400 uppercase tracking-wider">Selecciona un plato para ver su escandallo</p>
+            <div className="p-12 text-center space-y-2">
+              <p className="text-sm font-semibold text-[var(--text-primary)]">
+                Elegí un plato de la columna izquierda para revisar su receta
+              </p>
             </div>
           )}
         </div>
       </div>
 
-      {/* New Product Modal */}
+      {/* New Dish Modal */}
       {isNewProductModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-          <form onSubmit={handleCreateProduct} className="bg-[#121215] border border-[#27272a] rounded w-full max-w-md p-4 space-y-3 shadow-2xl">
-            <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-plus text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Agregar Nuevo Plato al Menú</span>
-            </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-dish-modal-title"
+        >
+          <form onSubmit={handleCreateProduct} className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="new-dish-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                Sumar nuevo plato a la carta
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsNewProductModalOpen(false)}
+                aria-label="Cerrar ventana"
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Nombre del Plato:</label>
+              <label htmlFor="new-dish-name" className="pos-label">Nombre del plato:</label>
               <input
+                id="new-dish-name"
                 type="text"
-                placeholder="Ej: Pizza Fugazzeta Rellena"
+                placeholder="Ej. Pizza Fugazzeta Rellena"
                 value={newProductName}
                 onChange={(e) => setNewProductName(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
                 required
-                autoFocus
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Categoría:</label>
+                <label htmlFor="new-dish-cat" className="pos-label">Categoría:</label>
                 <select
+                  id="new-dish-cat"
                   value={newProductCategory}
                   onChange={(e) => setNewProductCategory(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                  className="pos-input"
                 >
                   <option value="Pizzas">Pizzas</option>
                   <option value="Hamburguesas">Hamburguesas</option>
-                  <option value="Minutas & Entradas">Minutas & Entradas</option>
+                  <option value="Minutas & Entradas">Minutas y Entradas</option>
                   <option value="Pastas">Pastas</option>
                   <option value="Bebidas">Bebidas</option>
                   <option value="Postres">Postres</option>
@@ -408,48 +457,50 @@ export default function RecipeManager() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Precio de Venta ($):</label>
+                <label htmlFor="new-dish-price" className="pos-label">Precio de venta ($):</label>
                 <input
+                  id="new-dish-price"
                   type="number"
                   placeholder="0"
                   value={newProductPrice}
                   onChange={(e) => setNewProductPrice(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-200 focus:outline-none focus:border-zinc-500 tabular-nums"
+                  className="pos-input font-mono font-bold"
                   required
                 />
               </div>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Detalle / Notas internas:</label>
+              <label htmlFor="new-dish-notes" className="pos-label">Nota interna de producción:</label>
               <textarea
+                id="new-dish-notes"
                 rows="2"
-                placeholder="Detalle para cocina o carta..."
+                placeholder="Opcional para ficha técnica de cocina..."
                 value={newProductDesc}
                 onChange={(e) => setNewProductDesc(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
               />
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-[#27272a]">
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setIsNewProductModalOpen(false)}
-                className="flex-1 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                className="pos-btn-secondary flex-1"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold transition-all"
+                className="pos-btn-primary flex-1"
               >
-                Crear Plato
+                Crear plato
               </button>
             </div>
           </form>
         </div>
       )}
-    </div>
+    </section>
   );
 }

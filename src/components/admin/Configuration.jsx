@@ -1,25 +1,24 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import { getTableCode } from '../mozo/MozoSalonView';
 
 export default function Configuration() {
   const { tables, currentUser, showToast, refreshData } = useApp();
 
-  const [configSubtab, setConfigSubtab] = useState('tables'); // 'tables' | 'users'
+  const [configSubtab, setConfigSubtab] = useState('tables');
   const [userList, setUserList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
-  // New Table Form
   const [tableNumber, setTableNumber] = useState('');
   const [tableSector, setTableSector] = useState('Salón Principal');
   const [tableCapacity, setTableCapacity] = useState('4');
 
-  // New User Form
   const [userName, setUserName] = useState('');
-  const [userRole, setUserRole] = useState('mozo'); // 'mozo' | 'cajero' | 'admin'
+  const [userRole, setUserRole] = useState('mozo');
   const [userPin, setUserPin] = useState('');
 
-  React.useEffect(() => {
+  useEffect(() => {
     api.getUsers().then(setUserList).catch(console.error);
   }, []);
 
@@ -32,24 +31,24 @@ export default function Configuration() {
         sector: tableSector,
         capacity: Number(tableCapacity)
       });
-      showToast('Mesa agregada al plano');
+      showToast('Mesa incorporada al plano');
       setTableNumber('');
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error agregando mesa', 'error');
+      showToast(err.message || 'No se pudo agregar la mesa', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleDeleteTable = async (id, num) => {
-    if (window.confirm(`¿Deseas eliminar la Mesa #${num}?`)) {
+    if (window.confirm(`¿Querés quitar la Mesa #${num} del plano?`)) {
       try {
         await api.deleteTable(id);
         showToast(`Mesa #${num} eliminada`);
         await refreshData();
       } catch (err) {
-        showToast('Error eliminando mesa', 'error');
+        showToast('No se pudo eliminar la mesa', 'error');
       }
     }
   };
@@ -57,16 +56,17 @@ export default function Configuration() {
   const handleAddUser = async (e) => {
     e.preventDefault();
     if (!userName.trim() || userPin.length !== 4) {
-      showToast('Ingresa el nombre y un PIN de 4 dígitos exactos', 'error');
+      showToast('Ingresá el nombre y un PIN numérico de 4 cifras', 'error');
       return;
     }
     setSubmitting(true);
     try {
-      const avatarIcon = userRole === 'admin'
-        ? 'fa-solid fa-user-shield'
-        : userRole === 'cajero'
-        ? 'fa-solid fa-cash-register'
-        : 'fa-solid fa-user-tie';
+      const avatarIcon =
+        userRole === 'admin'
+          ? 'fa-solid fa-user-shield'
+          : userRole === 'cajero'
+          ? 'fa-solid fa-cash-register'
+          : 'fa-solid fa-user-tie';
 
       const created = await api.createUser({
         name: userName,
@@ -74,13 +74,13 @@ export default function Configuration() {
         pin: userPin,
         avatar: avatarIcon
       });
-      showToast(`Usuario ${created.name} (${created.role}) creado`);
+      showToast(`Operador ${created.name} habilitado`);
       setUserName('');
       setUserPin('');
       const updated = await api.getUsers();
       setUserList(updated);
     } catch (err) {
-      showToast(err.message || 'Error creando usuario', 'error');
+      showToast(err.message || 'No se pudo registrar el operador', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -88,152 +88,151 @@ export default function Configuration() {
 
   const handleDeleteUser = async (id, name) => {
     if (id === currentUser.id) {
-      showToast('No puedes eliminar el usuario activo', 'error');
+      showToast('No podés dar de baja el operador con sesión abierta', 'error');
       return;
     }
-    if (window.confirm(`¿Eliminar al usuario ${name}?`)) {
+    if (window.confirm(`¿Dar de baja a ${name}?`)) {
       try {
         await api.deleteUser(id);
-        showToast(`Usuario ${name} eliminado`);
+        showToast(`Operador ${name} dado de baja`);
         const updated = await api.getUsers();
         setUserList(updated);
       } catch (err) {
-        showToast('Error eliminando usuario', 'error');
+        showToast('No se pudo eliminar el operador', 'error');
       }
     }
   };
 
   return (
-    <div className="space-y-3">
-      {/* Header */}
-      <div className="bg-[#121215] p-3 rounded border border-[#27272a] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+    <section className="space-y-5" aria-label="Configuración de salón y operadores">
+      {/* Open Header */}
+      <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-100 flex items-center gap-2">
-            <i className="fa-solid fa-sliders text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Configuración del Sistema</span>
+          <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+            Configuración de salón y personal
           </h2>
-          <p className="text-[11px] text-zinc-400 mt-1 font-mono">
-            Administración de sectores, distribución de mesas y personal con roles y claves PIN de acceso.
+          <p className="text-sm text-[var(--text-secondary)]">
+            Administrá la numeración por sectores y las claves PIN de acceso de cada operador.
           </p>
         </div>
 
-        <div className="inline-flex border border-[#27272a] divide-x divide-[#27272a] rounded-sm overflow-hidden self-start sm:self-auto">
+        <div className="pos-segment-group self-start sm:self-auto" role="group" aria-label="Secciones de configuración">
           <button
+            type="button"
+            aria-pressed={configSubtab === 'tables'}
             onClick={() => setConfigSubtab('tables')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-              configSubtab === 'tables'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-            }`}
+            className="pos-segment-btn"
           >
-            <i className="fa-solid fa-table-cells text-xs" aria-hidden="true"></i>
-            <span>Mesas y Sectores ({tables.length})</span>
+            <i className="fa-solid fa-chair text-xs" aria-hidden="true"></i>
+            <span>Mesas ({tables.length})</span>
           </button>
 
           <button
+            type="button"
+            aria-pressed={configSubtab === 'users'}
             onClick={() => setConfigSubtab('users')}
-            className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-              configSubtab === 'users'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-            }`}
+            className="pos-segment-btn"
           >
             <i className="fa-solid fa-users text-xs" aria-hidden="true"></i>
-            <span>Personal & Roles ({userList.length})</span>
+            <span>Personal ({userList.length})</span>
           </button>
         </div>
       </div>
 
-      {/* Tables Subtab */}
+      {/* Tables Management */}
       {configSubtab === 'tables' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* Add Table Form */}
-          <div className="md:col-span-5 bg-[#121215] p-3.5 rounded border border-[#27272a]">
-            <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-zinc-100 mb-3 flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-plus text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Nueva Mesa</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5 pos-panel p-5">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)] pb-3 mb-4 border-b border-[var(--border-subtle)]">
+              Agregar mesa al plano
             </h3>
 
-            <form onSubmit={handleAddTable} className="space-y-2.5">
+            <form onSubmit={handleAddTable} className="space-y-3.5">
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Número de Mesa:</label>
+                <label htmlFor="cfg-table-num" className="pos-label">Número de mesa:</label>
                 <input
+                  id="cfg-table-num"
                   type="number"
-                  placeholder="Ej: 11"
+                  placeholder="Ej. 12"
                   value={tableNumber}
                   onChange={(e) => setTableNumber(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-500 tabular-nums"
+                  className="pos-input font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Sector:</label>
+                <label htmlFor="cfg-table-sector" className="pos-label">Sector (define la inicial del código):</label>
                 <select
+                  id="cfg-table-sector"
                   value={tableSector}
                   onChange={(e) => setTableSector(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                  className="pos-input"
                 >
-                  <option value="Salón Principal">Salón Principal</option>
-                  <option value="Terraza">Terraza</option>
-                  <option value="Vereda">Vereda</option>
-                  <option value="Barra">Barra</option>
-                  <option value="Planta Alta">Planta Alta</option>
+                  <option value="Salón Principal">Salón Principal (S)</option>
+                  <option value="Galería">Galería (G)</option>
+                  <option value="Terraza">Terraza (T)</option>
+                  <option value="Vereda">Vereda (V)</option>
+                  <option value="Barra">Barra (B)</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Capacidad Máxima (comensales):</label>
+                <label htmlFor="cfg-table-cap" className="pos-label">Capacidad de cubiertos:</label>
                 <input
+                  id="cfg-table-cap"
                   type="number"
                   min="1"
                   max="20"
                   value={tableCapacity}
                   onChange={(e) => setTableCapacity(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-xs font-mono text-zinc-100 tabular-nums focus:outline-none focus:border-zinc-500"
+                  className="pos-input font-mono"
                 />
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs transition-all mt-1"
+                className="pos-btn-primary w-full mt-2"
               >
-                Crear Mesa
+                <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+                <span>Sumar mesa</span>
               </button>
             </form>
           </div>
 
-          {/* Tables List */}
-          <div className="md:col-span-7 bg-[#121215] rounded border border-[#27272a] overflow-hidden flex flex-col">
-            <div className="p-2.5 bg-[#09090b] border-b border-[#27272a] font-mono font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
-              Mesas Disponibles en el Plano
+          <div className="lg:col-span-7 pos-panel overflow-hidden flex flex-col">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)]">
+              Mesas activas en el plano
             </div>
 
-            <div className="divide-y divide-[#27272a] max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-[var(--border-subtle)] max-h-[520px] overflow-y-auto">
               {tables.map(table => (
-                <div key={table.id} className="p-2.5 hover:bg-[#18181c] flex items-center justify-between text-xs transition-colors">
+                <div key={table.id} className="px-4 py-3 hover:bg-[var(--bg-hover)] flex items-center justify-between gap-3">
                   <div className="flex items-center gap-3">
-                    <span className="w-7 h-7 rounded-xs bg-[#09090b] border border-[#27272a] text-zinc-200 font-mono font-bold flex items-center justify-center tabular-nums">
-                      #{table.number}
+                    <span className="w-10 h-10 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono font-bold text-sm flex items-center justify-center">
+                      {getTableCode(table)}
                     </span>
                     <div>
-                      <div className="font-semibold text-zinc-200">{table.sector}</div>
-                      <div className="text-[10px] text-zinc-500 font-mono tabular-nums">Capacidad: {table.capacity} comensales</div>
+                      <div className="font-semibold text-sm text-[var(--text-primary)]">
+                        {table.sector} · Mesa {table.number}
+                      </div>
+                      <div className="text-xs text-[var(--text-muted)] font-mono">
+                        Hasta {table.capacity} cubiertos
+                      </div>
                     </div>
                   </div>
 
-                  <div className="flex items-center gap-3 font-mono">
-                    <span className={`px-2 py-0.5 rounded-xs text-[10px] font-bold uppercase border ${
-                      table.status === 'libre' ? 'bg-[#09090b] text-emerald-400 border-emerald-500/30' : 'bg-[#09090b] text-amber-400 border-amber-500/30'
-                    }`}>
-                      {table.status}
+                  <div className="flex items-center gap-2">
+                    <span className={`pos-badge ${table.status === 'libre' ? 'pos-badge-neutral' : 'pos-badge-open'} capitalize`}>
+                      {table.status === 'libre' ? 'Cerrada' : table.status.replace('_', ' ')}
                     </span>
                     <button
+                      type="button"
                       onClick={() => handleDeleteTable(table.id, table.number)}
-                      className="p-1 text-zinc-500 hover:text-rose-400 transition-colors"
+                      className="pos-btn-ghost text-[var(--text-muted)] hover:text-[var(--status-danger-fg)]"
                       aria-label={`Eliminar mesa ${table.number}`}
                     >
-                      <i className="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                      <i className="fa-solid fa-trash-can text-sm" aria-hidden="true"></i>
                     </button>
                   </div>
                 </div>
@@ -243,112 +242,108 @@ export default function Configuration() {
         </div>
       )}
 
-      {/* Users Subtab */}
+      {/* Staff & Roles Management */}
       {configSubtab === 'users' && (
-        <div className="grid grid-cols-1 md:grid-cols-12 gap-3">
-          {/* New User Form */}
-          <div className="md:col-span-5 bg-[#121215] p-3.5 rounded border border-[#27272a] space-y-3">
-            <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-zinc-100 mb-2 flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-key text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Nuevo Usuario / Personal</span>
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
+          <div className="lg:col-span-5 pos-panel p-5 space-y-4">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)] pb-3 border-b border-[var(--border-subtle)]">
+              Registrar operador
             </h3>
 
-            <form onSubmit={handleAddUser} className="space-y-2.5">
+            <form onSubmit={handleAddUser} className="space-y-3.5">
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Nombre Completo:</label>
+                <label htmlFor="cfg-user-name" className="pos-label">Nombre y apellido:</label>
                 <input
+                  id="cfg-user-name"
                   type="text"
-                  placeholder="Ej: Nicolás Gómez"
+                  placeholder="Ej. Nicolás Gómez"
                   value={userName}
                   onChange={(e) => setUserName(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-xs text-zinc-100 focus:outline-none focus:border-zinc-500"
+                  className="pos-input"
                   required
                 />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Rol de Acceso:</label>
+                <label htmlFor="cfg-user-role" className="pos-label">Rol asignado:</label>
                 <select
+                  id="cfg-user-role"
                   value={userRole}
                   onChange={(e) => setUserRole(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-mono"
+                  className="pos-input"
                 >
-                  <option value="mozo">Mozo (Salón y Pre-cuenta)</option>
-                  <option value="cajero">Cajero (Caja, Arqueos, Cobros, Stock y Facturas)</option>
-                  <option value="admin">Encargado / Admin (Acceso Total)</option>
+                  <option value="mozo">Mozo (Exclusivo Salón y Mesas)</option>
+                  <option value="cajero">Cajero (Cobros, Arqueos, Delivery y Facturas)</option>
+                  <option value="admin">Encargado / Admin (Acceso completo)</option>
                 </select>
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">PIN Numérico (4 Dígitos):</label>
+                <label htmlFor="cfg-user-pin" className="pos-label">Clave PIN (4 dígitos):</label>
                 <input
+                  id="cfg-user-pin"
                   type="text"
+                  inputMode="numeric"
                   maxLength={4}
-                  placeholder="Ej: 5566"
+                  placeholder="Ej. 5566"
                   value={userPin}
                   onChange={(e) => setUserPin(e.target.value.replace(/\D/g, ''))}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-1.5 text-sm font-mono font-bold text-zinc-100 text-center tracking-widest focus:outline-none focus:border-zinc-500 tabular-nums"
+                  className="pos-input font-mono font-bold text-center tracking-widest text-base"
                   required
                 />
               </div>
 
-              <div className="p-2.5 bg-[#09090b] border border-[#27272a] rounded-sm text-[11px] text-zinc-400 space-y-1 font-mono">
-                <span className="font-bold text-zinc-200 block uppercase tracking-wider text-[10px]">Permisos por Rol:</span>
-                <p>· <strong>Mozo:</strong> Carga de pedidos de salón y pre-cuenta.</p>
-                <p>· <strong>Cajero:</strong> Cobro, arqueo de caja, stock y facturas de compras.</p>
-                <p>· <strong>Admin:</strong> Métricas, configuración, recetario y control global.</p>
+              <div className="pos-subpanel p-3 text-xs text-[var(--text-secondary)] space-y-1">
+                <strong className="text-[var(--text-primary)] block">Alcance de cada rol:</strong>
+                <p>· <strong>Mozo:</strong> Carga de comandas en salón y solicitud de cierre.</p>
+                <p>· <strong>Cajero:</strong> Cobros, pre-cuenta, arqueos, delivery y compra de insumos.</p>
+                <p>· <strong>Admin:</strong> Escandallos, stock, métricas y configuración general.</p>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="w-full py-2 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs transition-all mt-1"
+                className="pos-btn-primary w-full"
               >
-                Guardar Usuario
+                <i className="fa-solid fa-user-plus text-xs" aria-hidden="true"></i>
+                <span>Habilitar operador</span>
               </button>
             </form>
           </div>
 
-          {/* Users List */}
-          <div className="md:col-span-7 bg-[#121215] rounded border border-[#27272a] overflow-hidden flex flex-col">
-            <div className="p-2.5 bg-[#09090b] border-b border-[#27272a] font-mono font-bold text-[10px] text-zinc-400 uppercase tracking-wider">
-              Personal Registrado
+          <div className="lg:col-span-7 pos-panel overflow-hidden flex flex-col">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)]">
+              Plantel habilitado
             </div>
 
-            <div className="divide-y divide-[#27272a] max-h-[500px] overflow-y-auto">
+            <div className="divide-y divide-[var(--border-subtle)] max-h-[520px] overflow-y-auto">
               {userList.map(u => {
                 const isFaIcon = typeof u.avatar === 'string' && u.avatar.includes('fa-');
                 return (
-                  <div key={u.id} className="p-3 hover:bg-[#18181c] flex items-center justify-between text-xs transition-colors">
+                  <div key={u.id} className="px-4 py-3.5 hover:bg-[var(--bg-hover)] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-8 h-8 rounded-xs bg-[#09090b] border border-[#27272a] flex items-center justify-center text-zinc-300">
-                        {isFaIcon ? (
-                          <i className={`${u.avatar} text-xs`} aria-hidden="true"></i>
-                        ) : (
-                          <i className="fa-solid fa-user text-xs" aria-hidden="true"></i>
-                        )}
+                      <div className="w-10 h-10 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-brand)]">
+                        <i className={isFaIcon ? u.avatar : 'fa-solid fa-user'} aria-hidden="true"></i>
                       </div>
                       <div>
-                        <div className="font-semibold text-zinc-200">{u.name}</div>
-                        <div className="text-[10px] text-zinc-500 font-mono uppercase">
-                          Rol: {u.role} · PIN: <span className="text-zinc-300 font-bold tabular-nums">{u.pin}</span>
+                        <div className="font-bold text-sm text-[var(--text-primary)]">{u.name}</div>
+                        <div className="text-xs text-[var(--text-secondary)] font-mono capitalize">
+                          {u.role} · PIN <strong className="text-[var(--text-primary)]">{u.pin}</strong>
                         </div>
                       </div>
                     </div>
 
                     <div className="flex items-center gap-2">
-                      {u.id === currentUser.id && (
-                        <span className="text-[10px] font-mono bg-[#18181c] text-emerald-400 px-2 py-0.5 rounded-xs border border-emerald-500/30">
-                          Sesión Actual
-                        </span>
-                      )}
-                      {u.id !== currentUser.id && (
+                      {u.id === currentUser.id ? (
+                        <span className="pos-badge pos-badge-open">En uso</span>
+                      ) : (
                         <button
+                          type="button"
                           onClick={() => handleDeleteUser(u.id, u.name)}
-                          className="p-1 text-zinc-500 hover:text-rose-400 transition-colors"
-                          aria-label={`Eliminar usuario ${u.name}`}
+                          className="pos-btn-ghost text-[var(--text-muted)] hover:text-[var(--status-danger-fg)]"
+                          aria-label={`Dar de baja a ${u.name}`}
                         >
-                          <i className="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                          <i className="fa-solid fa-trash-can text-sm" aria-hidden="true"></i>
                         </button>
                       )}
                     </div>
@@ -359,6 +354,6 @@ export default function Configuration() {
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

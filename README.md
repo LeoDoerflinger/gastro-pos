@@ -2,7 +2,7 @@
 
 Sistema web dinámico para restaurantes, bares y locales gastronómicos con gestión multicanal (**Salón / Mesas**, **Mostrador**, **Take Away** y **Delivery**), control de acceso por roles (Mozo, Cajero, Encargado/Admin), arqueos de caja, ingreso de facturas/remitos de proveedores y recetario con escandallo y descuento automático de stock por porción.
 
-Diseñado bajo estándares de ingeniería de interfaces de alta densidad: paleta carbon grafito, geometría micro-radius (2px-4px), controles segmentados con borde unificado, tipografía tabular monoespaciada para valores numéricos e iconografía vectorial Font Awesome 6.
+Diseñado bajo la identidad **Arquitectura Gastronómica Táctil** documentada en [`DESIGN.md`](./DESIGN.md): sistema dual de temas (**Grafito Táctil** y **Papel Técnico**), botones estilo tecla física con área táctil mínima de `44x44px`, tipografía editorial y técnica (`Bricolage Grotesque`, `Plus Jakarta Sans`, `IBM Plex Mono` tabular), contraste verificado WCAG AA e iconografía vectorial Font Awesome 6.
 
 ---
 
@@ -79,10 +79,10 @@ El gestor de entregas cuenta con:
 
 ---
 
-## Estándares de Diseño e Interfaz
+## Estándares de Diseño e Interfaz (`DESIGN.md`)
 
-- **Paleta Carbon Neutro:** `#09090b` (fondo), `#121215` (paneles), `#18181c` (interactivos), `#27272a` (bordes estructurales). Sin colores neón ni saturaciones excesivas.
-- **Micro-Radius:** Bordes finos `rounded` (4px) y `rounded-sm` (2px) que maximizan el área útil de trabajo.
-- **Iconografía:** Font Awesome 6 Solid (`fa-solid`) para una lectura visual unívoca y profesional.
-- **Tipografía:** Valores numéricos tabulares (`font-mono tabular-nums`) para alineación perfecta de importes, pesos y horas.
-- **Responsive:** Drawer lateral colapsable, vista de comanda táctil y soporte optimizado para terminales móviles y de escritorio.
+- **Sistema Dual de Temas:** **Grafito Táctil** (`#17191c` / `#1f2226`) predeterminado para salones con luz tenue y **Papel Técnico** (`#eeebe4` / `#faf9f5`) para mostradores diurnos, con selector persistente en cabecera y acento terracota cobre (`#eb855e` / `#9e3c16`).
+- **Superficies y Teclas Físicas:** Micro-radio de `4px` a `6px`, bordes estructurales con contraste `>= 3:1` y objetivos táctiles mínimos de `44x44px` en todos los controles.
+- **Iconografía:** Font Awesome 6 Solid (`fa-solid`) con `aria-hidden="true"`, cero emojis en código y datos.
+- **Tipografía:** `Bricolage Grotesque` para jerarquía visual, `Plus Jakarta Sans` para lectura operativa e `IBM Plex Mono` (`tabular-nums`) para importes, códigos de mesa (`S1`, `T5`) y tiempos.
+- **Accesibilidad y Responsive:** Navegación completa por teclado (`Tab`, `Enter`, `Escape`), estados vacíos/carga/error explícitos, cajón lateral accesible y vista adaptable entre escritorio y celulares.

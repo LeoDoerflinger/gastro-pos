@@ -20,174 +20,76 @@ export default function AdminDashboard() {
 
   const totalChannelAmount = Object.values(byChannel || {}).reduce((a, b) => a + b, 0) || 1;
   const totalPaymentAmount = Object.values(byPaymentMethod || {}).reduce((a, b) => a + b, 0) || 1;
-
-  // Closed orders list for history table
   const closedOrders = orders.filter(o => o.status === 'cobrado');
 
   return (
-    <div className="space-y-3">
-      {/* Top 4 KPI Cards */}
-      <div className="grid grid-cols-2 lg:grid-cols-4 gap-3">
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Facturación Total</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl sm:text-2xl font-mono font-bold text-emerald-400 tabular-nums">
-              ${totalVentas.toLocaleString('es-AR')}
-            </span>
-            <i className="fa-solid fa-dollar-sign text-emerald-400 text-base" aria-hidden="true"></i>
+    <section className="space-y-5" aria-label="Ventas y analítica del turno">
+      {/* Open Page Header */}
+      <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-end justify-between gap-2">
+        <div>
+          <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+             Pulso comercial del turno
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Resumen en vivo de facturación cobrada, ocupación del salón y rotación de platos.
+          </p>
+        </div>
+        <span className="text-xs font-mono text-[var(--text-muted)]">
+          {activeOrdersCount} comandas abiertas en curso
+        </span>
+      </div>
+
+      {/* Unified Architectural KPI Ledger Strip (No redundant 4-card wall) */}
+      <div className="pos-panel grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 sm:divide-x divide-[var(--border-subtle)] overflow-hidden">
+        <div className="p-4 sm:p-5 space-y-1">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Facturación cobrada</span>
+          <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--status-open-fg)]">
+            ${totalVentas.toLocaleString('es-AR')}
           </div>
-          <p className="text-[10px] text-zinc-500 mt-1 font-mono">Acumulado del turno actual</p>
+          <p className="text-xs text-[var(--text-muted)]">Ingresos cerrados del turno</p>
         </div>
 
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Tickets Cobrados</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl sm:text-2xl font-mono font-bold text-zinc-100 tabular-nums">
-              {totalTickets}
-            </span>
-            <i className="fa-solid fa-receipt text-zinc-400 text-base" aria-hidden="true"></i>
+        <div className="p-4 sm:p-5 space-y-1">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Tickets emitidos</span>
+          <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--text-primary)]">
+            {totalTickets}
           </div>
-          <p className="text-[10px] text-zinc-500 mt-1 font-mono tabular-nums">{activeOrdersCount} pedidos activos</p>
+          <p className="text-xs text-[var(--text-muted)]">{activeOrdersCount} pendientes de cierre</p>
         </div>
 
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Ticket Promedio</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl sm:text-2xl font-mono font-bold text-zinc-100 tabular-nums">
-              ${ticketPromedio.toLocaleString('es-AR')}
-            </span>
-            <i className="fa-solid fa-chart-line text-zinc-400 text-base" aria-hidden="true"></i>
+        <div className="p-4 sm:p-5 space-y-1">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Ticket promedio</span>
+          <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--text-primary)]">
+            ${ticketPromedio.toLocaleString('es-AR')}
           </div>
-          <p className="text-[10px] text-zinc-500 mt-1 font-mono">Por mesa / comanda</p>
+          <p className="text-xs text-[var(--text-muted)]">Por cuenta cobrada</p>
         </div>
 
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Ocupación Salón</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl sm:text-2xl font-mono font-bold text-zinc-100 tabular-nums">
-              {openTablesCount} mesas
-            </span>
-            <i className="fa-solid fa-chair text-zinc-400 text-base" aria-hidden="true"></i>
+        <div className="p-4 sm:p-5 space-y-1">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Mesas activas</span>
+          <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--accent-brand)]">
+            {openTablesCount}
           </div>
-          <p className="text-[10px] text-zinc-500 mt-1 font-mono">Con comandas abiertas</p>
+          <p className="text-xs text-[var(--text-muted)]">En consumo ahora</p>
         </div>
       </div>
 
-      {/* Middle Grid: Channels, Payment Methods, and Ranking */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
-        {/* Sales by Channel */}
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a] space-y-3">
-          <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-            <i className="fa-solid fa-network-wired text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Ventas por Canal</span>
-          </h3>
-
-          <div className="space-y-2.5 text-xs">
-            {[
-              { id: 'mesa', label: 'Salón / Mesas', icon: 'fa-utensils', color: 'bg-zinc-300' },
-              { id: 'delivery', label: 'Delivery', icon: 'fa-motorcycle', color: 'bg-zinc-400' },
-              { id: 'take_away', label: 'Take Away', icon: 'fa-bag-shopping', color: 'bg-zinc-500' },
-              { id: 'mostrador', label: 'Mostrador', icon: 'fa-store', color: 'bg-zinc-600' }
-            ].map(ch => {
-              const amount = byChannel?.[ch.id] || 0;
-              const percent = Math.round((amount / totalChannelAmount) * 100);
-              return (
-                <div key={ch.id} className="space-y-1">
-                  <div className="flex justify-between text-zinc-300">
-                    <span className="flex items-center gap-1.5">
-                      <i className={`fa-solid ${ch.icon} text-zinc-400 w-3.5 text-center`} aria-hidden="true"></i>
-                      <span>{ch.label}</span>
-                    </span>
-                    <span className="font-mono font-semibold tabular-nums text-zinc-200">
-                      ${amount.toLocaleString('es-AR')} ({percent}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-1 bg-[#18181c] rounded-xs overflow-hidden">
-                    <div className={`h-full ${ch.color}`} style={{ width: `${percent}%` }}></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Sales by Payment Method */}
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a] space-y-3">
-          <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-            <i className="fa-solid fa-credit-card text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Medios de Pago</span>
-          </h3>
-
-          <div className="space-y-2.5 text-xs">
-            {[
-              { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave', color: 'bg-emerald-500' },
-              { id: 'mercadopago', label: 'Mercado Pago / QR', icon: 'fa-qrcode', color: 'bg-sky-500' },
-              { id: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card', color: 'bg-blue-500' },
-              { id: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card', color: 'bg-indigo-500' },
-              { id: 'transferencia', label: 'Transferencia', icon: 'fa-building-columns', color: 'bg-amber-500' }
-            ].map(pm => {
-              const amount = byPaymentMethod?.[pm.id] || 0;
-              const percent = Math.round((amount / totalPaymentAmount) * 100);
-              return (
-                <div key={pm.id} className="space-y-1">
-                  <div className="flex justify-between text-zinc-300">
-                    <span className="flex items-center gap-1.5">
-                      <i className={`fa-solid ${pm.icon} text-zinc-400 w-3.5 text-center`} aria-hidden="true"></i>
-                      <span>{pm.label}</span>
-                    </span>
-                    <span className="font-mono font-semibold tabular-nums text-zinc-200">
-                      ${amount.toLocaleString('es-AR')} ({percent}%)
-                    </span>
-                  </div>
-                  <div className="w-full h-1 bg-[#18181c] rounded-xs overflow-hidden">
-                    <div className={`h-full ${pm.color}`} style={{ width: `${percent}%` }}></div>
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-        {/* Top Selling Dishes Ranking */}
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a] space-y-3">
-          <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-            <i className="fa-solid fa-trophy text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Ranking de Platos Vendidos</span>
-          </h3>
-
-          <div className="space-y-1.5 text-xs font-mono">
-            {topProducts?.length === 0 ? (
-              <p className="text-zinc-500 italic py-6 text-center">Sin platos vendidos todavía</p>
-            ) : (
-              topProducts.map((p, idx) => (
-                <div key={idx} className="p-2 rounded-sm bg-[#09090b] border border-[#27272a] flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="w-4 h-4 rounded-xs bg-[#18181c] border border-[#27272a] text-zinc-400 font-mono font-bold text-[10px] flex items-center justify-center tabular-nums">
-                      {idx + 1}
-                    </span>
-                    <span className="font-semibold text-zinc-200 truncate max-w-[140px] font-sans">{p.name}</span>
-                  </div>
-                  <span className="font-mono font-bold text-zinc-300 tabular-nums">{p.qty} un</span>
-                </div>
-              ))
-            )}
-          </div>
-        </div>
-      </div>
-
-      {/* Critical Stock Alerts Banner if any */}
+      {/* Critical Stock Alert Banner */}
       {lowStockIngredients?.length > 0 && (
-        <div className="bg-[#121215] border-l-2 border-l-rose-500 border border-[#27272a] p-3 rounded space-y-2">
-          <div className="flex items-center gap-2 text-rose-400 font-mono font-bold text-xs uppercase tracking-wider">
-            <i className="fa-solid fa-triangle-exclamation text-xs" aria-hidden="true"></i>
-            <span>Insumos por debajo del stock mínimo ({lowStockIngredients.length})</span>
+        <div className="pos-panel border-l-4 border-l-[var(--status-danger-bar)] p-4 space-y-3">
+          <div className="flex items-center gap-2 text-sm font-bold text-[var(--status-danger-fg)]">
+            <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
+            <span>Tenés {lowStockIngredients.length} insumos en nivel crítico de reposición</span>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {lowStockIngredients.map(ing => (
-              <div key={ing.id} className="p-2 rounded-sm bg-[#09090b] border border-[#27272a] flex justify-between items-center font-mono">
-                <span className="text-zinc-300 font-sans text-xs">{ing.name}</span>
-                <span className="font-mono font-bold text-rose-400 tabular-nums text-xs">
-                  {ing.stock} {ing.unit} (Mín: {ing.minStock})
+              <div
+                key={ing.id}
+                className="pos-subpanel px-3 py-2 flex justify-between items-center text-xs"
+              >
+                <span className="font-semibold text-[var(--text-primary)]">{ing.name}</span>
+                <span className="font-mono font-bold text-[var(--status-danger-fg)]">
+                  {ing.stock} {ing.unit} (mín. {ing.minStock})
                 </span>
               </div>
             ))}
@@ -195,52 +97,170 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Sales History Table */}
-      <div className="bg-[#121215] rounded border border-[#27272a] overflow-hidden">
-        <div className="p-3 border-b border-[#27272a] flex items-center justify-between">
-          <h3 className="font-mono font-bold text-xs uppercase tracking-wider text-zinc-300 flex items-center gap-2">
-            <i className="fa-solid fa-clock-rotate-left text-zinc-400 text-xs" aria-hidden="true"></i>
-            <span>Últimas Ventas Cerradas</span>
+      {/* Breakdown Panels Answering Real Operational Questions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {/* Question 1: Channels */}
+        <div className="pos-panel p-4 sm:p-5 space-y-4">
+          <div className="border-b border-[var(--border-subtle)] pb-2.5">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+              ¿Qué canal generó más ingresos?
+            </h3>
+            <p className="text-xs text-[var(--text-muted)]">Participación sobre ventas cerradas</p>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            {[
+              { id: 'mesa', label: 'Salón y mesas', icon: 'fa-utensils', bar: 'bg-[var(--accent-brand)]' },
+              { id: 'delivery', label: 'Delivery', icon: 'fa-motorcycle', bar: 'bg-[var(--status-open-bar)]' },
+              { id: 'take_away', label: 'Take Away', icon: 'fa-bag-shopping', bar: 'bg-[var(--status-bill-bar)]' },
+              { id: 'mostrador', label: 'Mostrador', icon: 'fa-store', bar: 'bg-[var(--border-strong)]' }
+            ].map(ch => {
+              const amount = byChannel?.[ch.id] || 0;
+              const percent = Math.round((amount / totalChannelAmount) * 100);
+              return (
+                <div key={ch.id} className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[var(--text-primary)]">
+                    <span className="flex items-center gap-2 font-medium">
+                      <i className={`fa-solid ${ch.icon} text-[var(--text-muted)] w-4 text-center`} aria-hidden="true"></i>
+                      <span>{ch.label}</span>
+                    </span>
+                    <span className="font-mono font-semibold">
+                      ${amount.toLocaleString('es-AR')} <span className="text-[var(--text-muted)]">({percent}%)</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-[var(--bg-subtle)] rounded overflow-hidden">
+                    <div className={`h-full ${ch.bar}`} style={{ width: `${percent}%` }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Question 2: Payment Methods */}
+        <div className="pos-panel p-4 sm:p-5 space-y-4">
+          <div className="border-b border-[var(--border-subtle)] pb-2.5">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+              ¿Cómo pagaron los clientes?
+            </h3>
+            <p className="text-xs text-[var(--text-muted)]">Distribución por medio de cobro</p>
+          </div>
+
+          <div className="space-y-3 text-xs">
+            {[
+              { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave', bar: 'bg-[var(--status-open-bar)]' },
+              { id: 'mercadopago', label: 'QR / Mercado Pago', icon: 'fa-qrcode', bar: 'bg-[var(--accent-brand)]' },
+              { id: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card', bar: 'bg-[var(--status-bill-bar)]' },
+              { id: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card', bar: 'bg-[var(--text-secondary)]' },
+              { id: 'transferencia', label: 'Transferencia', icon: 'fa-building-columns', bar: 'bg-[var(--border-strong)]' }
+            ].map(pm => {
+              const amount = byPaymentMethod?.[pm.id] || 0;
+              const percent = Math.round((amount / totalPaymentAmount) * 100);
+              return (
+                <div key={pm.id} className="space-y-1.5">
+                  <div className="flex justify-between items-center text-[var(--text-primary)]">
+                    <span className="flex items-center gap-2 font-medium">
+                      <i className={`fa-solid ${pm.icon} text-[var(--text-muted)] w-4 text-center`} aria-hidden="true"></i>
+                      <span>{pm.label}</span>
+                    </span>
+                    <span className="font-mono font-semibold">
+                      ${amount.toLocaleString('es-AR')} <span className="text-[var(--text-muted)]">({percent}%)</span>
+                    </span>
+                  </div>
+                  <div className="w-full h-2 bg-[var(--bg-subtle)] rounded overflow-hidden">
+                    <div className={`h-full ${pm.bar}`} style={{ width: `${percent}%` }}></div>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Question 3: Top Dishes */}
+        <div className="pos-panel p-4 sm:p-5 space-y-4">
+          <div className="border-b border-[var(--border-subtle)] pb-2.5">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+              ¿Qué platos salieron más hoy?
+            </h3>
+            <p className="text-xs text-[var(--text-muted)]">Unidades despachadas en el turno</p>
+          </div>
+
+          <div className="divide-y divide-[var(--border-subtle)] text-sm">
+            {topProducts?.length === 0 ? (
+              <p className="text-xs text-[var(--text-muted)] py-8 text-center">
+                Todavía no hay platos cobrados en este turno.
+              </p>
+            ) : (
+              topProducts.map((p, idx) => (
+                <div key={idx} className="py-2.5 flex items-center justify-between gap-2">
+                  <div className="flex items-center gap-2.5 min-w-0">
+                    <span className="w-6 h-6 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--accent-brand)] font-mono font-bold text-xs flex items-center justify-center shrink-0">
+                      {idx + 1}
+                    </span>
+                    <span className="font-medium text-[var(--text-primary)] truncate">{p.name}</span>
+                  </div>
+                  <span className="font-mono font-bold text-xs text-[var(--text-secondary)] shrink-0">
+                    {p.qty} un.
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Closed Sales Ledger Table */}
+      <div className="pos-panel overflow-hidden">
+        <div className="px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between">
+          <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+            Últimas cuentas cerradas
           </h3>
-          <span className="text-[11px] font-mono text-zinc-500 tabular-nums">Total: {closedOrders.length}</span>
+          <span className="text-xs font-mono text-[var(--text-secondary)]">Total: {closedOrders.length}</span>
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="bg-[#09090b] border-b border-[#27272a] text-zinc-400 uppercase text-[10px] tracking-wider font-mono font-bold">
-                <th className="py-2 px-3">Comanda</th>
-                <th className="py-2 px-3">Canal</th>
-                <th className="py-2 px-3">Mozo / Personal</th>
-                <th className="py-2 px-3">Medio de Pago</th>
-                <th className="py-2 px-3">Fecha y Hora</th>
-                <th className="py-2 px-3 text-right">Total</th>
+              <tr className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs font-semibold">
+                <th className="py-3 px-4">Comanda</th>
+                <th className="py-3 px-4">Canal</th>
+                <th className="py-3 px-4">Atendió</th>
+                <th className="py-3 px-4">Medio de pago</th>
+                <th className="py-3 px-4">Hora cierre</th>
+                <th className="py-3 px-4 text-right">Importe</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#27272a]">
+            <tbody className="divide-y divide-[var(--border-subtle)]">
               {closedOrders.length === 0 ? (
                 <tr>
-                  <td colSpan="6" className="py-8 text-center text-zinc-500 font-mono">No hay ventas cerradas aún en el turno</td>
+                  <td colSpan="6" className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                    Todavía no se cerraron ventas en este turno.
+                  </td>
                 </tr>
               ) : (
                 closedOrders.map(ord => (
-                  <tr key={ord.id} className="hover:bg-[#18181c] transition-colors">
-                    <td className="py-2 px-3 font-bold text-zinc-200 font-mono tabular-nums">
+                  <tr key={ord.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                    <td className="py-3 px-4 font-bold text-[var(--text-primary)] font-mono">
                       #{ord.orderNumber} {ord.tableNumber ? `(Mesa ${ord.tableNumber})` : ''}
                     </td>
-                    <td className="py-2 px-3 uppercase text-[10px] text-zinc-400 font-mono font-bold">
-                      {ord.channel}
+                    <td className="py-3 px-4 capitalize text-xs font-semibold text-[var(--text-secondary)]">
+                      {ord.channel?.replace('_', ' ')}
                     </td>
-                    <td className="py-2 px-3 text-zinc-300">
+                    <td className="py-3 px-4 text-[var(--text-primary)]">
                       {ord.waiterName || 'Personal'}
                     </td>
-                    <td className="py-2 px-3 uppercase text-[10px] text-zinc-300 font-mono">
+                    <td className="py-3 px-4 capitalize text-xs font-mono text-[var(--text-secondary)]">
                       {ord.paymentMethod || 'Efectivo'}
                     </td>
-                    <td className="py-2 px-3 text-zinc-500 text-[11px] font-mono tabular-nums">
-                      {new Date(ord.closedAt || ord.createdAt).toLocaleString([], { hour: '2-digit', minute: '2-digit', day: '2-digit', month: '2-digit' })}
+                    <td className="py-3 px-4 text-[var(--text-muted)] text-xs font-mono">
+                      {new Date(ord.closedAt || ord.createdAt).toLocaleString([], {
+                        hour: '2-digit',
+                        minute: '2-digit',
+                        day: '2-digit',
+                        month: '2-digit'
+                      })}
                     </td>
-                    <td className="py-2 px-3 text-right font-mono font-bold text-emerald-400 tabular-nums">
+                    <td className="py-3 px-4 text-right font-mono font-bold text-[var(--status-open-fg)]">
                       ${ord.total?.toLocaleString('es-AR')}
                     </td>
                   </tr>
@@ -250,6 +270,6 @@ export default function AdminDashboard() {
           </table>
         </div>
       </div>
-    </div>
+    </section>
   );
 }

@@ -6,7 +6,6 @@ import PinModal from './components/common/PinModal';
 import Toast from './components/common/Toast';
 import DeviceFrame from './components/common/DeviceFrame';
 
-// Views
 import MozoSalonView from './components/mozo/MozoSalonView';
 import CajeroDashboard from './components/cajero/CajeroDashboard';
 import ArqueoCaja from './components/cajero/ArqueoCaja';
@@ -18,23 +17,52 @@ import AdminDashboard from './components/admin/AdminDashboard';
 import Configuration from './components/admin/Configuration';
 
 export default function App() {
-  const { activeTab, currentUser, loading } = useApp();
+  const { activeTab, currentUser, loading, apiError, tables, refreshData, theme, activeShift } = useApp();
 
   const isMozo = currentUser.role === 'mozo';
-  const isCajero = currentUser.role === 'cajero';
   const isAdmin = currentUser.role === 'admin';
 
   const renderContent = () => {
     if (loading) {
       return (
-        <div className="py-24 text-center space-y-3">
-          <div className="w-8 h-8 border-2 border-zinc-300 border-t-transparent rounded-full animate-spin mx-auto"></div>
-          <p className="text-xs font-mono text-zinc-500">Cargando sistema...</p>
+        <div className="pos-panel p-12 my-8 max-w-md mx-auto text-center space-y-3" role="status" aria-live="polite">
+          <div className="w-9 h-9 border-2 border-[var(--accent-brand)] border-t-transparent rounded-full animate-spin mx-auto" aria-hidden="true"></div>
+          <h2 className="font-display font-bold text-base text-[var(--text-primary)]">
+            Sincronizando salón y caja
+          </h2>
+          <p className="text-sm text-[var(--text-secondary)]">
+            Cargando mesas, comandas activas y stock disponible...
+          </p>
         </div>
       );
     }
 
-    // Role Enforcement: Mozo ONLY has access to Salón/Mesas
+    if (apiError && tables.length === 0) {
+      return (
+        <div className="pos-panel p-8 my-8 max-w-lg mx-auto text-center space-y-4 border-l-4 border-l-[var(--status-danger-bar)]" role="alert">
+          <div className="w-11 h-11 rounded bg-[var(--status-danger-bg)] text-[var(--status-danger-fg)] border border-[var(--status-danger-border)] flex items-center justify-center mx-auto">
+            <i className="fa-solid fa-plug-circle-exclamation text-lg" aria-hidden="true"></i>
+          </div>
+          <div className="space-y-1">
+            <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+              Sin conexión con el servicio de comandas
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)]">
+              {apiError}
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={refreshData}
+            className="pos-btn-primary mx-auto"
+          >
+            <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i>
+            <span>Reintentar conexión</span>
+          </button>
+        </div>
+      );
+    }
+
     if (isMozo || activeTab === 'mesas') {
       return <MozoSalonView />;
     }
@@ -55,7 +83,6 @@ export default function App() {
       return <StockPurchases />;
     }
 
-    // Admin Only Views
     if (isAdmin) {
       if (activeTab === 'recetario') return <RecipeManager />;
       if (activeTab === 'stock_control') return <StockControl />;
@@ -68,15 +95,48 @@ export default function App() {
 
   return (
     <DeviceFrame>
-      <div className="min-h-screen bg-[#09090b] text-zinc-100 flex flex-col font-sans selection:bg-zinc-200 selection:text-zinc-950">
+      <div className="min-h-screen flex flex-col text-[var(--text-primary)]">
+        <a
+          href="#main-workspace"
+          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 pos-btn-primary"
+        >
+          Saltar al área de trabajo
+        </a>
+
         <Header />
         <SidebarDrawer />
 
-        <main className="flex-1 max-w-7xl w-full mx-auto p-2.5 sm:p-5">
+        <main id="main-workspace" className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+          {apiError && tables.length > 0 && (
+            <div className="mb-4 pos-panel px-4 py-3 border-l-4 border-l-[var(--status-bill-bar)] flex flex-wrap items-center justify-between gap-3" role="alert">
+              <div className="flex items-center gap-2.5 text-sm text-[var(--text-primary)]">
+                <i className="fa-solid fa-triangle-exclamation text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+                <span>La última sincronización falló. Mostrando el último estado guardado.</span>
+              </div>
+              <button type="button" onClick={refreshData} className="pos-btn-secondary">
+                <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i>
+                <span>Sincronizar ahora</span>
+              </button>
+            </div>
+          )}
           {renderContent()}
         </main>
 
-        {/* Global Modals & Notifications */}
+        <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 sm:px-6 py-2.5 text-xs text-[var(--text-secondary)]">
+          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+            <div className="flex items-center gap-2">
+              <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
+              <span>·</span>
+              <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+            </div>
+            <div className="flex items-center gap-3 font-mono">
+              <span>{activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}</span>
+              <span>·</span>
+              <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
+            </div>
+          </div>
+        </footer>
+
         <PinModal />
         <Toast />
       </div>

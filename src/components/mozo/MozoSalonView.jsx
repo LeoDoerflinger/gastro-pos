@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useApp } from '../../context/AppContext';
 import OrderTakingModal from './OrderTakingModal';
 
-// Helper to compute table identifier: Initial of sector + number (e.g. Salón 44 = S44, Terraza 10 = T10, Galería 3 = G3)
+// Identifier format: Sector initial + table number (Salón 44 -> S44, Terraza 10 -> T10, Galería 3 -> G3)
 export function getTableCode(table) {
   if (!table) return '';
   const sector = (table.sector || 'Salón').trim();
@@ -13,17 +13,14 @@ export function getTableCode(table) {
 export default function MozoSalonView() {
   const { tables, orders, refreshData } = useApp();
   const [selectedSector, setSelectedSector] = useState('Todos');
-  const [statusFilter, setStatusFilter] = useState('todas'); // 'todas', 'cerrada', 'abierta', 'pendiente_cobro'
+  const [statusFilter, setStatusFilter] = useState('todas');
   const [searchTable, setSearchTable] = useState('');
 
-  // Selected table to open comanda
   const [selectedTableForOrder, setSelectedTableForOrder] = useState(null);
   const [activeOrderForModal, setActiveOrderForModal] = useState(null);
 
-  // Extract unique sectors
   const sectors = ['Todos', ...Array.from(new Set(tables.map(t => t.sector)))];
 
-  // Map active order to each table
   const tableOrderMap = {};
   orders.forEach(ord => {
     if (ord.channel === 'mesa' && ord.tableId && (ord.status === 'abierto' || ord.status === 'cuenta_pedida')) {
@@ -31,15 +28,14 @@ export default function MozoSalonView() {
     }
   });
 
-  // Calculate elapsed time from last comanda or openedAt
   const getElapsedTimeString = (table, order) => {
-    if (table.status === 'libre' || !order) return '-';
+    if (table.status === 'libre' || !order) return 'Sin comanda';
     const timestamp = order.createdAt || table.openedAt;
-    if (!timestamp) return '-';
+    if (!timestamp) return 'Sin comanda';
     const diffMs = Date.now() - new Date(timestamp).getTime();
     const diffMins = Math.floor(diffMs / 60000);
-    if (diffMins < 1) return 'reciente';
-    if (diffMins < 60) return `${diffMins}m`;
+    if (diffMins < 1) return 'Hace instantes';
+    if (diffMins < 60) return `${diffMins} min`;
     const hours = Math.floor(diffMins / 60);
     const remMins = diffMins % 60;
     return `${hours}h ${remMins}m`;
@@ -47,22 +43,21 @@ export default function MozoSalonView() {
 
   const filteredTables = tables.filter(table => {
     const matchesSector = selectedSector === 'Todos' || table.sector === selectedSector;
-    
-    // Status mapping: 'libre' = 'cerrada', 'ocupada' = 'abierta', 'cuenta_pedida' = 'pendiente_cobro'
+
     let tableMappedStatus = 'cerrada';
     if (table.status === 'ocupada') tableMappedStatus = 'abierta';
     if (table.status === 'cuenta_pedida') tableMappedStatus = 'pendiente_cobro';
 
     const matchesStatus = statusFilter === 'todas' || tableMappedStatus === statusFilter;
     const tableCode = getTableCode(table).toLowerCase();
-    const matchesSearch = !searchTable || 
-      table.number.toString().includes(searchTable) || 
+    const matchesSearch =
+      !searchTable ||
+      table.number.toString().includes(searchTable) ||
       tableCode.includes(searchTable.toLowerCase());
 
     return matchesSector && matchesStatus && matchesSearch;
   });
 
-  // Counters
   const countCerradas = tables.filter(t => t.status === 'libre').length;
   const countAbiertas = tables.filter(t => t.status === 'ocupada').length;
   const countPendientes = tables.filter(t => t.status === 'cuenta_pedida').length;
@@ -72,158 +67,191 @@ export default function MozoSalonView() {
     setActiveOrderForModal(tableOrderMap[table.id] || null);
   };
 
+  const resetFilters = () => {
+    setSelectedSector('Todos');
+    setStatusFilter('todas');
+    setSearchTable('');
+  };
+
   return (
-    <div className="space-y-3">
-      {/* Control Toolbar: Segmented Controls with Crisp Shared Borders */}
-      <div className="bg-[#121215] p-2.5 rounded border border-[#27272a] flex flex-col md:flex-row md:items-center justify-between gap-2.5">
-        {/* Status Segmented Control */}
-        <div className="flex border border-[#27272a] rounded overflow-hidden divide-x divide-[#27272a] text-xs">
-          <button
-            onClick={() => setStatusFilter('todas')}
-            className={`px-3 py-1.5 font-semibold whitespace-nowrap transition-colors ${
-              statusFilter === 'todas'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#15151a] text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1a20]'
-            }`}
-          >
-            Todas ({tables.length})
-          </button>
+    <section className="space-y-5" aria-label="Plano de salón y mesas">
+      {/* Open Architectural Header & Filter Controls */}
+      <div className="pb-4 border-b border-[var(--border-subtle)] space-y-3">
+        <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+          {/* Status Filter Segmented Bar */}
+          <div className="overflow-x-auto no-scrollbar -mx-1 px-1">
+            <div className="pos-segment-group" role="group" aria-label="Filtrar mesas por estado">
+              <button
+                type="button"
+                aria-pressed={statusFilter === 'todas'}
+                onClick={() => setStatusFilter('todas')}
+                className="pos-segment-btn"
+              >
+                <span>Todas</span>
+                <span className="font-mono text-xs text-[var(--text-muted)]">{tables.length}</span>
+              </button>
 
-          <button
-            onClick={() => setStatusFilter('cerrada')}
-            className={`px-3 py-1.5 font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-              statusFilter === 'cerrada'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#15151a] text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1a20]'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-600"></span>
-            <span>Cerradas ({countCerradas})</span>
-          </button>
+              <button
+                type="button"
+                aria-pressed={statusFilter === 'abierta'}
+                onClick={() => setStatusFilter('abierta')}
+                className="pos-segment-btn"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--status-open-bar)]" aria-hidden="true"></span>
+                <span>Abiertas</span>
+                <span className="font-mono text-xs">{countAbiertas}</span>
+              </button>
 
-          <button
-            onClick={() => setStatusFilter('abierta')}
-            className={`px-3 py-1.5 font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-              statusFilter === 'abierta'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#15151a] text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1a20]'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-zinc-300"></span>
-            <span>Abiertas ({countAbiertas})</span>
-          </button>
+              <button
+                type="button"
+                aria-pressed={statusFilter === 'pendiente_cobro'}
+                onClick={() => setStatusFilter('pendiente_cobro')}
+                className="pos-segment-btn"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--status-bill-bar)]" aria-hidden="true"></span>
+                <span>Pendiente cobro</span>
+                <span className="font-mono text-xs">{countPendientes}</span>
+              </button>
 
-          <button
-            onClick={() => setStatusFilter('pendiente_cobro')}
-            className={`px-3 py-1.5 font-semibold whitespace-nowrap transition-colors flex items-center gap-1.5 ${
-              statusFilter === 'pendiente_cobro'
-                ? 'bg-zinc-800 text-zinc-100 font-bold'
-                : 'bg-[#15151a] text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1a20]'
-            }`}
-          >
-            <span className="w-1.5 h-1.5 rounded-full bg-white"></span>
-            <span>Pendiente Cobro ({countPendientes})</span>
-          </button>
+              <button
+                type="button"
+                aria-pressed={statusFilter === 'cerrada'}
+                onClick={() => setStatusFilter('cerrada')}
+                className="pos-segment-btn"
+              >
+                <span className="w-2.5 h-2.5 rounded-full border-2 border-[var(--border-strong)]" aria-hidden="true"></span>
+                <span>Cerradas</span>
+                <span className="font-mono text-xs text-[var(--text-muted)]">{countCerradas}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Search Input */}
+          <div className="flex items-center gap-2 w-full lg:w-72 shrink-0">
+            <label htmlFor="table-search-input" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">
+              Buscar:
+            </label>
+            <div className="relative flex-1">
+              <i
+                className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                aria-hidden="true"
+              ></i>
+              <input
+                id="table-search-input"
+                type="search"
+                placeholder="Mesa (ej. S4, T10)..."
+                value={searchTable}
+                onChange={(e) => setSearchTable(e.target.value)}
+                className="pos-input pl-9"
+              />
+            </div>
+          </div>
         </div>
 
-        {/* Sectors & Search Input */}
-        <div className="flex items-center gap-2">
-          {/* Sector Segmented Bar */}
-          <div className="flex border border-[#27272a] rounded overflow-hidden divide-x divide-[#27272a] text-xs">
-            {sectors.map(sec => (
+        {/* Sector Filter Strip */}
+        <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5" role="group" aria-label="Filtrar por sector">
+          <span className="text-xs font-semibold text-[var(--text-muted)] shrink-0 mr-1">
+            Sector:
+          </span>
+          {sectors.map(sec => {
+            const active = selectedSector === sec;
+            return (
               <button
                 key={sec}
+                type="button"
+                aria-pressed={active}
                 onClick={() => setSelectedSector(sec)}
-                className={`px-2.5 py-1 font-medium whitespace-nowrap transition-colors ${
-                  selectedSector === sec
-                    ? 'bg-zinc-800 text-zinc-100 font-bold'
-                    : 'bg-[#15151a] text-zinc-400 hover:text-zinc-200 hover:bg-[#1a1a20]'
+                className={`min-h-[44px] px-3.5 rounded text-xs font-semibold whitespace-nowrap border transition-colors ${
+                  active
+                    ? 'bg-[var(--accent-brand-bg)] text-[var(--accent-brand)] border-[var(--accent-brand-border)] font-bold'
+                    : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
                 }`}
               >
                 {sec}
               </button>
-            ))}
-          </div>
-
-          {/* Quick Search */}
-          <div className="relative w-32 sm:w-36 shrink-0">
-            <i className="fa-solid fa-magnifying-glass text-[11px] text-zinc-500 absolute left-2.5 top-2.5" aria-hidden="true"></i>
-            <input
-              type="text"
-              placeholder="Buscar mesa..."
-              value={searchTable}
-              onChange={(e) => setSearchTable(e.target.value)}
-              className="w-full bg-[#15151a] border border-[#27272a] rounded pl-7 pr-2 py-1 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-mono"
-            />
-          </div>
+            );
+          })}
         </div>
       </div>
 
-      {/* Mesas Grid: Minimal, high-density, precise micro-radius geometry */}
-      <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-2">
-        {filteredTables.map(table => {
-          const order = tableOrderMap[table.id];
-          const isCerrada = table.status === 'libre';
-          const isAbierta = table.status === 'ocupada';
-          const isPendiente = table.status === 'cuenta_pedida';
+      {/* Floor Plan Grid: 2 cols mobile, 3 sm, 4 md, 5 lg, 6 xl */}
+      {filteredTables.length === 0 ? (
+        <div className="pos-panel p-10 text-center space-y-3">
+          <div className="w-11 h-11 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-muted)] flex items-center justify-center mx-auto">
+            <i className="fa-solid fa-chair text-lg" aria-hidden="true"></i>
+          </div>
+          <div className="space-y-1">
+            <h2 className="font-display font-bold text-base text-[var(--text-primary)]">
+              No encontramos mesas con ese filtro
+            </h2>
+            <p className="text-sm text-[var(--text-secondary)]">
+              Probá limpiando la búsqueda o seleccionando otro sector del salón.
+            </p>
+          </div>
+          <button type="button" onClick={resetFilters} className="pos-btn-secondary mx-auto">
+            <i className="fa-solid fa-filter-circle-xmark text-xs" aria-hidden="true"></i>
+            <span>Mostrar todas las mesas</span>
+          </button>
+        </div>
+      ) : (
+        <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 xl:grid-cols-6 gap-3">
+          {filteredTables.map(table => {
+            const order = tableOrderMap[table.id];
+            const isAbierta = table.status === 'ocupada';
+            const isPendiente = table.status === 'cuenta_pedida';
 
-          const tableCode = getTableCode(table);
-          const elapsedTime = getElapsedTimeString(table, order);
+            const tableCode = getTableCode(table);
+            const elapsedTime = getElapsedTimeString(table, order);
 
-          let cardStyle = 'table-card-cerrada';
-          let statusLabel = 'Cerrada';
-          let statusTextClass = 'text-zinc-500';
-          let dotColor = 'bg-zinc-600';
+            let cardVariant = 'table-card-cerrada';
+            let statusLabel = 'Cerrada';
+            let statusClass = 'text-[var(--text-muted)]';
+            let statusIcon = 'fa-regular fa-circle text-[var(--text-muted)]';
 
-          if (isAbierta) {
-            cardStyle = 'table-card-abierta';
-            statusLabel = 'Abierta';
-            statusTextClass = 'text-zinc-200';
-            dotColor = 'bg-zinc-300';
-          } else if (isPendiente) {
-            cardStyle = 'table-card-pendiente';
-            statusLabel = 'Pendiente cobro';
-            statusTextClass = 'text-white font-bold';
-            dotColor = 'bg-white';
-          }
+            if (isAbierta) {
+              cardVariant = 'table-card-abierta';
+              statusLabel = 'Abierta';
+              statusClass = 'text-[var(--status-open-fg)] font-bold';
+              statusIcon = 'fa-solid fa-circle text-[var(--status-open-bar)]';
+            } else if (isPendiente) {
+              cardVariant = 'table-card-pendiente';
+              statusLabel = 'Pendiente cobro';
+              statusClass = 'text-[var(--status-bill-fg)] font-bold';
+              statusIcon = 'fa-solid fa-receipt text-[var(--status-bill-fg)]';
+            }
 
-          return (
-            <div
-              key={table.id}
-              onClick={() => handleTableClick(table)}
-              className={`${cardStyle} rounded p-3 cursor-pointer transition-colors select-none flex flex-col justify-between min-h-[110px]`}
-            >
-              {/* Header: Table Code & Status Indicator */}
-              <div className="flex items-start justify-between">
-                <div>
-                  <div className="text-2xl font-mono tabular-nums font-black tracking-tight text-zinc-100">
+            return (
+              <button
+                key={table.id}
+                type="button"
+                onClick={() => handleTableClick(table)}
+                aria-label={`Mesa ${tableCode}, estado ${statusLabel}, tiempo ${elapsedTime}`}
+                className={`table-card-base ${cardVariant}`}
+              >
+                {/* Top: Table Code & Status Icon */}
+                <div className="flex items-start justify-between w-full gap-2">
+                  <span className="font-display font-extrabold text-2xl sm:text-3xl tracking-tight text-[var(--text-primary)] font-mono">
                     {tableCode}
-                  </div>
-                  <div className="text-[10px] text-zinc-500 uppercase tracking-wider font-mono">
-                    {table.sector}
-                  </div>
+                  </span>
+                  <i className={`${statusIcon} text-xs mt-1.5`} aria-hidden="true"></i>
                 </div>
 
-                <div className="pt-1">
-                  <span className={`inline-block w-2 h-2 rounded-full ${dotColor}`} />
+                {/* Bottom: Status Text & Elapsed Time since last comanda */}
+                <div className="w-full pt-2.5 mt-3 border-t border-[var(--border-subtle)] flex flex-col gap-0.5">
+                  <span className={`text-xs leading-tight ${statusClass}`}>
+                    {statusLabel}
+                  </span>
+                  <span className="text-xs font-mono text-[var(--text-secondary)] flex items-center gap-1.5">
+                    <i className="fa-regular fa-clock text-[11px] opacity-80" aria-hidden="true"></i>
+                    <span>{elapsedTime}</span>
+                  </span>
                 </div>
-              </div>
+              </button>
+            );
+          })}
+        </div>
+      )}
 
-              {/* Status and Elapsed Time */}
-              <div className="pt-2 border-t border-[#27272a] flex flex-col gap-0.5">
-                <div className={`text-[11px] uppercase tracking-wider font-mono ${statusTextClass}`}>
-                  {statusLabel}
-                </div>
-                <div className="text-[11px] font-mono tabular-nums text-zinc-400">
-                  {elapsedTime}
-                </div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
-      {/* Order Taking Modal */}
       {selectedTableForOrder && (
         <OrderTakingModal
           isOpen={!!selectedTableForOrder}
@@ -233,6 +261,6 @@ export default function MozoSalonView() {
           onOrderSubmitted={refreshData}
         />
       )}
-    </div>
+    </section>
   );
 }

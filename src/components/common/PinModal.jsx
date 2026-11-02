@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
@@ -8,6 +8,36 @@ export default function PinModal() {
   const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
+  const verifyPin = useCallback(async (inputPin) => {
+    try {
+      const res = await api.loginWithPin(inputPin);
+      if (res.user) {
+        switchUser(res.user);
+        setIsPinModalOpen(false);
+      }
+    } catch (err) {
+      setError('Ese PIN no coincide con ningún operador registrado.');
+      setPin('');
+    }
+  }, [switchUser, setIsPinModalOpen]);
+
+  const handleKeyPress = useCallback((num) => {
+    setPin(prev => {
+      if (prev.length >= 4) return prev;
+      const nextPin = prev + String(num);
+      setError('');
+      if (nextPin.length === 4) {
+        verifyPin(nextPin);
+      }
+      return nextPin;
+    });
+  }, [verifyPin]);
+
+  const handleDelete = useCallback(() => {
+    setPin(prev => prev.slice(0, -1));
+    setError('');
+  }, []);
+
   useEffect(() => {
     if (isPinModalOpen) {
       setPin('');
@@ -16,36 +46,22 @@ export default function PinModal() {
     }
   }, [isPinModalOpen]);
 
-  if (!isPinModalOpen) return null;
-
-  const handleKeyPress = (num) => {
-    if (pin.length < 4) {
-      const nextPin = pin + num;
-      setPin(nextPin);
-      setError('');
-      if (nextPin.length === 4) {
-        verifyPin(nextPin);
-      }
-    }
-  };
-
-  const handleDelete = () => {
-    setPin(prev => prev.slice(0, -1));
-    setError('');
-  };
-
-  const verifyPin = async (inputPin) => {
-    try {
-      const res = await api.loginWithPin(inputPin);
-      if (res.user) {
-        switchUser(res.user);
+  useEffect(() => {
+    if (!isPinModalOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
         setIsPinModalOpen(false);
+      } else if (/^[0-9]$/.test(e.key)) {
+        handleKeyPress(e.key);
+      } else if (e.key === 'Backspace') {
+        handleDelete();
       }
-    } catch (err) {
-      setError('PIN no válido');
-      setPin('');
-    }
-  };
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isPinModalOpen, setIsPinModalOpen, handleKeyPress, handleDelete]);
+
+  if (!isPinModalOpen) return null;
 
   const handleDirectSelect = (user) => {
     switchUser(user);
@@ -53,45 +69,65 @@ export default function PinModal() {
   };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-3 animate-in fade-in duration-150">
-      <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-sm overflow-hidden shadow-2xl">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="pin-modal-title"
+    >
+      <div className="pos-panel w-full max-w-md overflow-hidden shadow-2xl">
         {/* Header */}
-        <div className="p-3 border-b border-[#27272a] flex items-center justify-between bg-[#0e0e11]">
-          <div className="flex items-center gap-2">
-            <i className="fa-solid fa-key text-zinc-400 text-xs" aria-hidden="true"></i>
-            <h3 className="font-bold text-zinc-100 text-xs uppercase tracking-wider font-mono">Cambio de Usuario</h3>
+        <div className="px-4 py-3 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <i className="fa-solid fa-key text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+            <h2 id="pin-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+              Cambiar operador
+            </h2>
           </div>
-          <button 
+          <button
+            type="button"
             onClick={() => setIsPinModalOpen(false)}
-            aria-label="Cerrar modal de PIN"
-            className="w-6 h-6 rounded text-zinc-400 hover:text-zinc-100 flex items-center justify-center"
+            aria-label="Cerrar ventana de cambio de operador"
+            className="pos-btn-ghost"
           >
-            <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+            <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
           </button>
         </div>
 
         {/* Quick staff select list */}
-        <div className="p-3 bg-[#15151a] border-b border-[#27272a]">
-          <p className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider mb-2 font-mono">Personal Registrado:</p>
-          <div className="grid grid-cols-2 gap-1.5">
+        <div className="p-4 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <p className="text-xs font-semibold text-[var(--text-secondary)] mb-2.5">
+            Acceso rápido de turno (o ingresá tu PIN abajo):
+          </p>
+          <div className="grid grid-cols-2 gap-2">
             {users.map(u => {
-              const uIcon = u.avatar?.startsWith('fa-') ? u.avatar : (u.role === 'admin' ? 'fa-solid fa-user-shield' : u.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie');
+              const uIcon = u.avatar?.startsWith('fa-')
+                ? u.avatar
+                : (u.role === 'admin'
+                  ? 'fa-solid fa-user-shield'
+                  : u.role === 'cajero'
+                  ? 'fa-solid fa-cash-register'
+                  : 'fa-solid fa-user-tie');
+              const isCurrent = currentUser.id === u.id;
               return (
                 <button
                   key={u.id}
+                  type="button"
                   onClick={() => handleDirectSelect(u)}
-                  className={`flex items-center gap-2 p-2 rounded border text-left transition-colors ${
-                    currentUser.id === u.id 
-                      ? 'bg-zinc-800 border-zinc-600 text-zinc-100 font-bold border-l-[3px] border-l-zinc-200' 
-                      : 'bg-[#18181c] border-[#27272a] hover:border-zinc-700 text-zinc-300'
+                  className={`min-h-[52px] flex items-center gap-2.5 px-3 py-2 rounded border text-left transition-colors ${
+                    isCurrent
+                      ? 'bg-[var(--bg-elevated)] border-[var(--border-strong)] border-l-4 border-l-[var(--accent-brand)] text-[var(--text-primary)]'
+                      : 'bg-[var(--bg-subtle)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-[var(--text-primary)]'
                   }`}
                 >
-                  <span className="w-5 h-5 flex items-center justify-center bg-zinc-900 text-zinc-400 rounded-sm border border-zinc-700 text-[11px] shrink-0">
+                  <span className="w-7 h-7 flex items-center justify-center bg-[var(--bg-surface)] text-[var(--accent-brand)] rounded border border-[var(--border-subtle)] text-xs shrink-0">
                     <i className={uIcon} aria-hidden="true"></i>
                   </span>
                   <div className="overflow-hidden">
-                    <div className="text-xs font-bold truncate leading-tight">{u.name.split(' ')[0]}</div>
-                    <div className="text-[10px] text-zinc-500 uppercase font-mono">{u.role} : {u.pin}</div>
+                    <div className="text-sm font-bold truncate leading-tight">{u.name.split(' ')[0]}</div>
+                    <div className="text-xs text-[var(--text-secondary)] font-mono capitalize">
+                      {u.role} · {u.pin}
+                    </div>
                   </div>
                 </button>
               );
@@ -99,63 +135,68 @@ export default function PinModal() {
           </div>
         </div>
 
-        {/* PIN input dots */}
-        <div className="p-4 flex flex-col items-center justify-center bg-[#101014]">
-          <p className="text-xs text-zinc-400 mb-2.5 font-mono">Ingresar PIN de 4 dígitos:</p>
-          
-          <div className="flex items-center gap-2.5 mb-2">
+        {/* PIN input & tactile keypad */}
+        <div className="p-5 flex flex-col items-center justify-center bg-[var(--bg-subtle)]">
+          <p className="text-sm font-medium text-[var(--text-secondary)] mb-3">
+            Marcá tu clave de 4 dígitos
+          </p>
+
+          <div className="flex items-center gap-3 mb-3" aria-label={`Dígitos ingresados: ${pin.length} de 4`}>
             {[0, 1, 2, 3].map(idx => (
-              <div 
+              <div
                 key={idx}
-                className={`w-3 h-3 rounded-full border transition-all ${
-                  pin.length > idx 
-                    ? 'bg-zinc-200 border-white' 
-                    : 'border-zinc-700 bg-zinc-900'
+                className={`w-4 h-4 rounded border-2 transition-colors ${
+                  pin.length > idx
+                    ? 'bg-[var(--accent-brand)] border-[var(--accent-brand)]'
+                    : 'border-[var(--border-strong)] bg-[var(--bg-surface)]'
                 }`}
               />
             ))}
           </div>
 
           {error && (
-            <p className="text-xs text-rose-400 font-mono flex items-center gap-1 mt-1">
-              <i className="fa-solid fa-triangle-exclamation text-xs" aria-hidden="true"></i>
+            <p className="text-xs text-[var(--status-danger-fg)] bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] px-3 py-1.5 rounded flex items-center gap-2 mb-2" role="alert">
+              <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
               <span>{error}</span>
             </p>
           )}
 
-          {/* NumPad */}
-          <div className="grid grid-cols-3 gap-1.5 w-full mt-2.5 max-w-[220px]">
+          <div className="grid grid-cols-3 gap-2 w-full max-w-[256px] mt-2">
             {[1, 2, 3, 4, 5, 6, 7, 8, 9].map(num => (
               <button
                 key={num}
                 type="button"
                 onClick={() => handleKeyPress(num)}
-                className="h-10 rounded bg-[#18181c] hover:bg-zinc-800 active:scale-95 text-zinc-100 font-mono font-bold text-base border border-[#27272a] transition-colors flex items-center justify-center"
+                className="pos-btn-secondary min-h-[52px] font-mono font-bold text-lg"
               >
                 {num}
               </button>
             ))}
             <button
               type="button"
-              onClick={() => setPin('')}
-              className="h-10 rounded bg-[#141418] hover:bg-zinc-800 active:scale-95 text-zinc-400 text-xs font-semibold border border-[#27272a] transition-colors flex items-center justify-center"
+              onClick={() => {
+                setPin('');
+                setError('');
+              }}
+              aria-label="Limpiar PIN"
+              className="pos-btn-secondary min-h-[52px] text-xs font-bold"
             >
-              C
+              Limpiar
             </button>
             <button
               type="button"
               onClick={() => handleKeyPress(0)}
-              className="h-10 rounded bg-[#18181c] hover:bg-zinc-800 active:scale-95 text-zinc-100 font-mono font-bold text-base border border-[#27272a] transition-colors flex items-center justify-center"
+              className="pos-btn-secondary min-h-[52px] font-mono font-bold text-lg"
             >
               0
             </button>
             <button
               type="button"
               onClick={handleDelete}
-              aria-label="Borrar dígito"
-              className="h-10 rounded bg-[#141418] hover:bg-zinc-800 active:scale-95 text-zinc-300 border border-[#27272a] transition-colors flex items-center justify-center"
+              aria-label="Borrar último dígito"
+              className="pos-btn-secondary min-h-[52px]"
             >
-              <i className="fa-solid fa-delete-left text-sm" aria-hidden="true"></i>
+              <i className="fa-solid fa-delete-left text-base" aria-hidden="true"></i>
             </button>
           </div>
         </div>

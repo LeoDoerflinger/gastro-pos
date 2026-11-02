@@ -202,7 +202,7 @@
       "category": "Pizzas",
       "price": 13500,
       "description": "8 porciones, salsa pomodoro, 250g de muzzarella artesanal, orégano y aceitunas verdes.",
-      "badge": "🍕",
+      "badge": "fa-solid fa-pizza-slice",
       "recipe": [
         {
           "ingredientId": "ing_bollo_pizza",
@@ -232,7 +232,7 @@
       "category": "Pizzas",
       "price": 8200,
       "description": "4 porciones, 1/2 bollo de pizza, 125g muzzarella, salsa y 4 aceitunas.",
-      "badge": "🍕",
+      "badge": "fa-solid fa-pizza-slice",
       "recipe": [
         {
           "ingredientId": "ing_bollo_pizza",
@@ -262,7 +262,7 @@
       "category": "Pizzas",
       "price": 16800,
       "description": "Masa madre, salsa pomodoro, 250g muzzarella, 150g jamón cocido y morrones asados.",
-      "badge": "🍕",
+      "badge": "fa-solid fa-pizza-slice",
       "recipe": [
         {
           "ingredientId": "ing_bollo_pizza",
@@ -302,7 +302,7 @@
       "category": "Hamburguesas",
       "price": 11900,
       "description": "Pan brioche, doble medallón smash (160g), 4 fetas de cheddar y panceta crocante.",
-      "badge": "🍔",
+      "badge": "fa-solid fa-burger",
       "recipe": [
         {
           "ingredientId": "ing_pan_brioche",
@@ -332,7 +332,7 @@
       "category": "Hamburguesas",
       "price": 8900,
       "description": "Pan brioche, un medallón smash (80g), 2 fetas de cheddar.",
-      "badge": "🍔",
+      "badge": "fa-solid fa-burger",
       "recipe": [
         {
           "ingredientId": "ing_pan_brioche",
@@ -357,7 +357,7 @@
       "category": "Minutas & Entradas",
       "price": 7900,
       "description": "350g de papas bastón con abundante queso cheddar fundido y lluvia de panceta crocante.",
-      "badge": "🍟",
+      "badge": "fa-solid fa-utensils",
       "recipe": [
         {
           "ingredientId": "ing_papas_baston",
@@ -382,7 +382,7 @@
       "category": "Minutas & Entradas",
       "price": 1900,
       "description": "Relleno criollo suave con carne cortada a cuchillo, horneada al momento.",
-      "badge": "🥟",
+      "badge": "fa-solid fa-utensils",
       "recipe": [
         {
           "ingredientId": "ing_disco_empanada",
@@ -402,7 +402,7 @@
       "category": "Bebidas",
       "price": 4500,
       "description": "Pinta tirada de 500cc, amargor medio, notas cítricas y resinosas.",
-      "badge": "🍺",
+      "badge": "fa-solid fa-beer-mug-empty",
       "recipe": [
         {
           "ingredientId": "ing_cerveza_ipa",
@@ -417,7 +417,7 @@
       "category": "Bebidas",
       "price": 2500,
       "description": "Lata 354ml servida bien fría con o sin hielo y limón.",
-      "badge": "🥤",
+      "badge": "fa-solid fa-glass-water",
       "recipe": [
         {
           "ingredientId": "ing_coca_cola_lata",
@@ -432,7 +432,7 @@
       "category": "Bebidas",
       "price": 2100,
       "description": "Botella 500ml fría o natural.",
-      "badge": "💧",
+      "badge": "fa-solid fa-bottle-water",
       "recipe": [
         {
           "ingredientId": "ing_agua_mineral",

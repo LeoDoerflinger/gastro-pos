@@ -1,20 +1,31 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function SidebarDrawer() {
-  const { 
-    isSidebarOpen, 
-    setIsSidebarOpen, 
-    activeTab, 
-    setActiveTab, 
-    currentUser, 
+  const {
+    isSidebarOpen,
+    setIsSidebarOpen,
+    activeTab,
+    setActiveTab,
+    currentUser,
     setIsPinModalOpen,
     isMobileSimulated,
     setIsMobileSimulated,
+    theme,
+    toggleTheme,
     refreshData,
     showToast
   } = useApp();
+
+  useEffect(() => {
+    if (!isSidebarOpen) return;
+    const handleKeyDown = (e) => {
+      if (e.key === 'Escape') setIsSidebarOpen(false);
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isSidebarOpen, setIsSidebarOpen]);
 
   if (!isSidebarOpen) return null;
 
@@ -27,259 +38,268 @@ export default function SidebarDrawer() {
   };
 
   const handleResetDemo = async () => {
-    if (window.confirm('¿Restaurar todos los datos a la demostración inicial?')) {
+    if (window.confirm('¿Querés restaurar las mesas, pedidos y stock a los valores iniciales de prueba?')) {
       try {
         await api.resetDemo();
         await refreshData();
-        showToast('Datos demo restaurados correctamente');
+        showToast('Datos de prueba restaurados');
         setIsSidebarOpen(false);
       } catch (e) {
-        showToast('Error al restaurar datos', 'error');
+        showToast('No se pudieron restaurar los datos', 'error');
       }
     }
   };
 
   const roleLabels = {
-    admin: 'ENCARGADO / ADMIN',
-    cajero: 'CAJERO',
-    mozo: 'MOZO'
+    admin: 'Encargado / Admin',
+    cajero: 'Cajero',
+    mozo: 'Mozo de salón'
   };
 
   const userIcon = currentUser.avatar?.startsWith('fa-')
     ? currentUser.avatar
-    : (currentUser.role === 'admin' ? 'fa-solid fa-user-shield' : currentUser.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie');
+    : (currentUser.role === 'admin'
+      ? 'fa-solid fa-user-shield'
+      : currentUser.role === 'cajero'
+      ? 'fa-solid fa-cash-register'
+      : 'fa-solid fa-user-tie');
+
+  const navItemClass = (tab) => {
+    const active = activeTab === tab;
+    return `w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded text-sm transition-colors text-left ${
+      active
+        ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] font-bold border border-[var(--border-strong)] border-l-4 border-l-[var(--accent-brand)]'
+        : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] font-medium border border-transparent'
+    }`;
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex animate-in fade-in duration-150">
-      {/* Backdrop */}
-      <div 
-        className="fixed inset-0 bg-black/80 backdrop-blur-sm"
+    <div
+      className="fixed inset-0 z-50 flex"
+      role="dialog"
+      aria-modal="true"
+      aria-label="Menú de navegación"
+    >
+      <button
+        type="button"
+        aria-label="Cerrar menú lateral"
+        className="fixed inset-0 bg-[var(--backdrop-overlay)]"
         onClick={() => setIsSidebarOpen(false)}
+        tabIndex={-1}
       />
 
-      {/* Drawer Container */}
-      <div className="relative w-full max-w-xs bg-[#121215] border-r border-[#27272a] h-full flex flex-col shadow-2xl z-10 animate-in slide-in-from-left duration-150">
+      <div className="relative w-full max-w-xs bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] h-full flex flex-col z-10 shadow-2xl">
         {/* Drawer Header */}
-        <div className="p-3.5 border-b border-[#27272a] flex items-center justify-between bg-[#0e0e11]">
-          <div className="flex items-center gap-2">
-            <div className="w-6 h-6 rounded bg-zinc-200 flex items-center justify-center text-zinc-950 font-black text-xs font-mono">
+        <div className="px-4 py-3.5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <div className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] flex items-center justify-center text-[var(--accent-brand)] font-display font-extrabold text-sm">
               GP
             </div>
             <div>
-              <span className="font-extrabold text-xs tracking-wider text-zinc-100 uppercase font-mono">
-                GASTRO<span className="text-zinc-500 font-normal">POS</span>
+              <span className="font-display font-bold text-base text-[var(--text-primary)] block leading-none">
+                GastroPOS
               </span>
-              <span className="text-[10px] text-zinc-500 block font-mono">v1.2 PRO</span>
+              <span className="text-xs text-[var(--text-muted)] font-mono">Comandera Web</span>
             </div>
           </div>
 
           <button
+            type="button"
             onClick={() => setIsSidebarOpen(false)}
             aria-label="Cerrar menú"
-            className="w-7 h-7 rounded text-zinc-400 hover:text-zinc-200 hover:bg-[#18181c] flex items-center justify-center transition-colors"
+            className="pos-btn-ghost"
           >
-            <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+            <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
           </button>
         </div>
 
-        {/* Current Active User Profile Banner */}
-        <div className="p-3 bg-[#15151a] border-b border-[#27272a]">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-2.5 overflow-hidden">
-              <span className="w-7 h-7 flex items-center justify-center bg-zinc-800 text-zinc-300 rounded border border-zinc-700 text-xs shrink-0">
+        {/* Active Operator Profile */}
+        <div className="p-3.5 border-b border-[var(--border-subtle)] bg-[var(--bg-surface)]">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 overflow-hidden">
+              <span className="w-9 h-9 flex items-center justify-center bg-[var(--bg-elevated)] text-[var(--accent-brand)] rounded border border-[var(--border-subtle)] text-sm shrink-0">
                 <i className={userIcon} aria-hidden="true"></i>
               </span>
               <div className="overflow-hidden">
-                <div className="font-bold text-xs text-zinc-100 truncate">{currentUser.name}</div>
-                <div className="text-[10px] font-mono text-zinc-400">
-                  {roleLabels[currentUser.role]} • PIN: {currentUser.pin}
+                <div className="font-bold text-sm text-[var(--text-primary)] truncate">{currentUser.name}</div>
+                <div className="text-xs text-[var(--text-secondary)]">
+                  {roleLabels[currentUser.role]} · <span className="font-mono">PIN {currentUser.pin}</span>
                 </div>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={() => {
                 setIsSidebarOpen(false);
                 setIsPinModalOpen(true);
               }}
-              title="Cambiar usuario con PIN"
-              aria-label="Cambiar usuario con PIN"
-              className="w-7 h-7 rounded bg-[#18181c] hover:bg-zinc-800 text-zinc-300 border border-[#27272a] transition-colors flex items-center justify-center shrink-0"
+              aria-label="Cambiar operador con PIN"
+              title="Cambiar operador con PIN"
+              className="pos-btn-secondary px-3 shrink-0"
             >
               <i className="fa-solid fa-key text-xs" aria-hidden="true"></i>
             </button>
           </div>
         </div>
 
-        {/* Navigation Links (Segmented, micro-radius, FA6) */}
-        <div className="flex-1 overflow-y-auto p-2 space-y-0.5">
-          <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-2.5 py-1.5">
-            Módulos Habilitados
-          </p>
+        {/* Navigation Links */}
+        <nav className="flex-1 overflow-y-auto p-3 space-y-1" aria-label="Módulos del sistema">
+          <div className="text-xs font-semibold text-[var(--text-muted)] px-2.5 py-1.5">
+            Operación diaria
+          </div>
 
-          {/* Salón / Mesas */}
           <button
+            type="button"
             onClick={() => handleSelectTab('mesas')}
-            className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-              activeTab === 'mesas'
-                ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-            }`}
+            aria-current={activeTab === 'mesas' ? 'page' : undefined}
+            className={navItemClass('mesas')}
           >
-            <i className="fa-solid fa-utensils w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-            <span>Salón & Mesas</span>
+            <i className="fa-solid fa-utensils w-4 text-center text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
+            <span>Salón y Mesas</span>
           </button>
 
-          {/* Cajero & Admin Only Navigation */}
           {!isMozo && (
             <>
               <button
+                type="button"
                 onClick={() => handleSelectTab('caja')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'caja'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'caja' ? 'page' : undefined}
+                className={navItemClass('caja')}
               >
-                <i className="fa-solid fa-cash-register w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Caja & Cobros</span>
+                <i className="fa-solid fa-cash-register w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Caja y Cobros</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('arqueo')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'arqueo'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'arqueo' ? 'page' : undefined}
+                className={navItemClass('arqueo')}
               >
-                <i className="fa-solid fa-clock w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Arqueos de Caja</span>
+                <i className="fa-solid fa-vault w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Arqueo de Caja</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('delivery')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'delivery'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'delivery' ? 'page' : undefined}
+                className={navItemClass('delivery')}
               >
-                <i className="fa-solid fa-motorcycle w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Delivery & Take Away</span>
+                <i className="fa-solid fa-motorcycle w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Delivery y Take Away</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('stock_purchases')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'stock_purchases'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'stock_purchases' ? 'page' : undefined}
+                className={navItemClass('stock_purchases')}
               >
-                <i className="fa-solid fa-file-invoice-dollar w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Facturas / Proveedores</span>
+                <i className="fa-solid fa-file-invoice-dollar w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Facturas y Proveedores</span>
               </button>
             </>
           )}
 
-          {/* Admin Exclusive Navigation */}
           {isAdmin && (
             <>
-              <div className="pt-2 pb-1 border-t border-[#27272a] my-1">
-                <p className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 px-2.5 py-1">
-                  Administración Central
-                </p>
+              <div className="pt-3 mt-2 border-t border-[var(--border-subtle)]">
+                <div className="text-xs font-semibold text-[var(--text-muted)] px-2.5 py-1.5">
+                  Gestión y control
+                </div>
               </div>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('recetario')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'recetario'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'recetario' ? 'page' : undefined}
+                className={navItemClass('recetario')}
               >
-                <i className="fa-solid fa-book-open w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Recetario & Escandallos</span>
+                <i className="fa-solid fa-book-open w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Recetario y Escandallos</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('stock_control')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'stock_control'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'stock_control' ? 'page' : undefined}
+                className={navItemClass('stock_control')}
               >
-                <i className="fa-solid fa-boxes-stacked w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Control de Stock & Mermas</span>
+                <i className="fa-solid fa-boxes-stacked w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Control de Stock</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('ventas')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'ventas'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'ventas' ? 'page' : undefined}
+                className={navItemClass('ventas')}
               >
-                <i className="fa-solid fa-chart-line w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Ventas & Analítica</span>
+                <i className="fa-solid fa-chart-simple w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Ventas y Analítica</span>
               </button>
 
               <button
+                type="button"
                 onClick={() => handleSelectTab('config')}
-                className={`w-full flex items-center gap-2.5 px-3 py-2 rounded text-xs font-semibold transition-all ${
-                  activeTab === 'config'
-                    ? 'bg-[#18181c] text-white border-l-[3px] border-zinc-200'
-                    : 'text-zinc-400 hover:bg-[#16161b] hover:text-zinc-200'
-                }`}
+                aria-current={activeTab === 'config' ? 'page' : undefined}
+                className={navItemClass('config')}
               >
-                <i className="fa-solid fa-gears w-4 text-center text-xs text-zinc-400" aria-hidden="true"></i>
-                <span>Configuración Salón & Roles</span>
+                <i className="fa-solid fa-sliders w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Configuración</span>
               </button>
             </>
           )}
-        </div>
+        </nav>
 
-        {/* Footer Actions */}
-        <div className="p-2.5 bg-[#0e0e11] border-t border-[#27272a] space-y-1">
-          <button
-            onClick={() => {
-              setIsMobileSimulated(!isMobileSimulated);
-              setIsSidebarOpen(false);
-            }}
-            className="w-full flex items-center justify-between px-2.5 py-1.5 rounded bg-[#15151a] hover:bg-[#1c1c22] text-zinc-300 text-xs border border-[#27272a] transition-colors"
-          >
-            <span className="flex items-center gap-2">
-              <i className={`fa-solid ${isMobileSimulated ? 'fa-desktop' : 'fa-mobile-screen'} text-zinc-400 text-xs`} aria-hidden="true"></i>
-              <span>{isMobileSimulated ? 'Vista Escritorio' : 'Simulador Celular'}</span>
-            </span>
-            <span className="text-[10px] font-mono text-zinc-400 font-bold uppercase">
-              {isMobileSimulated ? 'ON' : 'OFF'}
-            </span>
-          </button>
+        {/* Drawer Footer Controls */}
+        <div className="p-3 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] space-y-2">
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={toggleTheme}
+              className="pos-btn-secondary text-xs px-2.5"
+            >
+              <i className={`fa-solid ${theme === 'graphite' ? 'fa-sun' : 'fa-moon'} text-xs`} aria-hidden="true"></i>
+              <span>{theme === 'graphite' ? 'Tema Claro' : 'Tema Grafito'}</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={() => {
+                setIsMobileSimulated(!isMobileSimulated);
+                setIsSidebarOpen(false);
+              }}
+              className="pos-btn-secondary text-xs px-2.5"
+            >
+              <i className={`fa-solid ${isMobileSimulated ? 'fa-desktop' : 'fa-mobile-screen'} text-xs`} aria-hidden="true"></i>
+              <span>{isMobileSimulated ? 'Escritorio' : 'Vista Móvil'}</span>
+            </button>
+          </div>
 
           {isAdmin && (
             <button
+              type="button"
               onClick={handleResetDemo}
-              className="w-full flex items-center gap-2 px-2.5 py-1.5 rounded bg-[#15151a] hover:bg-[#1c1c22] text-zinc-400 hover:text-zinc-200 text-xs border border-[#27272a] transition-colors"
+              className="pos-btn-secondary w-full text-xs"
             >
               <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
-              <span>Restaurar Datos Demo</span>
+              <span>Restaurar datos de prueba</span>
             </button>
           )}
 
           <button
+            type="button"
             onClick={() => {
               setIsSidebarOpen(false);
               setIsPinModalOpen(true);
             }}
-            className="w-full flex items-center justify-center gap-2 py-1.5 rounded bg-zinc-200 hover:bg-white text-zinc-950 text-xs font-bold transition-colors"
+            className="pos-btn-primary w-full"
           >
             <i className="fa-solid fa-key text-xs" aria-hidden="true"></i>
-            <span>Cambiar de Usuario (PIN)</span>
+            <span>Cambiar operador (PIN)</span>
           </button>
         </div>
       </div>

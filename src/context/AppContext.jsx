@@ -4,7 +4,7 @@ import { api } from '../api/client';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // Current user persistent in localStorage so it NEVER resets automatically
+  // User session persists in localStorage so completing an order never resets the active role
   const [currentUser, setCurrentUser] = useState(() => {
     try {
       const stored = localStorage.getItem('gastro_user_session');
@@ -13,15 +13,37 @@ export function AppProvider({ children }) {
       console.error('Error loading stored user session:', e);
     }
     return {
-      id: "u_admin",
-      name: "Rodrigo (Encargado / Admin)",
-      role: "admin",
-      pin: "9999",
-      avatar: "fa-solid fa-user-shield"
+      id: 'u_admin',
+      name: 'Rodrigo (Encargado / Admin)',
+      role: 'admin',
+      pin: '9999',
+      avatar: 'fa-solid fa-user-shield'
     };
   });
 
-  // UI state persistent in localStorage
+  const [theme, setThemeState] = useState(() => {
+    try {
+      const saved = localStorage.getItem('gastro_theme');
+      if (saved === 'paper' || saved === 'graphite') return saved;
+    } catch (e) {}
+    return 'graphite';
+  });
+
+  useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme);
+    const meta = document.getElementById('meta-theme-color');
+    if (meta) {
+      meta.setAttribute('content', theme === 'paper' ? '#eeebe4' : '#17191c');
+    }
+    try {
+      localStorage.setItem('gastro_theme', theme);
+    } catch (e) {}
+  }, [theme]);
+
+  const toggleTheme = useCallback(() => {
+    setThemeState(prev => (prev === 'graphite' ? 'paper' : 'graphite'));
+  }, []);
+
   const [activeTab, setActiveTabState] = useState(() => {
     try {
       const storedTab = localStorage.getItem('gastro_active_tab');
@@ -40,9 +62,8 @@ export function AppProvider({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isMobileSimulated, setIsMobileSimulated] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
-  const [toast, setToast] = useState(null); // { message, type: 'success' | 'error' | 'info' }
+  const [toast, setToast] = useState(null);
 
-  // Data state
   const [tables, setTables] = useState([]);
   const [products, setProducts] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -53,12 +74,13 @@ export function AppProvider({ children }) {
   const [analytics, setAnalytics] = useState(null);
   const [stockLog, setStockLog] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [apiError, setApiError] = useState(null);
 
   const showToast = useCallback((message, type = 'success') => {
     setToast({ message, type });
     setTimeout(() => {
       setToast(prev => (prev?.message === message ? null : prev));
-    }, 3500);
+    }, 3800);
   }, []);
 
   const refreshData = useCallback(async () => {
@@ -94,8 +116,10 @@ export function AppProvider({ children }) {
       setPurchases(purchasesData);
       setAnalytics(analyticsData);
       setStockLog(logData);
+      setApiError(null);
     } catch (err) {
-      console.error('Error cargando datos de GastroGestión:', err);
+      console.error('Error cargando datos de GastroPOS:', err);
+      setApiError('No pudimos conectar con el servidor de comandas. Revisá tu conexión e intentá de nuevo.');
     } finally {
       setLoading(false);
     }
@@ -103,17 +127,16 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     refreshData();
-    // Auto-refresh poll every 10 seconds to keep devices in sync
     const interval = setInterval(refreshData, 10000);
     return () => clearInterval(interval);
   }, [refreshData]);
 
-  // If currentUser is mozo, force tab to mesas
+  // Enforce domain rule: mozos can only access Salón / Mesas
   useEffect(() => {
     if (currentUser?.role === 'mozo' && activeTab !== 'mesas') {
       setActiveTab('mesas');
     }
-  }, [currentUser, activeTab]);
+  }, [currentUser, activeTab, setActiveTab]);
 
   const switchUser = (user) => {
     setCurrentUser(user);
@@ -125,7 +148,7 @@ export function AppProvider({ children }) {
     if (user.role === 'mozo') {
       setActiveTab('mesas');
     }
-    showToast(`Sesión activa: ${user.name} (${user.role.toUpperCase()})`, 'info');
+    showToast(`Sesión activa: ${user.name}`, 'info');
   };
 
   const loginWithPin = async (pin) => {
@@ -149,6 +172,9 @@ export function AppProvider({ children }) {
         setCurrentUser,
         switchUser,
         loginWithPin,
+        theme,
+        setTheme: setThemeState,
+        toggleTheme,
         isPinModalOpen,
         setIsPinModalOpen,
         activeTab,
@@ -169,6 +195,7 @@ export function AppProvider({ children }) {
         analytics,
         stockLog,
         loading,
+        apiError,
         refreshData
       }}
     >

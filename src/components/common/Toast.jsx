@@ -6,23 +6,32 @@ export default function Toast() {
 
   if (!toast) return null;
 
-  const icons = {
-    success: <i className="fa-solid fa-check text-emerald-400 shrink-0 text-xs" aria-hidden="true"></i>,
-    error: <i className="fa-solid fa-triangle-exclamation text-rose-400 shrink-0 text-xs" aria-hidden="true"></i>,
-    info: <i className="fa-solid fa-circle-info text-sky-400 shrink-0 text-xs" aria-hidden="true"></i>
+  const variants = {
+    success: {
+      icon: 'fa-solid fa-circle-check text-[var(--status-open-fg)]',
+      bar: 'border-l-4 border-l-[var(--status-open-bar)]'
+    },
+    error: {
+      icon: 'fa-solid fa-triangle-exclamation text-[var(--status-danger-fg)]',
+      bar: 'border-l-4 border-l-[var(--status-danger-bar)]'
+    },
+    info: {
+      icon: 'fa-solid fa-circle-info text-[var(--accent-brand)]',
+      bar: 'border-l-4 border-l-[var(--accent-brand)]'
+    }
   };
 
-  const borders = {
-    success: 'border-l-2 border-l-emerald-500 border-[#27272a] bg-[#121215]',
-    error: 'border-l-2 border-l-rose-500 border-[#27272a] bg-[#121215]',
-    info: 'border-l-2 border-l-sky-500 border-[#27272a] bg-[#121215]'
-  };
+  const current = variants[toast.type] || variants.info;
 
   return (
-    <div className="fixed bottom-4 right-4 z-50 max-w-sm">
-      <div className={`flex items-center gap-2.5 px-3 py-2 rounded border shadow-xl ${borders[toast.type] || borders.info}`}>
-        {icons[toast.type] || icons.info}
-        <p className="text-xs font-mono text-zinc-200">{toast.message}</p>
+    <div
+      className="fixed bottom-4 right-4 left-4 sm:left-auto z-50 sm:max-w-sm pointer-events-none"
+      role="status"
+      aria-live="polite"
+    >
+      <div className={`pos-elevated px-4 py-3 flex items-center gap-3 shadow-xl pointer-events-auto ${current.bar}`}>
+        <i className={`${current.icon} text-sm shrink-0`} aria-hidden="true"></i>
+        <p className="text-sm font-medium text-[var(--text-primary)]">{toast.message}</p>
       </div>
     </div>
   );

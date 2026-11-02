@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import ReceiptModal from '../common/ReceiptModal';
@@ -7,7 +7,7 @@ import { getTableCode } from '../mozo/MozoSalonView';
 export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const { currentUser, tables, showToast, refreshData } = useApp();
 
-  const [paymentMethod, setPaymentMethod] = useState('efectivo'); // 'efectivo', 'debito', 'credito', 'mercadopago', 'transferencia', 'mixto'
+  const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashTendered, setCashTendered] = useState('');
   const [discountAmount, setDiscountAmount] = useState(0);
   const [tipAmount, setTipAmount] = useState(order?.tip || 0);
@@ -15,6 +15,15 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const [splitDigital, setSplitDigital] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [closedOrderReceipt, setClosedOrderReceipt] = useState(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape' && !closedOrderReceipt) onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, closedOrderReceipt, onClose]);
 
   if (!isOpen || !order) return null;
 
@@ -25,29 +34,29 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const deliveryFee = order.deliveryFee || 0;
   const totalToPay = Math.max(0, subtotal + deliveryFee - Number(discountAmount || 0) + Number(tipAmount || 0));
 
-  // Change calculator for cash
-  const tenderedNum = Number(cashTendered) || 0;
+  const tenderedNum = cashTendered === '' ? totalToPay : (Number(cashTendered) || 0);
   const changeDue = tenderedNum >= totalToPay ? tenderedNum - totalToPay : 0;
 
-  // Preset bill shortcuts
   const presetBills = [
     totalToPay,
     Math.ceil(totalToPay / 1000) * 1000,
     Math.ceil(totalToPay / 5000) * 5000,
     Math.ceil(totalToPay / 10000) * 10000,
     Math.ceil(totalToPay / 20000) * 20000
-  ].filter((v, i, a) => v >= totalToPay && a.indexOf(v) === i).slice(0, 4);
+  ]
+    .filter((v, i, a) => v >= totalToPay && a.indexOf(v) === i)
+    .slice(0, 4);
 
   const handleConfirmPayment = async () => {
     if (paymentMethod === 'efectivo' && tenderedNum < totalToPay) {
-      showToast('El monto abonado en efectivo es menor al total a pagar', 'error');
+      showToast('El efectivo recibido es menor al total a cobrar', 'error');
       return;
     }
 
     setSubmitting(true);
     try {
       const payload = {
-        paymentMethod: paymentMethod,
+        paymentMethod,
         discount: Number(discountAmount || 0),
         tip: Number(tipAmount || 0),
         paymentDetails: {
@@ -59,12 +68,12 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
       };
 
       const closed = await api.closeOrder(order.id, payload);
-      showToast(`Comanda #${order.orderNumber} cobrada con éxito.`);
+      showToast(`Comanda #${order.orderNumber} cobrada y cerrada.`);
       await refreshData();
       onOrderClosed?.();
       setClosedOrderReceipt(closed);
     } catch (err) {
-      showToast(err.message || 'Error al procesar el cobro', 'error');
+      showToast(err.message || 'No se pudo procesar el cobro', 'error');
       setSubmitting(false);
     }
   };
@@ -80,212 +89,224 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
   return (
     <>
-      <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/85 backdrop-blur-sm p-3 animate-in fade-in duration-150">
-        <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
+      <div
+        className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="cobro-modal-title"
+      >
+        <div className="pos-panel w-full max-w-xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
           {/* Header */}
-          <div className="p-3 bg-[#0e0e11] border-b border-[#27272a] flex items-center justify-between shrink-0">
-            <div className="flex items-center gap-2">
-              <span className="w-7 h-7 rounded bg-zinc-800 text-zinc-200 border border-zinc-700 flex items-center justify-center font-bold text-xs">
+          <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
+            <div className="flex items-center gap-3">
+              <span className="w-9 h-9 rounded bg-[var(--bg-elevated)] text-[var(--accent-brand)] border border-[var(--border-subtle)] flex items-center justify-center text-sm">
                 <i className="fa-solid fa-cash-register" aria-hidden="true"></i>
               </span>
               <div>
-                <h3 className="font-bold text-zinc-100 text-xs flex items-center gap-2 font-mono">
-                  <span>Cobrar Comanda #{order.orderNumber}</span>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h2 id="cobro-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                    Cobrar comanda #{order.orderNumber}
+                  </h2>
                   {tableCode && (
-                    <span className="text-[10px] bg-zinc-800 text-zinc-200 px-1.5 py-0.2 rounded border border-zinc-700 font-bold">
-                      {tableCode}
-                    </span>
+                    <span className="pos-badge pos-badge-brand font-mono">{tableCode}</span>
                   )}
-                  <span className="text-[10px] uppercase bg-zinc-900 text-zinc-400 px-1 py-0.2 rounded border border-[#27272a]">
-                    {order.channel}
-                  </span>
-                </h3>
-                <p className="text-[10px] text-zinc-500 font-mono">
-                  Atiende: {order.waiterName || 'Personal'} : {order.items?.length || 0} ítems
+                </div>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Atendió: {order.waiterName || 'Personal'} · {order.items?.length || 0} platos
                 </p>
               </div>
             </div>
 
             <button
+              type="button"
               onClick={onClose}
-              aria-label="Cerrar modal de cobro"
-              className="w-6 h-6 rounded text-zinc-400 hover:text-zinc-100 flex items-center justify-center"
+              aria-label="Cerrar ventana de cobro"
+              className="pos-btn-ghost"
             >
-              <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
             </button>
           </div>
 
           {/* Content Body */}
-          <div className="flex-1 overflow-y-auto p-3 space-y-3">
-            {/* Items Mini Summary (Clean tabular table without rounded box-in-box) */}
-            <div className="border border-[#27272a] rounded overflow-hidden max-h-32 overflow-y-auto bg-[#0e0e11] text-xs font-mono">
-              <div className="flex justify-between font-bold text-zinc-500 text-[10px] uppercase px-2.5 py-1 bg-[#141418] border-b border-[#27272a]">
-                <span>Cant : Detalle</span>
-                <span>Subtotal</span>
+          <div className="flex-1 overflow-y-auto p-4 space-y-4">
+            {/* Items Summary Ledger */}
+            <div className="pos-subpanel overflow-hidden max-h-36 overflow-y-auto">
+              <div className="flex justify-between font-semibold text-[var(--text-secondary)] text-xs px-3 py-2 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)]">
+                <span>Detalle consumido</span>
+                <span>Importe</span>
               </div>
-              <div className="divide-y divide-[#1e1e24] px-2.5">
+              <div className="divide-y divide-[var(--border-subtle)] px-3">
                 {(order.items || []).map((it, idx) => (
-                  <div key={idx} className="flex justify-between py-1 text-zinc-300">
-                    <span className="font-sans">
-                      <strong className="text-zinc-100 font-mono tabular-nums">{it.quantity}x</strong> {it.productName}
-                      {it.notes && <span className="text-[10px] text-zinc-500 italic block">↳ {it.notes}</span>}
-                    </span>
-                    <span className="text-zinc-400 font-mono tabular-nums">${it.subtotal?.toLocaleString('es-AR')}</span>
+                  <div key={idx} className="flex justify-between py-2 text-xs text-[var(--text-primary)] gap-2">
+                    <div>
+                      <strong className="font-mono">{it.quantity}x</strong> {it.productName}
+                      {it.notes && <span className="text-xs text-[var(--text-secondary)] italic block">{it.notes}</span>}
+                    </div>
+                    <span className="font-mono font-semibold shrink-0">${it.subtotal?.toLocaleString('es-AR')}</span>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Calculations Breakdown */}
-            <div className="bg-[#15151a] p-3 rounded border border-[#27272a] space-y-2 text-xs">
-              <div className="flex justify-between text-zinc-400">
-                <span>Subtotal platos:</span>
-                <span className="font-mono tabular-nums text-zinc-200 font-bold">${subtotal.toLocaleString('es-AR')}</span>
-              </div>
-
-              {deliveryFee > 0 && (
-                <div className="flex justify-between text-zinc-400">
-                  <span>Costo de envío:</span>
-                  <span className="font-mono tabular-nums text-zinc-200">${deliveryFee.toLocaleString('es-AR')}</span>
-                </div>
-              )}
-
-              {/* Discount and Tip modifiers */}
-              <div className="grid grid-cols-2 gap-2 pt-1.5 border-t border-[#27272a]">
+            {/* Modifiers & Total */}
+            <div className="space-y-3 pt-1">
+              <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="text-[10px] text-zinc-400 font-bold block mb-1 uppercase font-mono">Descuento ($):</label>
+                  <label htmlFor="cobro-discount-input" className="pos-label">
+                    Descuento ($):
+                  </label>
                   <input
+                    id="cobro-discount-input"
                     type="number"
                     min="0"
                     placeholder="0"
                     value={discountAmount || ''}
                     onChange={(e) => setDiscountAmount(Number(e.target.value) || 0)}
-                    className="w-full bg-[#101014] border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono tabular-nums focus:border-zinc-500 focus:outline-none"
+                    className="pos-input font-mono"
                   />
                 </div>
                 <div>
-                  <label className="text-[10px] text-zinc-400 font-bold block mb-1 uppercase font-mono">Propina ($):</label>
+                  <label htmlFor="cobro-tip-input" className="pos-label">
+                    Propina incluida ($):
+                  </label>
                   <input
+                    id="cobro-tip-input"
                     type="number"
                     min="0"
                     placeholder="0"
                     value={tipAmount || ''}
                     onChange={(e) => setTipAmount(Number(e.target.value) || 0)}
-                    className="w-full bg-[#101014] border border-zinc-700 rounded px-2 py-1 text-xs text-zinc-200 font-mono tabular-nums focus:border-zinc-500 focus:outline-none"
+                    className="pos-input font-mono"
                   />
                 </div>
               </div>
 
-              {/* Total Display */}
-              <div className="pt-2 border-t border-[#27272a] flex justify-between items-center">
-                <span className="font-bold text-xs uppercase text-zinc-400 font-mono">TOTAL A COBRAR:</span>
-                <span className="font-black text-lg font-mono tabular-nums text-zinc-100">
+              <div className="pos-elevated px-4 py-3 flex justify-between items-center border-l-4 border-l-[var(--accent-brand)]">
+                <div>
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] block">Total final a cobrar</span>
+                  {deliveryFee > 0 && (
+                    <span className="text-xs text-[var(--text-muted)] font-mono">
+                      Incluye envío (${deliveryFee.toLocaleString('es-AR')})
+                    </span>
+                  )}
+                </div>
+                <span className="font-display font-extrabold text-2xl font-mono text-[var(--text-primary)]">
                   ${totalToPay.toLocaleString('es-AR')}
                 </span>
               </div>
             </div>
 
-            {/* Payment Method Selector */}
+            {/* Payment Method Keycaps */}
             <div>
-              <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-500 block mb-1.5 font-mono">
-                Forma de Pago:
-              </label>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-1">
-                {paymentOptions.map(method => (
-                  <button
-                    key={method.id}
-                    type="button"
-                    onClick={() => {
-                      setPaymentMethod(method.id);
-                      if (method.id === 'efectivo' && !cashTendered) setCashTendered(totalToPay);
-                    }}
-                    className={`p-2 rounded border text-center transition-colors ${
-                      paymentMethod === method.id
-                        ? 'bg-zinc-200 text-zinc-950 font-bold border-white'
-                        : 'bg-[#15151a] text-zinc-400 border-[#27272a] hover:bg-zinc-800 hover:text-zinc-200'
-                    }`}
-                  >
-                    <i className={`fa-solid ${method.icon} text-sm mb-1 block`} aria-hidden="true"></i>
-                    <div className="text-[10px] truncate">{method.label}</div>
-                  </button>
-                ))}
+              <span className="pos-label">Medio de pago:</span>
+              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2" role="group" aria-label="Seleccionar medio de pago">
+                {paymentOptions.map(method => {
+                  const active = paymentMethod === method.id;
+                  return (
+                    <button
+                      key={method.id}
+                      type="button"
+                      aria-pressed={active}
+                      onClick={() => {
+                        setPaymentMethod(method.id);
+                        if (method.id === 'efectivo' && cashTendered === '') {
+                          setCashTendered(String(totalToPay));
+                        }
+                      }}
+                      className={`min-h-[56px] p-2 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
+                        active
+                          ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] border-[var(--btn-primary-border)] font-bold shadow-sm'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <i className={`fa-solid ${method.icon} text-sm`} aria-hidden="true"></i>
+                      <span className="text-xs truncate w-full">{method.label}</span>
+                    </button>
+                  );
+                })}
               </div>
             </div>
 
-            {/* Cash specific details */}
+            {/* Cash Tender & Vuelto */}
             {paymentMethod === 'efectivo' && (
-              <div className="bg-[#101014] p-2.5 rounded border border-[#27272a] space-y-2">
-                <div className="flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2.5">
-                  <div className="flex-1">
-                    <label className="text-[10px] font-bold uppercase text-zinc-400 block mb-1 font-mono">Monto recibido:</label>
-                    <div className="relative">
-                      <span className="absolute left-2.5 top-1.5 text-zinc-400 font-mono font-bold">$</span>
-                      <input
-                        type="number"
-                        placeholder={totalToPay.toString()}
-                        value={cashTendered}
-                        onChange={(e) => setCashTendered(e.target.value)}
-                        className="w-full bg-[#16161b] border border-zinc-700 rounded pl-6 pr-2.5 py-1 text-xs font-mono tabular-nums font-bold text-zinc-100 focus:outline-none focus:border-zinc-500"
-                        autoFocus
-                      />
-                    </div>
+              <div className="pos-subpanel p-3.5 space-y-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 items-end">
+                  <div>
+                    <label htmlFor="cash-tendered-input" className="pos-label">
+                      Efectivo recibido ($):
+                    </label>
+                    <input
+                      id="cash-tendered-input"
+                      type="number"
+                      placeholder={totalToPay.toString()}
+                      value={cashTendered}
+                      onChange={(e) => setCashTendered(e.target.value)}
+                      className="pos-input font-mono font-bold"
+                    />
                   </div>
 
-                  {/* Vuelto / Change Box */}
-                  <div className="p-2 rounded border border-zinc-700 flex-1 text-center bg-zinc-900">
-                    <div className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 font-mono">
-                      {tenderedNum >= totalToPay ? 'Vuelto a Entregar:' : 'Faltan:'}
-                    </div>
-                    <div className="text-base font-black font-mono tabular-nums mt-0.5 text-zinc-100">
-                      ${Math.abs(changeDue).toLocaleString('es-AR')}
-                    </div>
+                  <div className="pos-elevated px-3.5 py-2.5 text-right">
+                    <span className="text-xs font-semibold text-[var(--text-secondary)] block">
+                      {tenderedNum >= totalToPay ? 'Vuelto a entregar' : 'Faltan cubrir'}
+                    </span>
+                    <span
+                      className={`text-lg font-bold font-mono ${
+                        tenderedNum >= totalToPay ? 'text-[var(--status-open-fg)]' : 'text-[var(--status-danger-fg)]'
+                      }`}
+                    >
+                      ${Math.abs(tenderedNum - totalToPay).toLocaleString('es-AR')}
+                    </span>
                   </div>
                 </div>
 
-                {/* Preset Fast Bill Buttons */}
-                <div className="flex items-center gap-1 flex-wrap pt-1 border-t border-[#1e1e24]">
-                  <span className="text-[10px] text-zinc-500 uppercase font-mono">Billetes:</span>
+                <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-[var(--border-subtle)]">
+                  <span className="text-xs text-[var(--text-muted)] mr-1">Pago rápido:</span>
                   {presetBills.map(bill => (
                     <button
                       key={bill}
                       type="button"
-                      onClick={() => setCashTendered(bill)}
-                      className="px-2 py-0.5 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-mono tabular-nums font-semibold border border-zinc-700 transition-colors"
+                      onClick={() => setCashTendered(String(bill))}
+                      className="pos-btn-secondary text-xs font-mono px-3"
                     >
                       ${bill.toLocaleString('es-AR')}
                     </button>
                   ))}
                   <button
                     type="button"
-                    onClick={() => setCashTendered(totalToPay)}
-                    className="px-2 py-0.5 rounded bg-zinc-700 text-zinc-100 text-xs font-bold border border-zinc-600 hover:bg-zinc-600 transition-colors font-mono"
+                    onClick={() => setCashTendered(String(totalToPay))}
+                    className="pos-btn-secondary text-xs px-3"
                   >
-                    Exacto
+                    Justo
                   </button>
                 </div>
               </div>
             )}
 
             {paymentMethod === 'mercadopago' && (
-              <div className="bg-[#101014] p-3 rounded border border-[#27272a] flex items-center justify-center gap-3">
-                <div className="w-16 h-16 bg-white p-1 rounded flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-qrcode text-3xl text-zinc-950" aria-hidden="true"></i>
+              <div className="pos-subpanel p-4 flex items-center gap-4">
+                <div className="w-16 h-16 bg-white p-2 rounded border border-[#cfc9be] flex items-center justify-center shrink-0">
+                  <i className="fa-solid fa-qrcode text-3xl text-[#18191b]" aria-hidden="true"></i>
                 </div>
-                <div className="text-xs space-y-0.5 font-mono">
-                  <div className="font-bold text-zinc-200">QR Interoperable Activo</div>
-                  <p className="text-zinc-400">Total: <strong className="text-zinc-100 tabular-nums">${totalToPay.toLocaleString('es-AR')}</strong></p>
-                  <p className="text-[10px] text-zinc-500">Escaneable desde cualquier billetera bancaria o fintech.</p>
+                <div className="space-y-0.5">
+                  <div className="font-bold text-sm text-[var(--text-primary)]">QR interoperable listo</div>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Importe a cobrar: <strong className="font-mono text-[var(--text-primary)]">${totalToPay.toLocaleString('es-AR')}</strong>
+                  </p>
+                  <p className="text-xs text-[var(--text-muted)]">Compatible con cualquier billetera o banco.</p>
                 </div>
               </div>
             )}
 
             {paymentMethod === 'mixto' && (
-              <div className="bg-[#101014] p-2.5 rounded border border-[#27272a] space-y-2">
-                <p className="text-xs font-semibold text-zinc-300 font-mono">Dividir pago (Efectivo + Digital):</p>
-                <div className="grid grid-cols-2 gap-2">
+              <div className="pos-subpanel p-3.5 space-y-2.5">
+                <p className="text-xs font-semibold text-[var(--text-secondary)]">
+                  Dividí el cobro entre efectivo y medio digital:
+                </p>
+                <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="text-[10px] text-zinc-400 font-mono">Efectivo ($):</label>
+                    <label htmlFor="split-cash-input" className="pos-label">Efectivo ($):</label>
                     <input
+                      id="split-cash-input"
                       type="number"
                       placeholder="0"
                       value={splitCash}
@@ -294,17 +315,18 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                         setSplitCash(val);
                         setSplitDigital(Math.max(0, totalToPay - val));
                       }}
-                      className="w-full bg-[#16161b] border border-zinc-700 rounded p-1 text-xs font-mono tabular-nums text-zinc-100"
+                      className="pos-input font-mono"
                     />
                   </div>
                   <div>
-                    <label className="text-[10px] text-zinc-400 font-mono">Tarjeta / QR ($):</label>
+                    <label htmlFor="split-digital-input" className="pos-label">Tarjeta / QR ($):</label>
                     <input
+                      id="split-digital-input"
                       type="number"
                       placeholder="0"
                       value={splitDigital}
                       onChange={(e) => setSplitDigital(Number(e.target.value) || 0)}
-                      className="w-full bg-[#16161b] border border-zinc-700 rounded p-1 text-xs font-mono tabular-nums text-zinc-100"
+                      className="pos-input font-mono"
                     />
                   </div>
                 </div>
@@ -312,12 +334,12 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
             )}
           </div>
 
-          {/* Action Footer */}
-          <div className="p-2.5 bg-[#0e0e11] border-t border-[#27272a] flex items-center justify-between gap-2 shrink-0">
+          {/* Footer */}
+          <div className="p-3.5 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] flex items-center justify-between gap-2.5 shrink-0">
             <button
               type="button"
               onClick={onClose}
-              className="py-1.5 px-3 rounded bg-zinc-800 hover:bg-zinc-700 text-zinc-300 font-semibold text-xs border border-zinc-700 transition-colors"
+              className="pos-btn-secondary px-5"
             >
               Cancelar
             </button>
@@ -326,16 +348,17 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
               type="button"
               disabled={submitting || (paymentMethod === 'efectivo' && tenderedNum < totalToPay)}
               onClick={handleConfirmPayment}
-              className="flex-1 py-1.5 px-4 rounded bg-zinc-200 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed text-zinc-950 font-black text-xs flex items-center justify-center gap-1.5 shadow transition-colors font-mono"
+              className="pos-btn-primary flex-1"
             >
               <i className="fa-solid fa-check text-xs" aria-hidden="true"></i>
-              <span>{submitting ? 'Cerrando...' : `Confirmar Cobro ($${totalToPay.toLocaleString('es-AR')})`}</span>
+              <span>
+                {submitting ? 'Registrando cobro...' : `Confirmar cobro · $${totalToPay.toLocaleString('es-AR')}`}
+              </span>
             </button>
           </div>
         </div>
       </div>
 
-      {/* Closed Fiscal Receipt */}
       {closedOrderReceipt && (
         <ReceiptModal
           isOpen={!!closedOrderReceipt}

@@ -1,10 +1,19 @@
-import React, { useRef } from 'react';
+import React, { useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { getTableCode } from '../mozo/MozoSalonView';
 
 export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta' }) {
   const { tables } = useApp();
   const printRef = useRef(null);
+
+  useEffect(() => {
+    if (!isOpen) return;
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', onKeyDown);
+    return () => window.removeEventListener('keydown', onKeyDown);
+  }, [isOpen, onClose]);
 
   if (!isOpen || !order) return null;
 
@@ -19,48 +28,52 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
   const tip10 = Math.round((order.subtotal || 0) * 0.1);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-      <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[90vh]">
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="receipt-modal-title"
+    >
+      <div className="pos-panel w-full max-w-sm overflow-hidden shadow-2xl flex flex-col max-h-[92vh]">
         {/* Header */}
-        <div className="p-3 border-b border-[#27272a] flex items-center justify-between bg-[#09090b]">
-          <div className="flex items-center gap-2">
-            <i className="fa-solid fa-receipt text-zinc-400 text-xs" aria-hidden="true"></i>
-            <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider">
-              {isPrecuenta ? 'Pre-Cuenta de Mesa' : 'Comprobante de Pago'}
-            </h3>
+        <div className="px-4 py-3 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-subtle)]">
+          <div className="flex items-center gap-2.5">
+            <i className="fa-solid fa-receipt text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+            <h2 id="receipt-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+              {isPrecuenta ? 'Pre-cuenta de control' : 'Comprobante de cobro'}
+            </h2>
           </div>
           <button
+            type="button"
             onClick={onClose}
-            className="p-1 text-zinc-400 hover:text-zinc-100 transition-colors"
-            aria-label="Cerrar modal"
+            className="pos-btn-ghost"
+            aria-label="Cerrar comprobante"
           >
-            <i className="fa-solid fa-xmark text-xs" aria-hidden="true"></i>
+            <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
           </button>
         </div>
 
-        {/* Thermal Ticket Container */}
-        <div className="p-4 overflow-y-auto flex-1 bg-black/50 flex justify-center">
-          <div 
+        {/* Thermal Ticket Slip */}
+        <div className="p-4 overflow-y-auto flex-1 bg-[var(--bg-subtle)] flex justify-center">
+          <div
             ref={printRef}
-            className="w-full bg-[#f4f4f5] text-zinc-900 p-4 rounded-xs font-mono text-[11px] shadow border border-zinc-300 select-all tabular-nums"
+            className="printable-ticket w-full bg-[#faf8f2] text-[#18191b] p-5 rounded border border-[#cfc9be] font-mono text-xs shadow-sm select-all tabular-nums space-y-3"
           >
-            {/* Header branding */}
-            <div className="text-center pb-2.5 border-b border-dashed border-zinc-400">
-              <h2 className="font-bold text-xs uppercase tracking-wider">GASTROGESTIÓN RESTÓ</h2>
-              <p className="text-[9px] text-zinc-600">Av. Gastronómica 1234, CABA</p>
-              <p className="text-[9px] text-zinc-600">CUIT: 30-71999888-4 · IVA Resp. Inscripto</p>
+            <div className="text-center pb-3 border-b border-dashed border-[#8c867a]">
+              <div className="font-bold text-sm tracking-tight">GASTROPOS RESTÓ</div>
+              <p className="text-[11px] text-[#43464c]">Av. Corrientes 1500, CABA</p>
+              <p className="text-[11px] text-[#43464c]">CUIT 30-71999888-4 · IVA Resp. Inscripto</p>
             </div>
 
-            {/* Order metadata */}
-            <div className="py-2 border-b border-dashed border-zinc-400 space-y-0.5 text-[10px]">
+            <div className="pb-3 border-b border-dashed border-[#8c867a] space-y-1 text-xs">
               <div className="flex justify-between font-bold">
-                <span>{isPrecuenta ? 'PRE-CUENTA DE CONTROL' : 'TICKET FISCAL #0001-' + (order.orderNumber || '101')}</span>
-                <span>{order.channel?.toUpperCase()}</span>
+                <span>{isPrecuenta ? 'CONTROL DE MESA' : `TICKET #0001-${order.orderNumber || '101'}`}</span>
+                <span className="uppercase">{order.channel?.replace('_', ' ')}</span>
               </div>
               {tableCode && (
-                <div className="flex justify-between font-bold text-zinc-900">
+                <div className="flex justify-between font-bold">
                   <span>MESA: {tableCode}</span>
-                  <span>Comensales: {order.diners || 1}</span>
+                  <span>Cubiertos: {order.diners || 1}</span>
                 </div>
               )}
               {order.customerName && (
@@ -68,25 +81,24 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
                   <span>Cliente: {order.customerName}</span>
                 </div>
               )}
-              <div className="flex justify-between text-zinc-600 text-[9px]">
-                <span>Mozo: {order.waiterName || 'Personal'}</span>
+              <div className="flex justify-between text-[#43464c] text-[11px]">
+                <span>Atendió: {order.waiterName || 'Personal'}</span>
                 <span>{new Date(order.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>
 
-            {/* Items list */}
-            <div className="py-2 border-b border-dashed border-zinc-400 space-y-1">
-              <div className="flex justify-between font-bold text-[9px] text-zinc-500 uppercase border-b border-zinc-300 pb-0.5">
-                <span>Cant · Detalle</span>
-                <span>Subtotal</span>
+            <div className="pb-3 border-b border-dashed border-[#8c867a] space-y-1.5">
+              <div className="flex justify-between font-bold text-[11px] text-[#43464c] border-b border-[#d8d3c8] pb-1">
+                <span>Cant. / Plato</span>
+                <span>Importe</span>
               </div>
               {(order.items || []).map((it, idx) => (
-                <div key={idx} className="flex justify-between items-start text-[10px]">
-                  <div className="pr-2">
+                <div key={idx} className="flex justify-between items-start text-xs gap-2">
+                  <div>
                     <span className="font-bold">{it.quantity}x </span>
                     <span>{it.productName}</span>
                     {it.notes && (
-                      <p className="text-[8px] text-zinc-500 italic pl-2">↳ {it.notes}</p>
+                      <p className="text-[11px] text-[#43464c] italic pl-3">{it.notes}</p>
                     )}
                   </div>
                   <span className="font-bold shrink-0">${it.subtotal?.toLocaleString('es-AR')}</span>
@@ -94,50 +106,48 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
               ))}
             </div>
 
-            {/* Totals */}
-            <div className="py-2 border-b border-dashed border-zinc-400 space-y-0.5 text-[10px]">
-              <div className="flex justify-between text-zinc-700">
-                <span>SUBTOTAL:</span>
+            <div className="pb-3 border-b border-dashed border-[#8c867a] space-y-1 text-xs">
+              <div className="flex justify-between text-[#43464c]">
+                <span>Subtotal:</span>
                 <span>${(order.subtotal || 0).toLocaleString('es-AR')}</span>
               </div>
               {order.deliveryFee > 0 && (
-                <div className="flex justify-between text-zinc-700">
+                <div className="flex justify-between text-[#43464c]">
                   <span>Envío:</span>
                   <span>${order.deliveryFee.toLocaleString('es-AR')}</span>
                 </div>
               )}
               {order.discount > 0 && (
-                <div className="flex justify-between text-emerald-800">
+                <div className="flex justify-between text-[#185936] font-semibold">
                   <span>Descuento:</span>
                   <span>-${order.discount.toLocaleString('es-AR')}</span>
                 </div>
               )}
               {isPrecuenta && (
-                <div className="flex justify-between text-zinc-600 italic text-[9px]">
-                  <span>Propina Sugerida (10%):</span>
+                <div className="flex justify-between text-[#43464c] italic text-[11px]">
+                  <span>Propina sugerida (10%):</span>
                   <span>${tip10.toLocaleString('es-AR')}</span>
                 </div>
               )}
-              <div className="flex justify-between font-bold text-xs pt-1 border-t border-zinc-300 text-zinc-950">
+              <div className="flex justify-between font-bold text-sm pt-1.5 border-t border-[#cfc9be] text-[#18191b]">
                 <span>TOTAL:</span>
                 <span>${(isPrecuenta ? (order.subtotal + tip10) : order.total).toLocaleString('es-AR')}</span>
               </div>
             </div>
 
-            {/* Payment Details if Charged */}
             {!isPrecuenta && (
-              <div className="py-1.5 border-b border-dashed border-zinc-400 text-[9px] space-y-0.5 text-zinc-600">
+              <div className="pb-2 border-b border-dashed border-[#8c867a] text-[11px] space-y-0.5 text-[#43464c]">
                 <div className="flex justify-between font-semibold">
-                  <span>Método de Pago:</span>
-                  <span className="uppercase text-zinc-900">{order.paymentMethod || 'Efectivo'}</span>
+                  <span>Medio de pago:</span>
+                  <span className="uppercase text-[#18191b]">{order.paymentMethod || 'Efectivo'}</span>
                 </div>
                 {order.paymentDetails?.cashTendered && (
                   <>
                     <div className="flex justify-between">
-                      <span>Abonó con:</span>
+                      <span>Recibido:</span>
                       <span>${Number(order.paymentDetails.cashTendered).toLocaleString('es-AR')}</span>
                     </div>
-                    <div className="flex justify-between font-bold text-zinc-900">
+                    <div className="flex justify-between font-bold text-[#18191b]">
                       <span>Vuelto:</span>
                       <span>${Number(order.paymentDetails.changeDue || 0).toLocaleString('es-AR')}</span>
                     </div>
@@ -146,32 +156,33 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
               </div>
             )}
 
-            {/* Footer */}
-            <div className="text-center pt-2 text-[9px] text-zinc-500">
+            <div className="text-center pt-1 text-[11px] text-[#43464c]">
               {isPrecuenta ? (
                 <>
-                  <p className="font-bold text-zinc-800">DOCUMENTO NO VÁLIDO COMO FACTURA</p>
-                  <p>Solicite su ticket fiscal en caja.</p>
+                  <p className="font-bold text-[#18191b]">NO VÁLIDO COMO FACTURA</p>
+                  <p>Pedí tu comprobante fiscal en caja.</p>
                 </>
               ) : (
-                <p className="font-bold text-zinc-800">GRACIAS POR SU VISITA</p>
+                <p className="font-bold text-[#18191b]">GRACIAS POR VENIR</p>
               )}
             </div>
           </div>
         </div>
 
         {/* Modal actions */}
-        <div className="p-3 border-t border-[#27272a] bg-[#09090b] flex items-center gap-2">
+        <div className="p-3 border-t border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center gap-2">
           <button
+            type="button"
             onClick={handlePrint}
-            className="flex-1 flex items-center justify-center gap-1.5 py-1.5 px-3 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs transition-all"
+            className="pos-btn-primary flex-1"
           >
             <i className="fa-solid fa-print text-xs" aria-hidden="true"></i>
             <span>Imprimir</span>
           </button>
           <button
+            type="button"
             onClick={onClose}
-            className="py-1.5 px-4 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 font-mono text-xs border border-[#27272a] transition-colors"
+            className="pos-btn-secondary px-5"
           >
             Cerrar
           </button>

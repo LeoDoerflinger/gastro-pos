@@ -1,26 +1,35 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function ArqueoCaja() {
   const { activeShift, orders, currentUser, showToast, refreshData } = useApp();
 
-  // State for opening new shift
   const [initialCashInput, setInitialCashInput] = useState('45000');
-  
-  // State for adding movement
+
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
-  const [movementType, setMovementType] = useState('egreso'); // 'ingreso' | 'egreso'
+  const [movementType, setMovementType] = useState('egreso');
   const [movementAmount, setMovementAmount] = useState('');
   const [movementReason, setMovementReason] = useState('');
 
-  // State for blind count / closing shift
   const [isClosingModalOpen, setIsClosingModalOpen] = useState(false);
   const [actualCashCount, setActualCashCount] = useState('');
   const [closingNotes, setClosingNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
 
-  // Calculate sales for active shift
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setIsMovementModalOpen(false);
+        setIsClosingModalOpen(false);
+      }
+    };
+    if (isMovementModalOpen || isClosingModalOpen) {
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
+  }, [isMovementModalOpen, isClosingModalOpen]);
+
   const shiftStart = activeShift ? new Date(activeShift.openedAt).getTime() : 0;
   const closedShiftOrders = orders.filter(
     o => o.status === 'cobrado' && new Date(o.closedAt || o.createdAt).getTime() >= shiftStart
@@ -42,7 +51,6 @@ export default function ArqueoCaja() {
 
   const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
 
-  // Movements totals
   const totalIngresos = (activeShift?.movements || [])
     .filter(m => m.type === 'ingreso')
     .reduce((a, m) => a + m.amount, 0);
@@ -51,7 +59,6 @@ export default function ArqueoCaja() {
     .filter(m => m.type === 'egreso')
     .reduce((a, m) => a + m.amount, 0);
 
-  // Theoretical expected cash
   const expectedCash = activeShift
     ? (activeShift.initialCash || 0) + salesByMethod.efectivo + totalIngresos - totalEgresos
     : 0;
@@ -59,10 +66,9 @@ export default function ArqueoCaja() {
   const countNum = Number(actualCashCount) || 0;
   const cashDifference = actualCashCount !== '' ? countNum - expectedCash : 0;
 
-  // Handlers
   const handleOpenShift = async () => {
     if (!initialCashInput || Number(initialCashInput) < 0) {
-      showToast('Ingresa un monto inicial válido', 'error');
+      showToast('Ingresá un fondo inicial válido', 'error');
       return;
     }
     setSubmitting(true);
@@ -72,18 +78,18 @@ export default function ArqueoCaja() {
         cashierName: currentUser.name,
         initialCash: Number(initialCashInput)
       });
-      showToast('Caja abierta exitosamente');
+      showToast('Turno de caja abierto');
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error al abrir caja', 'error');
+      showToast(err.message || 'No se pudo abrir la caja', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   const handleAddMovement = async () => {
-    if (!movementAmount || Number(movementAmount) <= 0 || !movementReason) {
-      showToast('Completa el monto y el motivo del movimiento', 'error');
+    if (!movementAmount || Number(movementAmount) <= 0 || !movementReason.trim()) {
+      showToast('Completá el monto y el concepto del movimiento', 'error');
       return;
     }
     setSubmitting(true);
@@ -94,13 +100,13 @@ export default function ArqueoCaja() {
         reason: movementReason,
         user: currentUser.name
       });
-      showToast(`Movimiento de ${movementType.toUpperCase()} registrado`);
+      showToast(`Movimiento de ${movementType} guardado`);
       setIsMovementModalOpen(false);
       setMovementAmount('');
       setMovementReason('');
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error registrando movimiento', 'error');
+      showToast(err.message || 'No se pudo registrar el movimiento', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -108,7 +114,7 @@ export default function ArqueoCaja() {
 
   const handleCloseShift = async () => {
     if (actualCashCount === '') {
-      showToast('Ingresa el monto de efectivo contado en la gaveta', 'error');
+      showToast('Ingresá el efectivo físico contado en la gaveta', 'error');
       return;
     }
     setSubmitting(true);
@@ -118,204 +124,233 @@ export default function ArqueoCaja() {
         notes: closingNotes,
         closedBy: currentUser.name
       });
-      showToast('Turno de caja cerrado y arqueado correctamente');
+      showToast('Turno arqueado y cerrado');
       setIsClosingModalOpen(false);
       setActualCashCount('');
       setClosingNotes('');
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error al cerrar caja', 'error');
+      showToast(err.message || 'No se pudo cerrar la caja', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-3">
-      {/* Shift State Header */}
-      <div className="bg-[#121215] p-3 rounded border border-[#27272a] flex flex-col md:flex-row md:items-center justify-between gap-3">
+    <section className="space-y-5" aria-label="Arqueo y control de caja">
+      {/* Shift Status Bar */}
+      <div className="pos-panel p-4 flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
-          <div className="flex items-center gap-2">
-            <span className={`w-2 h-2 rounded-xs ${activeShift ? 'bg-emerald-500' : 'bg-rose-500'}`} aria-hidden="true"></span>
-            <h2 className="text-xs font-mono font-bold uppercase tracking-wider text-zinc-100 flex items-center gap-2">
-              <span>{activeShift ? `Turno de Caja #${activeShift.shiftNumber} (Abierto)` : 'Caja Cerrada'}</span>
+          <div className="flex items-center gap-2.5">
+            <span
+              className={`w-2.5 h-2.5 rounded-full ${
+                activeShift ? 'bg-[var(--status-open-bar)]' : 'bg-[var(--status-danger-bar)]'
+              }`}
+              aria-hidden="true"
+            ></span>
+            <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+              {activeShift ? `Turno #${activeShift.shiftNumber} en curso` : 'Caja cerrada'}
             </h2>
           </div>
           {activeShift ? (
-            <p className="text-[11px] text-zinc-400 mt-1 font-mono">
-              Responsable: <strong className="text-zinc-200">{activeShift.cashierName}</strong> · Apertura: <span className="tabular-nums">{new Date(activeShift.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+              Responsable: <strong className="text-[var(--text-primary)]">{activeShift.cashierName}</strong> · Abierto a las{' '}
+              <span className="font-mono">
+                {new Date(activeShift.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+              </span>
             </p>
           ) : (
-            <p className="text-[11px] text-zinc-500 mt-1">
-              No hay ningún turno abierto actualmente en este punto de venta.
+            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
+              Definí el fondo inicial en efectivo para habilitar cobros y movimientos del turno.
             </p>
           )}
         </div>
 
         {activeShift ? (
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2.5">
             <button
+              type="button"
               onClick={() => setIsMovementModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-200 text-xs font-mono font-semibold border border-[#27272a] flex items-center gap-1.5 transition-colors"
+              className="pos-btn-secondary"
             >
-              <i className="fa-solid fa-plus text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Registrar Movimiento</span>
+              <i className="fa-solid fa-arrows-up-down text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+              <span>Registrar ingreso / gasto</span>
             </button>
 
             <button
+              type="button"
               onClick={() => setIsClosingModalOpen(true)}
-              className="px-2.5 py-1.5 rounded-sm bg-zinc-800 hover:bg-zinc-700 text-zinc-100 text-xs font-mono font-semibold border border-zinc-700 flex items-center gap-1.5 transition-colors"
+              className="pos-btn-primary"
             >
-              <i className="fa-solid fa-lock text-zinc-300 text-xs" aria-hidden="true"></i>
-              <span>Arqueo y Cierre</span>
+              <i className="fa-solid fa-lock text-xs" aria-hidden="true"></i>
+              <span>Arqueo y cierre</span>
             </button>
           </div>
         ) : (
-          <div className="flex items-center gap-2">
-            <div className="relative">
-              <span className="absolute left-2.5 top-1.5 text-xs text-zinc-500 font-mono">$</span>
+          <div className="flex flex-wrap items-end gap-2.5">
+            <div className="w-44">
+              <label htmlFor="initial-cash-input" className="pos-label">
+                Fondo inicial ($):
+              </label>
               <input
+                id="initial-cash-input"
                 type="number"
-                placeholder="Fondo inicial"
+                placeholder="45000"
                 value={initialCashInput}
                 onChange={(e) => setInitialCashInput(e.target.value)}
-                className="bg-[#09090b] border border-[#27272a] rounded-sm pl-6 pr-2.5 py-1 text-xs font-mono font-bold text-zinc-100 w-32 focus:outline-none focus:border-zinc-500 tabular-nums"
+                className="pos-input font-mono font-bold"
               />
             </div>
             <button
+              type="button"
               disabled={submitting}
               onClick={handleOpenShift}
-              className="px-3 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold transition-all flex items-center gap-1.5"
+              className="pos-btn-primary"
             >
               <i className="fa-solid fa-lock-open text-xs" aria-hidden="true"></i>
-              <span>Abrir Turno</span>
+              <span>Abrir turno</span>
             </button>
           </div>
         )}
       </div>
 
-      {/* Main Shift Analytics Grid */}
+      {/* 3-Column Financial Ledger */}
       {activeShift && (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-          {/* Card 1: Cash in Drawer Overview */}
-          <div className="bg-[#121215] p-3 rounded border border-[#27272a] space-y-2.5">
-            <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-money-bill-wave text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Efectivo en Gaveta</span>
-            </h3>
-
-            <div className="space-y-1.5 text-xs font-mono tabular-nums">
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span>Fondo Inicial:</span>
-                <span className="font-mono text-zinc-200 font-semibold tabular-nums">${(activeShift.initialCash || 0).toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span>+ Ventas Efectivo:</span>
-                <span className="font-mono text-emerald-400 font-semibold tabular-nums">+${salesByMethod.efectivo.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span>+ Ingresos:</span>
-                <span className="font-mono text-sky-400 font-semibold tabular-nums">+${totalIngresos.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span>- Egresos (Gastos):</span>
-                <span className="font-mono text-rose-400 font-semibold tabular-nums">-${totalEgresos.toLocaleString('es-AR')}</span>
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+          {/* Column 1: Physical Cash Equation */}
+          <div className="pos-panel flex flex-col justify-between overflow-hidden">
+            <div>
+              <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center gap-2">
+                <i className="fa-solid fa-money-bill-wave text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
+                <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Efectivo en gaveta
+                </h3>
               </div>
 
-              <div className="pt-2 border-t border-[#27272a] flex justify-between items-center font-sans">
-                <span className="font-bold text-zinc-300 text-[11px] uppercase tracking-wider font-mono">Efectivo Esperado:</span>
-                <span className="font-mono font-bold text-sm text-zinc-100 tabular-nums">
-                  ${expectedCash.toLocaleString('es-AR')}
-                </span>
+              <div className="divide-y divide-[var(--border-subtle)] px-4 text-sm">
+                <div className="py-3 flex justify-between text-[var(--text-secondary)]">
+                  <span>Fondo inicial</span>
+                  <span className="font-mono font-semibold text-[var(--text-primary)]">
+                    ${(activeShift.initialCash || 0).toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div className="py-3 flex justify-between text-[var(--text-secondary)]">
+                  <span>Cobros en efectivo</span>
+                  <span className="font-mono font-semibold text-[var(--status-open-fg)]">
+                    +${salesByMethod.efectivo.toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div className="py-3 flex justify-between text-[var(--text-secondary)]">
+                  <span>Ingresos manuales</span>
+                  <span className="font-mono font-semibold text-[var(--text-primary)]">
+                    +${totalIngresos.toLocaleString('es-AR')}
+                  </span>
+                </div>
+                <div className="py-3 flex justify-between text-[var(--text-secondary)]">
+                  <span>Gastos / retiros</span>
+                  <span className="font-mono font-semibold text-[var(--status-danger-fg)]">
+                    -${totalEgresos.toLocaleString('es-AR')}
+                  </span>
+                </div>
               </div>
+            </div>
+
+            <div className="px-4 py-3.5 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex justify-between items-center">
+              <span className="text-sm font-bold text-[var(--text-primary)]">Efectivo esperado</span>
+              <span className="font-mono font-bold text-lg text-[var(--text-primary)]">
+                ${expectedCash.toLocaleString('es-AR')}
+              </span>
             </div>
           </div>
 
-          {/* Card 2: Sales by Payment Method */}
-          <div className="bg-[#121215] p-3 rounded border border-[#27272a] space-y-2.5">
-            <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-file-lines text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Ventas del Turno ({closedShiftOrders.length})</span>
-            </h3>
-
-            <div className="space-y-1.5 text-xs font-mono tabular-nums">
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-money-bill-wave text-zinc-500 w-3.5 text-center" aria-hidden="true"></i>
-                  <span>Efectivo:</span>
-                </span>
-                <span className="font-mono text-zinc-200 tabular-nums">${salesByMethod.efectivo.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-credit-card text-zinc-500 w-3.5 text-center" aria-hidden="true"></i>
-                  <span>Tarjeta Débito:</span>
-                </span>
-                <span className="font-mono text-zinc-200 tabular-nums">${salesByMethod.debito.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-credit-card text-zinc-500 w-3.5 text-center" aria-hidden="true"></i>
-                  <span>Tarjeta Crédito:</span>
-                </span>
-                <span className="font-mono text-zinc-200 tabular-nums">${salesByMethod.credito.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-qrcode text-zinc-500 w-3.5 text-center" aria-hidden="true"></i>
-                  <span>Mercado Pago:</span>
-                </span>
-                <span className="font-mono text-zinc-200 tabular-nums">${salesByMethod.mercadopago.toLocaleString('es-AR')}</span>
-              </div>
-              <div className="flex justify-between text-zinc-400 font-sans">
-                <span className="flex items-center gap-1.5">
-                  <i className="fa-solid fa-building-columns text-zinc-500 w-3.5 text-center" aria-hidden="true"></i>
-                  <span>Transferencias:</span>
-                </span>
-                <span className="font-mono text-zinc-200 tabular-nums">${salesByMethod.transferencia.toLocaleString('es-AR')}</span>
+          {/* Column 2: Sales by Payment Method */}
+          <div className="pos-panel flex flex-col justify-between overflow-hidden">
+            <div>
+              <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <i className="fa-solid fa-credit-card text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
+                  <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                    Ventas por medio
+                  </h3>
+                </div>
+                <span className="text-xs font-mono text-[var(--text-secondary)]">{closedShiftOrders.length} tickets</span>
               </div>
 
-              <div className="pt-2 border-t border-[#27272a] flex justify-between items-center font-sans">
-                <span className="font-bold text-zinc-300 text-[11px] uppercase tracking-wider font-mono">Total Cobrado:</span>
-                <span className="font-mono font-bold text-sm text-emerald-400 tabular-nums">
-                  ${totalSales.toLocaleString('es-AR')}
-                </span>
+              <div className="divide-y divide-[var(--border-subtle)] px-4 text-sm">
+                {[
+                  { key: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
+                  { key: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card' },
+                  { key: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card' },
+                  { key: 'mercadopago', label: 'QR / Mercado Pago', icon: 'fa-qrcode' },
+                  { key: 'transferencia', label: 'Transferencia', icon: 'fa-building-columns' }
+                ].map(item => (
+                  <div key={item.key} className="py-2.5 flex justify-between items-center text-[var(--text-secondary)]">
+                    <span className="flex items-center gap-2">
+                      <i className={`fa-solid ${item.icon} text-xs text-[var(--text-muted)] w-4 text-center`} aria-hidden="true"></i>
+                      <span>{item.label}</span>
+                    </span>
+                    <span className="font-mono font-semibold text-[var(--text-primary)]">
+                      ${salesByMethod[item.key].toLocaleString('es-AR')}
+                    </span>
+                  </div>
+                ))}
               </div>
+            </div>
+
+            <div className="px-4 py-3.5 bg-[var(--bg-elevated)] border-t border-[var(--border-subtle)] flex justify-between items-center">
+              <span className="text-sm font-bold text-[var(--text-primary)]">Total facturado</span>
+              <span className="font-mono font-bold text-lg text-[var(--status-open-fg)]">
+                ${totalSales.toLocaleString('es-AR')}
+              </span>
             </div>
           </div>
 
-          {/* Card 3: Shift Movements List */}
-          <div className="bg-[#121215] p-3 rounded border border-[#27272a] space-y-2 flex flex-col">
-            <div className="flex items-center justify-between border-b border-[#27272a] pb-2">
-              <h3 className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider flex items-center gap-2">
-                <i className="fa-solid fa-clock-rotate-left text-zinc-400 text-xs" aria-hidden="true"></i>
-                <span>Movimientos ({activeShift.movements?.length || 0})</span>
-              </h3>
+          {/* Column 3: Manual Cash Movements */}
+          <div className="pos-panel flex flex-col overflow-hidden">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-clock-rotate-left text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
+                <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Movimientos ({activeShift.movements?.length || 0})
+                </h3>
+              </div>
               <button
+                type="button"
                 onClick={() => setIsMovementModalOpen(true)}
-                className="text-[11px] text-zinc-300 hover:text-white font-mono uppercase tracking-wider"
+                className="pos-btn-ghost text-xs px-2.5"
               >
-                + Nuevo
+                + Cargar
               </button>
             </div>
 
-            <div className="flex-1 overflow-y-auto space-y-1.5 max-h-48 text-xs pr-0.5">
+            <div className="flex-1 divide-y divide-[var(--border-subtle)] overflow-y-auto max-h-64">
               {(activeShift.movements || []).length === 0 ? (
-                <p className="text-[11px] text-zinc-500 italic text-center py-6 font-mono">Sin egresos ni ingresos registrados</p>
+                <div className="p-8 text-center space-y-1">
+                  <p className="text-sm font-medium text-[var(--text-secondary)]">Sin movimientos manuales</p>
+                  <p className="text-xs text-[var(--text-muted)]">
+                    Registrá acá retiros, pagos a proveedores en efectivo o refuerzos de cambio.
+                  </p>
+                </div>
               ) : (
                 activeShift.movements.map(mov => (
-                  <div key={mov.id} className="p-2 rounded-sm bg-[#09090b] border border-[#27272a] flex items-start justify-between gap-2">
-                    <div className="overflow-hidden">
-                      <div className="flex items-center gap-1.5 font-bold">
-                        <span className={`text-[10px] uppercase font-mono font-bold ${mov.type === 'ingreso' ? 'text-sky-400' : 'text-rose-400'}`}>
+                  <div key={mov.id} className="px-4 py-3 flex items-start justify-between gap-3">
+                    <div className="min-w-0">
+                      <div className="flex items-center gap-2">
+                        <span className={`pos-badge ${mov.type === 'ingreso' ? 'pos-badge-open' : 'pos-badge-danger'}`}>
                           {mov.type === 'ingreso' ? 'Ingreso' : 'Egreso'}
                         </span>
-                        <span className="text-[10px] text-zinc-500 font-mono tabular-nums">· {new Date(mov.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        <span className="text-xs text-[var(--text-muted)] font-mono">
+                          {new Date(mov.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        </span>
                       </div>
-                      <p className="text-[11px] text-zinc-300 truncate mt-0.5">{mov.reason}</p>
+                      <p className="text-sm text-[var(--text-primary)] truncate mt-1">{mov.reason}</p>
                     </div>
 
-                    <span className={`font-mono font-bold shrink-0 tabular-nums ${mov.type === 'ingreso' ? 'text-sky-400' : 'text-rose-400'}`}>
+                    <span
+                      className={`font-mono font-bold text-sm shrink-0 ${
+                        mov.type === 'ingreso' ? 'text-[var(--status-open-fg)]' : 'text-[var(--status-danger-fg)]'
+                      }`}
+                    >
                       {mov.type === 'ingreso' ? '+' : '-'}${mov.amount.toLocaleString('es-AR')}
                     </span>
                   </div>
@@ -326,68 +361,77 @@ export default function ArqueoCaja() {
         </div>
       )}
 
-      {/* Movement Modal */}
+      {/* Register Movement Modal */}
       {isMovementModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-          <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-sm p-4 space-y-3 shadow-2xl">
-            <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider flex items-center gap-2">
-              <i className="fa-solid fa-arrows-up-down text-zinc-400 text-xs" aria-hidden="true"></i>
-              <span>Registrar Movimiento de Caja</span>
-            </h3>
-            
-            <div className="grid grid-cols-2 border border-[#27272a] divide-x divide-[#27272a] rounded-sm overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="movement-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="movement-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                Registrar movimiento de caja
+              </h3>
               <button
                 type="button"
+                onClick={() => setIsMovementModalOpen(false)}
+                aria-label="Cerrar ventana"
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                aria-pressed={movementType === 'egreso'}
                 onClick={() => setMovementType('egreso')}
-                className={`p-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                  movementType === 'egreso'
-                    ? 'bg-zinc-800 text-zinc-100 font-bold'
-                    : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-                }`}
+                className={movementType === 'egreso' ? 'pos-btn-danger' : 'pos-btn-secondary'}
               >
                 Egreso / Gasto
               </button>
               <button
                 type="button"
+                aria-pressed={movementType === 'ingreso'}
                 onClick={() => setMovementType('ingreso')}
-                className={`p-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                  movementType === 'ingreso'
-                    ? 'bg-zinc-800 text-zinc-100 font-bold'
-                    : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-                }`}
+                className={movementType === 'ingreso' ? 'pos-btn-primary' : 'pos-btn-secondary'}
               >
-                Ingreso / Refuerzo
+                Ingreso / Cambio
               </button>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Monto ($):</label>
+              <label htmlFor="movement-amount-input" className="pos-label">Importe ($):</label>
               <input
+                id="movement-amount-input"
                 type="number"
                 placeholder="0"
                 value={movementAmount}
                 onChange={(e) => setMovementAmount(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-500 tabular-nums"
-                autoFocus
+                className="pos-input font-mono font-bold"
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Motivo / Concepto:</label>
+              <label htmlFor="movement-reason-input" className="pos-label">Concepto:</label>
               <input
+                id="movement-reason-input"
                 type="text"
-                placeholder="Ej: Compra de insumo menor, propina cadete"
+                placeholder="Ej. Compra de hielo, adelanto cadete..."
                 value={movementReason}
                 onChange={(e) => setMovementReason(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
               />
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-[#27272a]">
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setIsMovementModalOpen(false)}
-                className="flex-1 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                className="pos-btn-secondary flex-1"
               >
                 Cancelar
               </button>
@@ -395,9 +439,9 @@ export default function ArqueoCaja() {
                 type="button"
                 disabled={submitting}
                 onClick={handleAddMovement}
-                className="flex-1 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold transition-all"
+                className="pos-btn-primary flex-1"
               >
-                Guardar
+                Guardar movimiento
               </button>
             </div>
           </div>
@@ -406,68 +450,89 @@ export default function ArqueoCaja() {
 
       {/* Blind Count / Close Shift Modal */}
       {isClosingModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-          <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-md p-4 space-y-3 shadow-2xl">
-            <div className="flex items-center gap-2 border-b border-[#27272a] pb-2">
-              <i className="fa-solid fa-lock text-zinc-300 text-xs" aria-hidden="true"></i>
-              <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider">Arqueo Ciego y Cierre de Caja</h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="closing-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="closing-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                Arqueo y cierre de turno
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsClosingModalOpen(false)}
+                aria-label="Cerrar ventana"
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
             </div>
 
-            <p className="text-xs text-zinc-400">
-              Cuenta el efectivo físico total que se encuentra en la gaveta e ingrésalo para cotejar contra el sistema.
+            <p className="text-sm text-[var(--text-secondary)]">
+              Contá los billetes físicos en la gaveta e ingresá el total para compararlo contra el saldo esperado.
             </p>
 
-            <div className="bg-[#09090b] p-3 rounded-sm border border-[#27272a] space-y-1.5">
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block">Efectivo Contado en Gaveta ($):</label>
+            <div>
+              <label htmlFor="actual-cash-input" className="pos-label">
+                Efectivo físico contado ($):
+              </label>
               <input
+                id="actual-cash-input"
                 type="number"
                 placeholder="0"
                 value={actualCashCount}
                 onChange={(e) => setActualCashCount(e.target.value)}
-                className="w-full bg-[#18181c] border border-[#27272a] rounded-sm p-2 text-sm font-mono font-bold text-zinc-100 focus:outline-none focus:border-zinc-500 tabular-nums"
-                autoFocus
+                className="pos-input font-mono font-bold text-base"
               />
             </div>
 
-            {/* Live Difference Result */}
             {actualCashCount !== '' && (
-              <div className="p-3 rounded-sm border border-[#27272a] bg-[#09090b] space-y-1 font-mono text-xs tabular-nums">
-                <div className="flex justify-between text-zinc-400">
-                  <span>Efectivo Esperado:</span>
-                  <span className="font-bold text-zinc-200 tabular-nums">${expectedCash.toLocaleString('es-AR')}</span>
+              <div className="pos-subpanel p-3.5 space-y-2 text-sm">
+                <div className="flex justify-between text-[var(--text-secondary)]">
+                  <span>Efectivo esperado</span>
+                  <span className="font-mono font-bold text-[var(--text-primary)]">
+                    ${expectedCash.toLocaleString('es-AR')}
+                  </span>
                 </div>
-                <div className="flex justify-between font-bold pt-1 border-t border-[#27272a]">
-                  <span className="text-zinc-300">Diferencia:</span>
-                  <span className={cashDifference === 0 ? 'text-emerald-400' : cashDifference > 0 ? 'text-sky-400' : 'text-rose-400'}>
-                    {cashDifference === 0 ? (
-                      <span className="flex items-center gap-1.5">
-                        <i className="fa-solid fa-check text-emerald-400" aria-hidden="true"></i>
-                        <span>Caja cuadrada exacta</span>
-                      </span>
-                    ) : (
-                      `${cashDifference > 0 ? '+ Sobrante' : '- Faltante'}: $${Math.abs(cashDifference).toLocaleString('es-AR')}`
-                    )}
+                <div className="flex justify-between font-bold pt-2 border-t border-[var(--border-subtle)]">
+                  <span>Diferencia</span>
+                  <span
+                    className={`font-mono ${
+                      cashDifference === 0
+                        ? 'text-[var(--status-open-fg)]'
+                        : cashDifference > 0
+                        ? 'text-[var(--accent-brand)]'
+                        : 'text-[var(--status-danger-fg)]'
+                    }`}
+                  >
+                    {cashDifference === 0
+                      ? 'Caja cuadrada ($0)'
+                      : `${cashDifference > 0 ? 'Sobrante +' : 'Faltante -'}$${Math.abs(cashDifference).toLocaleString('es-AR')}`}
                   </span>
                 </div>
               </div>
             )}
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Observaciones:</label>
+              <label htmlFor="closing-notes-input" className="pos-label">Observaciones del turno:</label>
               <textarea
+                id="closing-notes-input"
                 rows="2"
-                placeholder="Novedades o aclaraciones del arqueo..."
+                placeholder="Aclaraciones opcionales sobre el cierre..."
                 value={closingNotes}
                 onChange={(e) => setClosingNotes(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
               />
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-[#27272a]">
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setIsClosingModalOpen(false)}
-                className="flex-1 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                className="pos-btn-secondary flex-1"
               >
                 Volver
               </button>
@@ -475,14 +540,15 @@ export default function ArqueoCaja() {
                 type="button"
                 disabled={submitting || actualCashCount === ''}
                 onClick={handleCloseShift}
-                className="flex-1 py-1.5 rounded-sm bg-rose-600 hover:bg-rose-500 text-white text-xs font-mono font-bold transition-colors disabled:opacity-50"
+                className="pos-btn-danger flex-1"
               >
-                Confirmar Cierre
+                <i className="fa-solid fa-lock text-xs" aria-hidden="true"></i>
+                <span>Cerrar turno</span>
               </button>
             </div>
           </div>
         </div>
       )}
-    </div>
+    </section>
   );
 }

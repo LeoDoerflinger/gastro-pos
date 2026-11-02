@@ -1,21 +1,19 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function StockControl() {
   const { ingredients, stockLog, currentUser, showToast, refreshData } = useApp();
 
-  const [activeTab, setActiveTab] = useState('inventory'); // 'inventory' | 'audit'
+  const [activeTab, setActiveTab] = useState('inventory');
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
 
-  // Adjust stock modal
   const [selectedIngForAdjust, setSelectedIngForAdjust] = useState(null);
   const [adjustQty, setAdjustQty] = useState('');
-  const [adjustType, setAdjustType] = useState('merma'); // 'merma' | 'ingreso' | 'recuento'
+  const [adjustType, setAdjustType] = useState('merma');
   const [adjustReason, setAdjustReason] = useState('');
 
-  // New Ingredient modal
   const [isNewIngModalOpen, setIsNewIngModalOpen] = useState(false);
   const [newIngName, setNewIngName] = useState('');
   const [newIngCategory, setNewIngCategory] = useState('Lácteos');
@@ -25,6 +23,19 @@ export default function StockControl() {
   const [newIngCost, setNewIngCost] = useState('5000');
   const [submitting, setSubmitting] = useState(false);
 
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setSelectedIngForAdjust(null);
+        setIsNewIngModalOpen(false);
+      }
+    };
+    if (selectedIngForAdjust || isNewIngModalOpen) {
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
+  }, [selectedIngForAdjust, isNewIngModalOpen]);
+
   const categories = ['Todas', ...Array.from(new Set(ingredients.map(i => i.category || 'Almacén')))];
 
   const filteredIngredients = ingredients.filter(ing => {
@@ -33,9 +44,8 @@ export default function StockControl() {
     return matchesCat && matchesSearch;
   });
 
-  // KPI Calculations
   const lowStockCount = ingredients.filter(i => i.stock <= i.minStock).length;
-  const totalValuation = ingredients.reduce((sum, i) => sum + (i.stock * (i.costPerUnit || 0)), 0);
+  const totalValuation = ingredients.reduce((sum, i) => sum + i.stock * (i.costPerUnit || 0), 0);
 
   const handleOpenAdjust = (ing) => {
     setSelectedIngForAdjust(ing);
@@ -46,7 +56,7 @@ export default function StockControl() {
 
   const handleConfirmAdjust = async () => {
     if (!adjustQty || isNaN(Number(adjustQty))) {
-      showToast('Ingresa una cantidad válida', 'error');
+      showToast('Ingresá una cantidad numérica válida', 'error');
       return;
     }
     setSubmitting(true);
@@ -54,7 +64,7 @@ export default function StockControl() {
       const delta = adjustType === 'merma' ? -Math.abs(Number(adjustQty)) : Math.abs(Number(adjustQty));
       await api.adjustStock(selectedIngForAdjust.id, {
         quantityChange: delta,
-        reason: adjustReason || (adjustType === 'merma' ? 'Merma o desperdicio' : 'Ajuste manual'),
+        reason: adjustReason || (adjustType === 'merma' ? 'Merma o desperdicio' : 'Recuento manual'),
         user: currentUser.name,
         type: adjustType === 'merma' ? 'merma' : 'ajuste_manual'
       });
@@ -63,7 +73,7 @@ export default function StockControl() {
       setSelectedIngForAdjust(null);
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error ajustando stock', 'error');
+      showToast(err.message || 'No se pudo ajustar el stock', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -72,7 +82,7 @@ export default function StockControl() {
   const handleCreateIngredient = async (e) => {
     e.preventDefault();
     if (!newIngName.trim()) {
-      showToast('Ingresa el nombre del insumo', 'error');
+      showToast('Ingresá el nombre del insumo', 'error');
       return;
     }
     setSubmitting(true);
@@ -85,234 +95,245 @@ export default function StockControl() {
         minStock: Number(newIngMinStock || 0),
         costPerUnit: Number(newIngCost || 0)
       });
-      showToast(`Insumo "${newIngName}" agregado al inventario`);
+      showToast(`Insumo "${newIngName}" dado de alta`);
       setIsNewIngModalOpen(false);
       setNewIngName('');
       await refreshData();
     } catch (err) {
-      showToast(err.message || 'Error agregando insumo', 'error');
+      showToast(err.message || 'No se pudo crear el insumo', 'error');
     } finally {
       setSubmitting(false);
     }
   };
 
   return (
-    <div className="space-y-3">
-      {/* Top Stats Banner */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Insumos Controlados</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl font-mono font-bold text-zinc-100 tabular-nums">{ingredients.length} items</span>
-            <i className="fa-solid fa-boxes-stacked text-zinc-400 text-base" aria-hidden="true"></i>
-          </div>
+    <section className="space-y-5" aria-labelledby="stock-control-heading">
+      <div className="flex items-center justify-between">
+        <h2 id="stock-control-heading" className="font-display font-bold text-base text-[var(--text-primary)]">
+          Resumen de depósito e insumos
+        </h2>
+      </div>
+      {/* Unified Summary Strip */}
+      <div className="pos-panel grid grid-cols-1 sm:grid-cols-3 divide-y sm:divide-y-0 sm:divide-x divide-[var(--border-subtle)] overflow-hidden">
+        <div className="p-4 space-y-0.5">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Insumos registrados</span>
+          <span className="font-display font-extrabold text-2xl font-mono text-[var(--text-primary)]">
+            {ingredients.length}
+          </span>
         </div>
 
-        <div className={`p-3.5 rounded border ${
-          lowStockCount > 0 ? 'bg-[#121215] border-l-2 border-l-rose-500 border-[#27272a]' : 'bg-[#121215] border-[#27272a]'
-        }`}>
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Stock Crítico</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className={`text-xl font-mono font-bold tabular-nums ${lowStockCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`}>
-              {lowStockCount} {lowStockCount === 1 ? 'insumo bajo' : 'insumos bajos'}
-            </span>
-            <i className={`fa-solid fa-triangle-exclamation text-base ${lowStockCount > 0 ? 'text-rose-400' : 'text-emerald-400'}`} aria-hidden="true"></i>
-          </div>
+        <div className="p-4 space-y-0.5">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Alertas de reposición</span>
+          <span
+            className={`font-display font-extrabold text-2xl font-mono ${
+              lowStockCount > 0 ? 'text-[var(--status-danger-fg)]' : 'text-[var(--status-open-fg)]'
+            }`}
+          >
+            {lowStockCount} {lowStockCount === 1 ? 'crítico' : 'críticos'}
+          </span>
         </div>
 
-        <div className="bg-[#121215] p-3.5 rounded border border-[#27272a]">
-          <span className="text-[10px] text-zinc-400 font-mono font-bold uppercase tracking-wider block">Valuación de Mercadería</span>
-          <div className="flex items-center justify-between mt-1">
-            <span className="text-xl font-mono font-bold text-zinc-100 tabular-nums">
-              ${Math.round(totalValuation).toLocaleString('es-AR')}
-            </span>
-            <i className="fa-solid fa-chart-line text-emerald-400 text-base" aria-hidden="true"></i>
-          </div>
+        <div className="p-4 space-y-0.5">
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Valuación en depósito</span>
+          <span className="font-display font-extrabold text-2xl font-mono text-[var(--text-primary)]">
+            ${Math.round(totalValuation).toLocaleString('es-AR')}
+          </span>
         </div>
       </div>
 
-      {/* Control Header & Tabs */}
-      <div className="bg-[#121215] p-3 rounded border border-[#27272a] space-y-3">
+      {/* Controls & View Switcher */}
+      <div className="pb-4 border-b border-[var(--border-subtle)] space-y-3">
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-          <div className="inline-flex border border-[#27272a] divide-x divide-[#27272a] rounded-sm overflow-hidden">
+          <div className="pos-segment-group self-start" role="group" aria-label="Vistas de inventario">
             <button
+              type="button"
+              aria-pressed={activeTab === 'inventory'}
               onClick={() => setActiveTab('inventory')}
-              className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors ${
-                activeTab === 'inventory'
-                  ? 'bg-zinc-800 text-zinc-100 font-bold'
-                  : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-              }`}
+              className="pos-segment-btn"
             >
-              Inventario ({ingredients.length})
+              <span>Existencias ({ingredients.length})</span>
             </button>
             <button
+              type="button"
+              aria-pressed={activeTab === 'audit'}
               onClick={() => setActiveTab('audit')}
-              className={`px-3 py-1.5 text-xs font-mono uppercase tracking-wider transition-colors flex items-center gap-1.5 ${
-                activeTab === 'audit'
-                  ? 'bg-zinc-800 text-zinc-100 font-bold'
-                  : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-              }`}
+              className="pos-segment-btn"
             >
               <i className="fa-solid fa-clock-rotate-left text-xs" aria-hidden="true"></i>
-              <span>Auditoría ({stockLog.length})</span>
+              <span>Historial ({stockLog.length})</span>
             </button>
           </div>
 
           {activeTab === 'inventory' && (
             <button
+              type="button"
               onClick={() => setIsNewIngModalOpen(true)}
-              className="px-3 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 font-mono font-bold text-xs flex items-center gap-1.5 self-start sm:self-auto transition-all"
+              className="pos-btn-primary self-start sm:self-auto"
             >
               <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
-              <span>Nuevo Insumo</span>
+              <span>Nuevo insumo</span>
             </button>
           )}
         </div>
 
-        {/* Filters if in inventory tab */}
         {activeTab === 'inventory' && (
-          <div className="pt-2 border-t border-[#27272a] flex flex-col sm:flex-row items-stretch sm:items-center justify-between gap-2">
-            <div className="inline-flex border border-[#27272a] divide-x divide-[#27272a] rounded-sm overflow-x-auto no-scrollbar">
-              {categories.map(cat => (
-                <button
-                  key={cat}
-                  onClick={() => setSelectedCategory(cat)}
-                  className={`px-2.5 py-1 text-xs font-mono uppercase tracking-wider whitespace-nowrap transition-colors ${
-                    selectedCategory === cat
-                      ? 'bg-zinc-800 text-zinc-100 font-bold'
-                      : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-                  }`}
-                >
-                  {cat}
-                </button>
-              ))}
+          <div className="flex flex-col lg:flex-row lg:items-center justify-between gap-3">
+            <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5" role="group" aria-label="Filtrar por rubro">
+              {categories.map(cat => {
+                const active = selectedCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    aria-pressed={active}
+                    onClick={() => setSelectedCategory(cat)}
+                    className={`min-h-[44px] px-3.5 rounded text-xs font-semibold whitespace-nowrap border transition-colors ${
+                      active
+                        ? 'bg-[var(--accent-brand-bg)] text-[var(--accent-brand)] border-[var(--accent-brand-border)] font-bold'
+                        : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)] hover:text-[var(--text-primary)]'
+                    }`}
+                  >
+                    {cat}
+                  </button>
+                );
+              })}
             </div>
 
-            <div className="relative min-w-[180px]">
-              <i className="fa-solid fa-magnifying-glass text-zinc-500 absolute left-2.5 top-2.5 text-xs" aria-hidden="true"></i>
-              <input
-                type="text"
-                placeholder="Buscar insumo..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm pl-7 pr-2.5 py-1 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
-              />
+            <div className="flex items-center gap-2 w-full lg:w-72 shrink-0">
+              <label htmlFor="stock-search-input" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">
+                Buscar:
+              </label>
+              <div className="relative flex-1">
+                <i
+                  className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
+                  aria-hidden="true"
+                ></i>
+                <input
+                  id="stock-search-input"
+                  type="search"
+                  placeholder="Materia prima..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pos-input pl-9"
+                />
+              </div>
             </div>
           </div>
         )}
       </div>
 
-      {/* Main Tab Content */}
+      {/* Main Content */}
       {activeTab === 'inventory' ? (
-        <div className="bg-[#121215] rounded border border-[#27272a] overflow-x-auto">
-          <table className="w-full text-left text-xs border-collapse">
+        <div className="pos-panel overflow-x-auto">
+          <table className="w-full text-left text-sm border-collapse">
             <thead>
-              <tr className="bg-[#09090b] border-b border-[#27272a] text-zinc-400 uppercase text-[10px] tracking-wider font-mono font-bold">
-                <th className="py-2.5 px-3">Insumo / Materia Prima</th>
-                <th className="py-2.5 px-3">Categoría</th>
-                <th className="py-2.5 px-3">Stock Actual</th>
-                <th className="py-2.5 px-3">Stock Mínimo</th>
-                <th className="py-2.5 px-3">Estado</th>
-                <th className="py-2.5 px-3 text-right">Costo Unitario</th>
-                <th className="py-2.5 px-3 text-right">Valuación</th>
-                <th className="py-2.5 px-3 text-center">Acciones</th>
+              <tr className="bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-[var(--text-secondary)] text-xs font-semibold">
+                <th className="py-3 px-4">Materia prima</th>
+                <th className="py-3 px-4">Rubro</th>
+                <th className="py-3 px-4">Disponible</th>
+                <th className="py-3 px-4">Mínimo</th>
+                <th className="py-3 px-4">Estado</th>
+                <th className="py-3 px-4 text-right">Costo u.</th>
+                <th className="py-3 px-4 text-right">Valuación</th>
+                <th className="py-3 px-4 text-right">Ajuste</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-[#27272a]">
-              {filteredIngredients.map(ing => {
-                const isCritical = ing.stock <= ing.minStock;
-                const isWarning = !isCritical && ing.stock <= ing.minStock * 1.3;
-                const valuation = ing.stock * (ing.costPerUnit || 0);
+            <tbody className="divide-y divide-[var(--border-subtle)]">
+              {filteredIngredients.length === 0 ? (
+                <tr>
+                  <td colSpan="8" className="py-10 text-center text-sm text-[var(--text-secondary)]">
+                    No encontramos insumos para esa búsqueda.
+                  </td>
+                </tr>
+              ) : (
+                filteredIngredients.map(ing => {
+                  const isCritical = ing.stock <= ing.minStock;
+                  const isWarning = !isCritical && ing.stock <= ing.minStock * 1.3;
+                  const valuation = ing.stock * (ing.costPerUnit || 0);
 
-                return (
-                  <tr key={ing.id} className="hover:bg-[#18181c] transition-colors">
-                    <td className="py-2.5 px-3">
-                      <div className="font-bold text-zinc-100">{ing.name}</div>
-                      <div className="text-[10px] text-zinc-500 font-mono">ID: {ing.id}</div>
-                    </td>
-                    <td className="py-2.5 px-3 text-zinc-300 font-mono text-[11px]">
-                      {ing.category}
-                    </td>
-                    <td className="py-2.5 px-3 font-mono font-bold text-zinc-100 tabular-nums">
-                      <span className={isCritical ? 'text-rose-400 font-black' : ''}>
-                        {ing.stock}
-                      </span>{' '}
-                      <span className="text-[11px] text-zinc-400">{ing.unit}</span>
-                    </td>
-                    <td className="py-2.5 px-3 font-mono text-zinc-400 tabular-nums">
-                      {ing.minStock} {ing.unit}
-                    </td>
-                    <td className="py-2.5 px-3">
-                      {isCritical ? (
-                        <span className="px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold bg-[#18181c] text-rose-400 border border-rose-500/40 inline-flex items-center gap-1">
-                          <span className="w-1.5 h-1.5 rounded-xs bg-rose-500" aria-hidden="true"></span>
-                          Crítico
+                  return (
+                    <tr key={ing.id} className="hover:bg-[var(--bg-hover)] transition-colors">
+                      <td className="py-3 px-4">
+                        <div className="font-bold text-[var(--text-primary)]">{ing.name}</div>
+                      </td>
+                      <td className="py-3 px-4 text-xs text-[var(--text-secondary)]">
+                        {ing.category}
+                      </td>
+                      <td className="py-3 px-4 font-mono font-bold">
+                        <span className={isCritical ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-primary)]'}>
+                          {ing.stock} {ing.unit}
                         </span>
-                      ) : isWarning ? (
-                        <span className="px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold bg-[#18181c] text-amber-400 border border-amber-500/40 inline-block">
-                          Bajo
-                        </span>
-                      ) : (
-                        <span className="px-2 py-0.5 rounded-xs text-[10px] font-mono font-bold bg-[#18181c] text-emerald-400 border border-emerald-500/40 inline-block">
-                          Óptimo
-                        </span>
-                      )}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono text-zinc-300 tabular-nums">
-                      ${ing.costPerUnit?.toLocaleString('es-AR')} /{ing.unit}
-                    </td>
-                    <td className="py-2.5 px-3 text-right font-mono font-bold text-zinc-100 tabular-nums">
-                      ${Math.round(valuation).toLocaleString('es-AR')}
-                    </td>
-                    <td className="py-2.5 px-3 text-center">
-                      <button
-                        onClick={() => handleOpenAdjust(ing)}
-                        className="px-2 py-1 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-200 text-[11px] font-mono border border-[#27272a] transition-colors"
-                      >
-                        Ajustar / Merma
-                      </button>
-                    </td>
-                  </tr>
-                );
-              })}
+                      </td>
+                      <td className="py-3 px-4 font-mono text-xs text-[var(--text-muted)]">
+                        {ing.minStock} {ing.unit}
+                      </td>
+                      <td className="py-3 px-4">
+                        {isCritical ? (
+                          <span className="pos-badge pos-badge-danger">Reponer ya</span>
+                        ) : isWarning ? (
+                          <span className="pos-badge pos-badge-bill">Stock justo</span>
+                        ) : (
+                          <span className="pos-badge pos-badge-open">Óptimo</span>
+                        )}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono text-xs text-[var(--text-secondary)]">
+                        ${ing.costPerUnit?.toLocaleString('es-AR')} /{ing.unit}
+                      </td>
+                      <td className="py-3 px-4 text-right font-mono font-bold text-[var(--text-primary)]">
+                        ${Math.round(valuation).toLocaleString('es-AR')}
+                      </td>
+                      <td className="py-3 px-4 text-right">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenAdjust(ing)}
+                          className="pos-btn-secondary text-xs px-3"
+                        >
+                          Merma / Ajuste
+                        </button>
+                      </td>
+                    </tr>
+                  );
+                })
+              )}
             </tbody>
           </table>
         </div>
       ) : (
-        /* Audit Log Tab */
-        <div className="bg-[#121215] rounded border border-[#27272a] overflow-hidden">
-          <div className="p-3 border-b border-[#27272a] flex items-center justify-between">
-            <span className="text-xs font-mono font-bold text-zinc-300 uppercase tracking-wider">
-              Trazabilidad Completa de Movimientos
-            </span>
+        <div className="pos-panel overflow-hidden">
+          <div className="px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+              Trazabilidad de descuentos y cargas
+            </h3>
           </div>
 
-          <div className="divide-y divide-[#27272a] max-h-[600px] overflow-y-auto">
+          <div className="divide-y divide-[var(--border-subtle)] max-h-[600px] overflow-y-auto">
             {stockLog.map(log => {
               const isDeduction = log.change?.startsWith('-');
               return (
-                <div key={log.id} className="p-3 hover:bg-[#18181c] transition-colors flex items-center justify-between gap-3 text-xs">
-                  <div className="space-y-0.5">
-                    <div className="flex items-center gap-2">
-                      <span className="font-bold text-zinc-200">{log.ingredientName}</span>
-                      <span className={`text-[10px] font-mono font-bold uppercase px-1.5 py-0.5 rounded-xs border border-[#27272a] ${
-                        isDeduction ? 'text-rose-400 bg-[#09090b]' : 'text-emerald-400 bg-[#09090b]'
-                      }`}>
+                <div key={log.id} className="p-4 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between gap-3">
+                  <div className="space-y-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <span className="font-bold text-sm text-[var(--text-primary)]">{log.ingredientName}</span>
+                      <span className={`pos-badge ${isDeduction ? 'pos-badge-danger' : 'pos-badge-open'} capitalize`}>
                         {log.type.replace('_', ' ')}
                       </span>
                     </div>
-                    <p className="text-[11px] text-zinc-400">{log.reason}</p>
-                    <div className="text-[10px] text-zinc-500 font-mono tabular-nums">
-                      {new Date(log.timestamp).toLocaleString()} · Por: {log.user}
+                    <p className="text-xs text-[var(--text-secondary)]">{log.reason}</p>
+                    <div className="text-xs text-[var(--text-muted)] font-mono">
+                      {new Date(log.timestamp).toLocaleString()} · {log.user}
                     </div>
                   </div>
 
-                  <div className="text-right shrink-0">
-                    <span className={`font-mono text-sm font-bold tabular-nums ${isDeduction ? 'text-rose-400' : 'text-emerald-400'}`}>
+                  <div className="text-right shrink-0 font-mono">
+                    <span
+                      className={`text-base font-bold ${
+                        isDeduction ? 'text-[var(--status-danger-fg)]' : 'text-[var(--status-open-fg)]'
+                      }`}
+                    >
                       {log.change}
                     </span>
-                    <div className="text-[10px] text-zinc-500 font-mono tabular-nums">
-                      Quedó: {log.resultingStock}
+                    <div className="text-xs text-[var(--text-muted)]">
+                      Saldo: {log.resultingStock}
                     </div>
                   </div>
                 </div>
@@ -324,72 +345,82 @@ export default function StockControl() {
 
       {/* Adjust Stock Modal */}
       {selectedIngForAdjust && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-          <div className="bg-[#121215] border border-[#27272a] rounded w-full max-w-sm p-4 space-y-3 shadow-2xl">
-            <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider border-b border-[#27272a] pb-2">
-              Ajustar Stock: {selectedIngForAdjust.name}
-            </h3>
-
-            <p className="text-xs text-zinc-400 font-mono">
-              Stock actual: <strong className="text-zinc-100 tabular-nums">{selectedIngForAdjust.stock} {selectedIngForAdjust.unit}</strong>
-            </p>
-
-            <div className="grid grid-cols-2 border border-[#27272a] divide-x divide-[#27272a] rounded-sm overflow-hidden">
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="adjust-stock-title"
+        >
+          <div className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="adjust-stock-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                Ajustar stock: {selectedIngForAdjust.name}
+              </h3>
               <button
                 type="button"
-                onClick={() => setAdjustType('merma')}
-                className={`p-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                  adjustType === 'merma'
-                    ? 'bg-zinc-800 text-rose-400 font-bold'
-                    : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-                }`}
+                onClick={() => setSelectedIngForAdjust(null)}
+                aria-label="Cerrar ventana"
+                className="pos-btn-ghost"
               >
-                - Merma / Pérdida
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <p className="text-sm text-[var(--text-secondary)]">
+              Existencia actual: <strong className="font-mono text-[var(--text-primary)]">{selectedIngForAdjust.stock} {selectedIngForAdjust.unit}</strong>
+            </p>
+
+            <div className="grid grid-cols-2 gap-2">
+              <button
+                type="button"
+                aria-pressed={adjustType === 'merma'}
+                onClick={() => setAdjustType('merma')}
+                className={adjustType === 'merma' ? 'pos-btn-danger' : 'pos-btn-secondary'}
+              >
+                Merma / Descarte
               </button>
               <button
                 type="button"
+                aria-pressed={adjustType === 'ingreso'}
                 onClick={() => setAdjustType('ingreso')}
-                className={`p-2 text-xs font-mono uppercase tracking-wider transition-colors ${
-                  adjustType === 'ingreso'
-                    ? 'bg-zinc-800 text-emerald-400 font-bold'
-                    : 'bg-[#09090b] text-zinc-400 hover:text-zinc-200'
-                }`}
+                className={adjustType === 'ingreso' ? 'pos-btn-primary' : 'pos-btn-secondary'}
               >
-                + Ingreso / Ajuste
+                Ingreso / Recuento
               </button>
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">
+              <label htmlFor="adjust-qty-input" className="pos-label">
                 Cantidad ({selectedIngForAdjust.unit}):
               </label>
               <input
+                id="adjust-qty-input"
                 type="number"
                 step="0.01"
                 placeholder="0"
                 value={adjustQty}
                 onChange={(e) => setAdjustQty(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-100 focus:outline-none focus:border-zinc-500 tabular-nums"
-                autoFocus
+                className="pos-input font-mono font-bold"
               />
             </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Motivo / Explicación:</label>
+              <label htmlFor="adjust-reason-input" className="pos-label">Motivo:</label>
               <input
+                id="adjust-reason-input"
                 type="text"
-                placeholder="Ej: Masa quemada, rotura de envase, recuento"
+                placeholder="Ej. Masa pasada de fermentación, control físico..."
                 value={adjustReason}
                 onChange={(e) => setAdjustReason(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
               />
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-[#27272a]">
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setSelectedIngForAdjust(null)}
-                className="flex-1 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                className="pos-btn-secondary flex-1"
               >
                 Cancelar
               </button>
@@ -397,9 +428,9 @@ export default function StockControl() {
                 type="button"
                 disabled={submitting}
                 onClick={handleConfirmAdjust}
-                className="flex-1 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold transition-all"
+                className="pos-btn-primary flex-1"
               >
-                Confirmar
+                Aplicar ajuste
               </button>
             </div>
           </div>
@@ -408,32 +439,48 @@ export default function StockControl() {
 
       {/* New Ingredient Modal */}
       {isNewIngModalOpen && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-xs p-4">
-          <form onSubmit={handleCreateIngredient} className="bg-[#121215] border border-[#27272a] rounded w-full max-w-md p-4 space-y-3 shadow-2xl">
-            <h3 className="font-mono font-bold text-zinc-100 text-xs uppercase tracking-wider border-b border-[#27272a] pb-2">
-              Nuevo Insumo / Materia Prima
-            </h3>
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-ing-title"
+        >
+          <form onSubmit={handleCreateIngredient} className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <h3 id="new-ing-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                Alta de materia prima
+              </h3>
+              <button
+                type="button"
+                onClick={() => setIsNewIngModalOpen(false)}
+                aria-label="Cerrar ventana"
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
 
             <div>
-              <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Nombre del Insumo:</label>
+              <label htmlFor="new-ing-name" className="pos-label">Nombre del insumo:</label>
               <input
+                id="new-ing-name"
                 type="text"
-                placeholder="Ej: Queso Roquefort"
+                placeholder="Ej. Queso Roquefort"
                 value={newIngName}
                 onChange={(e) => setNewIngName(e.target.value)}
-                className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-100 focus:outline-none focus:border-zinc-500"
+                className="pos-input"
                 required
-                autoFocus
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-2">
+            <div className="grid grid-cols-2 gap-3">
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Categoría:</label>
+                <label htmlFor="new-ing-cat" className="pos-label">Rubro:</label>
                 <select
+                  id="new-ing-cat"
                   value={newIngCategory}
                   onChange={(e) => setNewIngCategory(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500"
+                  className="pos-input"
                 >
                   <option value="Lácteos">Lácteos</option>
                   <option value="Panadería">Panadería</option>
@@ -446,11 +493,12 @@ export default function StockControl() {
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Unidad de Medida:</label>
+                <label htmlFor="new-ing-unit" className="pos-label">Unidad:</label>
                 <select
+                  id="new-ing-unit"
                   value={newIngUnit}
                   onChange={(e) => setNewIngUnit(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs text-zinc-200 focus:outline-none focus:border-zinc-500 font-mono"
+                  className="pos-input"
                 >
                   <option value="kg">Kilogramos (kg)</option>
                   <option value="g">Gramos (g)</option>
@@ -461,59 +509,62 @@ export default function StockControl() {
               </div>
             </div>
 
-            <div className="grid grid-cols-3 gap-2">
+            <div className="grid grid-cols-3 gap-2.5">
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Stock Inicial:</label>
+                <label htmlFor="new-ing-stock" className="pos-label">Inicial:</label>
                 <input
+                  id="new-ing-stock"
                   type="number"
                   step="0.01"
                   value={newIngStock}
                   onChange={(e) => setNewIngStock(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-100 tabular-nums focus:outline-none focus:border-zinc-500"
+                  className="pos-input font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Stock Mínimo:</label>
+                <label htmlFor="new-ing-min" className="pos-label">Mínimo:</label>
                 <input
+                  id="new-ing-min"
                   type="number"
                   step="0.01"
                   value={newIngMinStock}
                   onChange={(e) => setNewIngMinStock(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-100 tabular-nums focus:outline-none focus:border-zinc-500"
+                  className="pos-input font-mono"
                 />
               </div>
 
               <div>
-                <label className="text-[10px] uppercase font-mono font-semibold text-zinc-400 block mb-1">Costo Unit. ($):</label>
+                <label htmlFor="new-ing-cost" className="pos-label">Costo ($):</label>
                 <input
+                  id="new-ing-cost"
                   type="number"
                   value={newIngCost}
                   onChange={(e) => setNewIngCost(e.target.value)}
-                  className="w-full bg-[#09090b] border border-[#27272a] rounded-sm p-2 text-xs font-mono text-zinc-100 tabular-nums focus:outline-none focus:border-zinc-500"
+                  className="pos-input font-mono"
                 />
               </div>
             </div>
 
-            <div className="flex gap-2 pt-2 border-t border-[#27272a]">
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
               <button
                 type="button"
                 onClick={() => setIsNewIngModalOpen(false)}
-                className="flex-1 py-1.5 rounded-sm bg-[#18181c] hover:bg-[#27272a] text-zinc-300 text-xs font-mono border border-[#27272a] transition-colors"
+                className="pos-btn-secondary flex-1"
               >
                 Cancelar
               </button>
               <button
                 type="submit"
                 disabled={submitting}
-                className="flex-1 py-1.5 rounded-sm bg-zinc-100 hover:bg-white text-zinc-950 text-xs font-mono font-bold transition-all"
+                className="pos-btn-primary flex-1"
               >
-                Crear Insumo
+                Guardar insumo
               </button>
             </div>
           </form>
         </div>
       )}
-    </div>
+    </section>
   );
 }
