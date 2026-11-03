@@ -23,54 +23,45 @@ export default function AdminDashboard() {
   const closedOrders = orders.filter(o => o.status === 'cobrado');
 
   return (
-    <section className="space-y-5" aria-label="Ventas y analítica del turno">
+    <section className="space-y-5" aria-label="Ventas y analítica">
       {/* Open Page Header */}
-      <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-end justify-between gap-2">
-        <div>
-          <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
-             Pulso comercial del turno
-          </h2>
-          <p className="text-sm text-[var(--text-secondary)]">
-            Resumen en vivo de facturación cobrada, ocupación del salón y rotación de platos.
-          </p>
-        </div>
+      <div className="pb-3 border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
+        <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+          Resumen
+        </h2>
         <span className="text-xs font-mono text-[var(--text-muted)]">
-          {activeOrdersCount} comandas abiertas en curso
+          {activeOrdersCount} abiertas
         </span>
       </div>
 
-      {/* Unified Architectural KPI Ledger Strip (No redundant 4-card wall) */}
+      {/* Unified Architectural KPI Ledger Strip */}
       <div className="pos-panel grid grid-cols-2 lg:grid-cols-4 divide-y lg:divide-y-0 sm:divide-x divide-[var(--border-subtle)] overflow-hidden">
         <div className="p-4 sm:p-5 space-y-1">
-          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Facturación cobrada</span>
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Ventas</span>
           <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--status-open-fg)]">
             ${totalVentas.toLocaleString('es-AR')}
           </div>
-          <p className="text-xs text-[var(--text-muted)]">Ingresos cerrados del turno</p>
         </div>
 
         <div className="p-4 sm:p-5 space-y-1">
-          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Tickets emitidos</span>
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Tickets</span>
           <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--text-primary)]">
             {totalTickets}
           </div>
-          <p className="text-xs text-[var(--text-muted)]">{activeOrdersCount} pendientes de cierre</p>
         </div>
 
         <div className="p-4 sm:p-5 space-y-1">
-          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Ticket promedio</span>
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Promedio</span>
           <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--text-primary)]">
             ${ticketPromedio.toLocaleString('es-AR')}
           </div>
-          <p className="text-xs text-[var(--text-muted)]">Por cuenta cobrada</p>
         </div>
 
         <div className="p-4 sm:p-5 space-y-1">
-          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Mesas activas</span>
+          <span className="text-xs font-semibold text-[var(--text-secondary)] block">Mesas</span>
           <div className="font-display font-extrabold text-2xl sm:text-3xl font-mono text-[var(--accent-brand)]">
             {openTablesCount}
           </div>
-          <p className="text-xs text-[var(--text-muted)]">En consumo ahora</p>
         </div>
       </div>
 
@@ -79,7 +70,7 @@ export default function AdminDashboard() {
         <div className="pos-panel border-l-4 border-l-[var(--status-danger-bar)] p-4 space-y-3">
           <div className="flex items-center gap-2 text-sm font-bold text-[var(--status-danger-fg)]">
             <i className="fa-solid fa-triangle-exclamation" aria-hidden="true"></i>
-            <span>Tenés {lowStockIngredients.length} insumos en nivel crítico de reposición</span>
+            <span>Stock crítico ({lowStockIngredients.length})</span>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-2">
             {lowStockIngredients.map(ing => (
@@ -97,20 +88,19 @@ export default function AdminDashboard() {
         </div>
       )}
 
-      {/* Breakdown Panels Answering Real Operational Questions */}
+      {/* Breakdown Panels with Concise Single-Word Titles */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {/* Question 1: Channels */}
+        {/* Channels */}
         <div className="pos-panel p-4 sm:p-5 space-y-4">
           <div className="border-b border-[var(--border-subtle)] pb-2.5">
             <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
-              ¿Qué canal generó más ingresos?
+              Canales
             </h3>
-            <p className="text-xs text-[var(--text-muted)]">Participación sobre ventas cerradas</p>
           </div>
 
           <div className="space-y-3 text-xs">
             {[
-              { id: 'mesa', label: 'Salón y mesas', icon: 'fa-utensils', bar: 'bg-[var(--accent-brand)]' },
+              { id: 'mesa', label: 'Salón', icon: 'fa-utensils', bar: 'bg-[var(--accent-brand)]' },
               { id: 'delivery', label: 'Delivery', icon: 'fa-motorcycle', bar: 'bg-[var(--status-open-bar)]' },
               { id: 'take_away', label: 'Take Away', icon: 'fa-bag-shopping', bar: 'bg-[var(--status-bill-bar)]' },
               { id: 'mostrador', label: 'Mostrador', icon: 'fa-store', bar: 'bg-[var(--border-strong)]' }
@@ -137,21 +127,20 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Question 2: Payment Methods */}
+        {/* Payment Methods */}
         <div className="pos-panel p-4 sm:p-5 space-y-4">
           <div className="border-b border-[var(--border-subtle)] pb-2.5">
             <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
-              ¿Cómo pagaron los clientes?
+              Pagos
             </h3>
-            <p className="text-xs text-[var(--text-muted)]">Distribución por medio de cobro</p>
           </div>
 
           <div className="space-y-3 text-xs">
             {[
               { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave', bar: 'bg-[var(--status-open-bar)]' },
-              { id: 'mercadopago', label: 'QR / Mercado Pago', icon: 'fa-qrcode', bar: 'bg-[var(--accent-brand)]' },
-              { id: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card', bar: 'bg-[var(--status-bill-bar)]' },
-              { id: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card', bar: 'bg-[var(--text-secondary)]' },
+              { id: 'mercadopago', label: 'Mercado Pago', icon: 'fa-qrcode', bar: 'bg-[var(--accent-brand)]' },
+              { id: 'debito', label: 'Débito', icon: 'fa-credit-card', bar: 'bg-[var(--status-bill-bar)]' },
+              { id: 'credito', label: 'Crédito', icon: 'fa-credit-card', bar: 'bg-[var(--text-secondary)]' },
               { id: 'transferencia', label: 'Transferencia', icon: 'fa-building-columns', bar: 'bg-[var(--border-strong)]' }
             ].map(pm => {
               const amount = byPaymentMethod?.[pm.id] || 0;
@@ -176,19 +165,18 @@ export default function AdminDashboard() {
           </div>
         </div>
 
-        {/* Question 3: Top Dishes */}
+        {/* Top Dishes */}
         <div className="pos-panel p-4 sm:p-5 space-y-4">
           <div className="border-b border-[var(--border-subtle)] pb-2.5">
             <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
-              ¿Qué platos salieron más hoy?
+              Platos
             </h3>
-            <p className="text-xs text-[var(--text-muted)]">Unidades despachadas en el turno</p>
           </div>
 
           <div className="divide-y divide-[var(--border-subtle)] text-sm">
             {topProducts?.length === 0 ? (
               <p className="text-xs text-[var(--text-muted)] py-8 text-center">
-                Todavía no hay platos cobrados en este turno.
+                Sin ventas cerradas
               </p>
             ) : (
               topProducts.map((p, idx) => (
@@ -213,9 +201,9 @@ export default function AdminDashboard() {
       <div className="pos-panel overflow-hidden">
         <div className="px-4 py-3 border-b border-[var(--border-subtle)] bg-[var(--bg-subtle)] flex items-center justify-between">
           <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
-            Últimas cuentas cerradas
+            Cierres
           </h3>
-          <span className="text-xs font-mono text-[var(--text-secondary)]">Total: {closedOrders.length}</span>
+          <span className="text-xs font-mono text-[var(--text-secondary)]">{closedOrders.length}</span>
         </div>
 
         <div className="overflow-x-auto">

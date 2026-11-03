@@ -39,120 +39,120 @@
       "name": "Queso Muzzarella en Barra",
       "category": "Lácteos",
       "unit": "kg",
-      "stock": 27.5,
+      "stock": 18.5,
       "minStock": 5,
       "costPerUnit": 7800,
-      "lastUpdated": "2026-11-02T21:41:55.815Z"
+      "lastUpdated": "2026-11-03T00:40:02.333Z"
     },
     {
       "id": "ing_salsa_tomate",
       "name": "Salsa de Tomate Pomodoro Artesanal",
       "category": "Conservas",
       "unit": "kg",
-      "stock": 13.88,
+      "stock": 14.2,
       "minStock": 4,
       "costPerUnit": 2400,
-      "lastUpdated": "2026-11-02T21:41:55.815Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_bollo_pizza",
       "name": "Bollo de Masa Madre Pizza",
       "category": "Panadería",
       "unit": "u",
-      "stock": 41,
+      "stock": 45,
       "minStock": 15,
       "costPerUnit": 950,
-      "lastUpdated": "2026-11-02T21:41:55.815Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_aceitunas_verdes",
       "name": "Aceitunas Verdes Descarozadas",
       "category": "Conservas",
       "unit": "u",
-      "stock": 318,
+      "stock": 350,
       "minStock": 80,
       "costPerUnit": 45,
-      "lastUpdated": "2026-11-02T21:41:55.815Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_jamon_cocido",
       "name": "Jamón Cocido Feteado Primera Calidad",
       "category": "Fiambrería",
       "unit": "kg",
-      "stock": 6.65,
+      "stock": 6.8,
       "minStock": 2,
       "costPerUnit": 9200,
-      "lastUpdated": "2026-11-02T21:04:38.493Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_morron_conserva",
       "name": "Morrones Asados en Conserva",
       "category": "Conservas",
       "unit": "kg",
-      "stock": 4.12,
+      "stock": 4.2,
       "minStock": 1.5,
       "costPerUnit": 6500,
-      "lastUpdated": "2026-11-02T21:04:38.493Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_carne_smash",
       "name": "Medallón de Carne Smash 80g (Blend)",
       "category": "Carnicería",
       "unit": "u",
-      "stock": 58,
+      "stock": 60,
       "minStock": 20,
       "costPerUnit": 1400,
-      "lastUpdated": "2026-11-02T21:41:27.238Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_pan_brioche",
       "name": "Pan de Hamburguesa Brioche con Sésamo",
       "category": "Panadería",
       "unit": "u",
-      "stock": 38,
+      "stock": 40,
       "minStock": 15,
       "costPerUnit": 680,
-      "lastUpdated": "2026-11-02T21:41:27.238Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_cheddar_fetas",
       "name": "Queso Cheddar Americano en Fetas",
       "category": "Lácteos",
       "unit": "u",
-      "stock": 110,
+      "stock": 120,
       "minStock": 30,
       "costPerUnit": 350,
-      "lastUpdated": "2026-11-02T21:41:27.239Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_panceta_ahumada",
       "name": "Panceta Ahumada Crocante",
       "category": "Fiambrería",
       "unit": "kg",
-      "stock": 5.34,
+      "stock": 5.4,
       "minStock": 1.5,
       "costPerUnit": 11500,
-      "lastUpdated": "2026-11-02T21:38:53.413Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_papas_baston",
       "name": "Papas Bastón Pre-fritas",
       "category": "Congelados",
       "unit": "kg",
-      "stock": 27.3,
+      "stock": 28,
       "minStock": 8,
       "costPerUnit": 2900,
-      "lastUpdated": "2026-11-02T21:38:53.413Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_cerveza_ipa",
       "name": "Barril Cerveza Artesanal IPA (Litros)",
       "category": "Bebidas",
       "unit": "l",
-      "stock": 41.5,
+      "stock": 42.5,
       "minStock": 15,
       "costPerUnit": 1900,
-      "lastUpdated": "2026-11-02T21:38:53.413Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_coca_cola_lata",
@@ -162,7 +162,7 @@
       "stock": 72,
       "minStock": 24,
       "costPerUnit": 980,
-      "lastUpdated": "2026-11-02T21:01:24.716Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_agua_mineral",
@@ -172,17 +172,17 @@
       "stock": 50,
       "minStock": 20,
       "costPerUnit": 650,
-      "lastUpdated": "2026-11-02T21:01:24.716Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_disco_empanada",
       "name": "Discos de Empanadas Caseros",
       "category": "Panadería",
       "unit": "u",
-      "stock": 106,
+      "stock": 96,
       "minStock": 24,
       "costPerUnit": 220,
-      "lastUpdated": "2026-11-02T21:07:05.674Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     },
     {
       "id": "ing_relleno_carne",
@@ -192,7 +192,7 @@
       "stock": 8.5,
       "minStock": 2,
       "costPerUnit": 6200,
-      "lastUpdated": "2026-11-02T21:01:24.716Z"
+      "lastUpdated": "2026-11-03T00:40:02.334Z"
     }
   ],
   "products": [
@@ -448,22 +448,22 @@
       "number": 1,
       "sector": "Salón Principal",
       "capacity": 2,
-      "status": "ocupada",
-      "activeOrderId": "ord_1793653478492",
-      "diners": 4,
-      "waiterId": "u_admin",
-      "openedAt": "2026-11-02T21:04:38.501Z"
+      "status": "libre",
+      "activeOrderId": null,
+      "diners": 0,
+      "waiterId": null,
+      "openedAt": null
     },
     {
       "id": "m2",
       "number": 2,
       "sector": "Salón Principal",
       "capacity": 4,
-      "status": "cuenta_pedida",
+      "status": "ocupada",
       "activeOrderId": "ord_demo_1",
       "diners": 3,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-02T20:16:24.716Z"
+      "openedAt": "2026-11-02T23:55:02.334Z"
     },
     {
       "id": "m3",
@@ -474,7 +474,7 @@
       "activeOrderId": "ord_demo_2",
       "diners": 2,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-02T19:51:24.717Z"
+      "openedAt": "2026-11-02T23:30:02.334Z"
     },
     {
       "id": "m4",
@@ -496,7 +496,7 @@
       "activeOrderId": "ord_demo_3",
       "diners": 4,
       "waiterId": "u_mozo2",
-      "openedAt": "2026-11-02T20:36:24.717Z"
+      "openedAt": "2026-11-03T00:15:02.334Z"
     },
     {
       "id": "m6",
@@ -556,213 +556,6 @@
   ],
   "orders": [
     {
-      "id": "ord_1793655715815",
-      "orderNumber": 109,
-      "channel": "take_away",
-      "tableId": null,
-      "tableNumber": null,
-      "customerName": "weqeqewq",
-      "customerPhone": "456321",
-      "deliveryAddress": null,
-      "deliveryFee": 0,
-      "driverName": null,
-      "waiterId": "u_cajero",
-      "waiterName": "Martín (Cajero Principal)",
-      "status": "abierto",
-      "kitchenStatus": "en_preparacion",
-      "diners": 1,
-      "items": [
-        {
-          "id": "item_1793655715815_0",
-          "productId": "prod_pizza_muzzi_chica",
-          "productName": "Pizza Muzzarella Individual / Chica",
-          "quantity": 1,
-          "unitPrice": 8200,
-          "subtotal": 8200,
-          "notes": ""
-        }
-      ],
-      "subtotal": 8200,
-      "discount": 0,
-      "tip": 0,
-      "total": 8200,
-      "paymentMethod": null,
-      "createdAt": "2026-11-02T21:41:55.815Z",
-      "closedAt": null,
-      "closedBy": null
-    },
-    {
-      "id": "ord_1793655687238",
-      "orderNumber": 108,
-      "channel": "delivery",
-      "tableId": null,
-      "tableNumber": null,
-      "customerName": "pedro",
-      "customerPhone": "13156",
-      "deliveryAddress": "pjqwekqwekl 454564",
-      "deliveryFee": 1800,
-      "driverName": "Gastón (Moto 1)",
-      "waiterId": "u_cajero",
-      "waiterName": "Martín (Cajero Principal)",
-      "status": "abierto",
-      "kitchenStatus": "en_preparacion",
-      "diners": 1,
-      "items": [
-        {
-          "id": "item_1793655687238_0",
-          "productId": "prod_pizza_muzzi_gde",
-          "productName": "Pizza Muzzarella Grande",
-          "quantity": 1,
-          "unitPrice": 13500,
-          "subtotal": 13500,
-          "notes": ""
-        },
-        {
-          "id": "item_1793655687238_1",
-          "productId": "prod_pizza_muzzi_chica",
-          "productName": "Pizza Muzzarella Individual / Chica",
-          "quantity": 1,
-          "unitPrice": 8200,
-          "subtotal": 8200,
-          "notes": ""
-        },
-        {
-          "id": "item_1793655687238_2",
-          "productId": "prod_burger_clasica",
-          "productName": "Hamburguesa Simple Clásica",
-          "quantity": 1,
-          "unitPrice": 8900,
-          "subtotal": 8900,
-          "notes": ""
-        }
-      ],
-      "subtotal": 30600,
-      "discount": 0,
-      "tip": 0,
-      "total": 32400,
-      "paymentMethod": null,
-      "createdAt": "2026-11-02T21:41:27.238Z",
-      "closedAt": null,
-      "closedBy": null
-    },
-    {
-      "id": "ord_1793653570550",
-      "orderNumber": 107,
-      "channel": "mesa",
-      "tableId": "mostrador_temp",
-      "tableNumber": "Mostrador",
-      "customerName": null,
-      "customerPhone": null,
-      "deliveryAddress": null,
-      "deliveryFee": 0,
-      "driverName": null,
-      "waiterId": "u_cajero",
-      "waiterName": "Martín (Cajero Principal)",
-      "status": "abierto",
-      "kitchenStatus": "en_preparacion",
-      "diners": 1,
-      "items": [
-        {
-          "id": "item_1793653570551_0",
-          "productId": "prod_papas_cheddar_bacon",
-          "productName": "Papas Rústicas Cheddar & Panceta",
-          "quantity": 1,
-          "unitPrice": 7900,
-          "subtotal": 7900,
-          "notes": ""
-        },
-        {
-          "id": "item_1793653570551_1",
-          "productId": "prod_burger_clasica",
-          "productName": "Hamburguesa Simple Clásica",
-          "quantity": 1,
-          "unitPrice": 8900,
-          "subtotal": 8900,
-          "notes": ""
-        }
-      ],
-      "subtotal": 16800,
-      "discount": 0,
-      "tip": 0,
-      "total": 16800,
-      "paymentMethod": null,
-      "createdAt": "2026-11-02T21:06:10.551Z",
-      "closedAt": null,
-      "closedBy": null
-    },
-    {
-      "id": "ord_1793653478492",
-      "orderNumber": 106,
-      "channel": "mesa",
-      "tableId": "m1",
-      "tableNumber": 1,
-      "customerName": null,
-      "customerPhone": null,
-      "deliveryAddress": null,
-      "deliveryFee": 0,
-      "driverName": null,
-      "waiterId": "u_admin",
-      "waiterName": "Rodrigo (Encargado / Admin)",
-      "status": "abierto",
-      "kitchenStatus": "en_preparacion",
-      "diners": 4,
-      "items": [
-        {
-          "id": "item_1793653478492_0",
-          "productId": "prod_pizza_especial_gde",
-          "productName": "Pizza Especial con Jamón y Morrones Grande",
-          "quantity": 1,
-          "unitPrice": 16800,
-          "subtotal": 16800,
-          "notes": ""
-        },
-        {
-          "id": "item_1793653478492_1",
-          "productId": "prod_cerveza_pinta_ipa",
-          "productName": "Cerveza Artesanal IPA (Pinta 500ml)",
-          "quantity": 1,
-          "unitPrice": 4500,
-          "subtotal": 4500,
-          "notes": ""
-        },
-        {
-          "id": "item_1793655533412_0",
-          "productId": "prod_pizza_muzzi_gde",
-          "productName": "Pizza Muzzarella Grande",
-          "quantity": 1,
-          "unitPrice": 13500,
-          "subtotal": 13500,
-          "notes": ""
-        },
-        {
-          "id": "item_1793655533412_1",
-          "productId": "prod_cerveza_pinta_ipa",
-          "productName": "Cerveza Artesanal IPA (Pinta 500ml)",
-          "quantity": 1,
-          "unitPrice": 7100,
-          "subtotal": 7100,
-          "notes": "Extras: +Extra Queso Cheddar, +Extra Panceta Ahumada"
-        },
-        {
-          "id": "item_1793655533412_2",
-          "productId": "prod_papas_cheddar_bacon",
-          "productName": "Papas Rústicas Cheddar & Panceta",
-          "quantity": 1,
-          "unitPrice": 7900,
-          "subtotal": 7900,
-          "notes": "entrada, Primero la entrada"
-        }
-      ],
-      "subtotal": 49800,
-      "discount": 0,
-      "tip": 0,
-      "total": 49800,
-      "paymentMethod": null,
-      "createdAt": "2026-11-02T21:04:38.492Z",
-      "closedAt": null,
-      "closedBy": null
-    },
-    {
       "id": "ord_demo_1",
       "orderNumber": 101,
       "channel": "mesa",
@@ -775,7 +568,7 @@
       "driverName": null,
       "waiterId": "u_mozo1",
       "waiterName": "Lucas",
-      "status": "cuenta_pedida",
+      "status": "abierto",
       "kitchenStatus": "en_preparacion",
       "diners": 3,
       "items": [
@@ -812,7 +605,7 @@
       "tip": 0,
       "total": 24600,
       "paymentMethod": null,
-      "createdAt": "2026-11-02T20:16:24.717Z",
+      "createdAt": "2026-11-02T23:55:02.334Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -866,7 +659,7 @@
       "tip": 3670,
       "total": 40370,
       "paymentMethod": null,
-      "createdAt": "2026-11-02T19:51:24.717Z",
+      "createdAt": "2026-11-02T23:30:02.334Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -920,7 +713,7 @@
       "tip": 0,
       "total": 37900,
       "paymentMethod": null,
-      "createdAt": "2026-11-02T20:36:24.717Z",
+      "createdAt": "2026-11-03T00:15:02.334Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -956,7 +749,7 @@
       "tip": 0,
       "total": 27000,
       "paymentMethod": null,
-      "createdAt": "2026-11-02T20:41:24.717Z",
+      "createdAt": "2026-11-03T00:20:02.334Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -1001,7 +794,7 @@
       "tip": 0,
       "total": 16200,
       "paymentMethod": "mercadopago",
-      "createdAt": "2026-11-02T20:26:24.717Z",
+      "createdAt": "2026-11-03T00:05:02.334Z",
       "closedAt": null,
       "closedBy": null
     }
@@ -1042,60 +835,12 @@
   ],
   "purchases": [
     {
-      "id": "pur_1793654308485",
-      "voucherType": "Factura A",
-      "voucherNumber": "5465",
-      "supplierId": "sup_1",
-      "supplierName": "Distribuidora Lácteos del Sur S.R.L.",
-      "date": "2026-11-02",
-      "items": [
-        {
-          "ingredientId": "ing_muzza",
-          "ingredientName": "Queso Muzzarella en Barra",
-          "quantity": 10,
-          "unit": "kg",
-          "unitCost": 7800,
-          "total": 78000
-        }
-      ],
-      "totalAmount": 78000,
-      "paymentMethod": "transferencia",
-      "paymentStatus": "pagado",
-      "notes": "",
-      "registeredBy": "Martín (Cajero Principal)",
-      "createdAt": "2026-11-02T21:18:28.485Z"
-    },
-    {
-      "id": "pur_1793653625674",
-      "voucherType": "Factura A",
-      "voucherNumber": "123",
-      "supplierId": "sup_2",
-      "supplierName": "Molinos & Harinas San Martín",
-      "date": "2026-11-02",
-      "items": [
-        {
-          "ingredientId": "ing_disco_empanada",
-          "ingredientName": "Discos de Empanadas Caseros",
-          "quantity": 10,
-          "unit": "u",
-          "unitCost": 220,
-          "total": 2200
-        }
-      ],
-      "totalAmount": 2200,
-      "paymentMethod": "transferencia",
-      "paymentStatus": "pagado",
-      "notes": "",
-      "registeredBy": "Martín (Cajero Principal)",
-      "createdAt": "2026-11-02T21:07:05.674Z"
-    },
-    {
       "id": "pur_101",
       "voucherType": "Factura A",
       "voucherNumber": "0003-00012489",
       "supplierId": "sup_1",
       "supplierName": "Distribuidora Lácteos del Sur S.R.L.",
-      "date": "2026-10-31",
+      "date": "2026-11-01",
       "items": [
         {
           "ingredientId": "ing_muzza",
@@ -1126,7 +871,7 @@
       "voucherNumber": "R-0001-00004512",
       "supplierId": "sup_2",
       "supplierName": "Molinos & Harinas San Martín",
-      "date": "2026-11-01",
+      "date": "2026-11-02",
       "items": [
         {
           "ingredientId": "ing_bollo_pizza",
@@ -1158,7 +903,7 @@
       "shiftNumber": 42,
       "cashierId": "u_cajero",
       "cashierName": "Martín",
-      "openedAt": "2026-11-02T16:01:24.717Z",
+      "openedAt": "2026-11-02T19:40:02.334Z",
       "initialCash": 45000,
       "status": "abierta",
       "movements": [
@@ -1167,7 +912,7 @@
           "type": "egreso",
           "amount": 3500,
           "reason": "Compra urgente 2 bolsas de hielo rolo",
-          "createdAt": "2026-11-02T18:01:24.717Z",
+          "createdAt": "2026-11-02T21:40:02.334Z",
           "user": "Martín (Cajero)"
         },
         {
@@ -1175,7 +920,7 @@
           "type": "ingreso",
           "amount": 15000,
           "reason": "Refuerzo cambio de billetes chicos",
-          "createdAt": "2026-11-02T19:01:24.717Z",
+          "createdAt": "2026-11-02T22:40:02.334Z",
           "user": "Rodrigo (Admin)"
         }
       ],
@@ -1193,7 +938,7 @@
       "tableNumber": 1,
       "total": 31200,
       "paymentMethod": "efectivo",
-      "closedAt": "2026-11-02T17:01:24.717Z",
+      "closedAt": "2026-11-02T20:40:02.334Z",
       "waiterName": "Lucas"
     },
     {
@@ -1203,7 +948,7 @@
       "tableNumber": null,
       "total": 16000,
       "paymentMethod": "mercadopago",
-      "closedAt": "2026-11-02T18:01:24.717Z",
+      "closedAt": "2026-11-02T21:40:02.334Z",
       "waiterName": "Martín"
     },
     {
@@ -1213,432 +958,14 @@
       "tableNumber": null,
       "total": 28500,
       "paymentMethod": "debito",
-      "closedAt": "2026-11-02T20:01:24.717Z",
+      "closedAt": "2026-11-02T23:40:02.334Z",
       "waiterName": "Martín"
     }
   ],
   "stockLog": [
     {
-      "id": "log_1793655715815_eihy",
-      "timestamp": "2026-11-02T21:41:55.815Z",
-      "ingredientId": "ing_aceitunas_verdes",
-      "ingredientName": "Aceitunas Verdes Descarozadas",
-      "type": "consumo_comanda",
-      "change": "-4 u",
-      "resultingStock": 318,
-      "reason": "Comanda #109 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655715815_yxy7",
-      "timestamp": "2026-11-02T21:41:55.815Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.125 kg",
-      "resultingStock": 27.5,
-      "reason": "Comanda #109 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655715815_c712",
-      "timestamp": "2026-11-02T21:41:55.815Z",
-      "ingredientId": "ing_salsa_tomate",
-      "ingredientName": "Salsa de Tomate Pomodoro Artesanal",
-      "type": "consumo_comanda",
-      "change": "-0.04 kg",
-      "resultingStock": 13.88,
-      "reason": "Comanda #109 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655715815_9bly",
-      "timestamp": "2026-11-02T21:41:55.815Z",
-      "ingredientId": "ing_bollo_pizza",
-      "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-0.5 u",
-      "resultingStock": 41,
-      "reason": "Comanda #109 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687239_ejdr",
-      "timestamp": "2026-11-02T21:41:27.239Z",
-      "ingredientId": "ing_cheddar_fetas",
-      "ingredientName": "Queso Cheddar Americano en Fetas",
-      "type": "consumo_comanda",
-      "change": "-2 u",
-      "resultingStock": 110,
-      "reason": "Comanda #108 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_fvou",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_carne_smash",
-      "ingredientName": "Medallón de Carne Smash 80g (Blend)",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 58,
-      "reason": "Comanda #108 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_3dlf",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_pan_brioche",
-      "ingredientName": "Pan de Hamburguesa Brioche con Sésamo",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 38,
-      "reason": "Comanda #108 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_cg3o",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_aceitunas_verdes",
-      "ingredientName": "Aceitunas Verdes Descarozadas",
-      "type": "consumo_comanda",
-      "change": "-4 u",
-      "resultingStock": 322,
-      "reason": "Comanda #108 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_zcmn",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.125 kg",
-      "resultingStock": 27.625,
-      "reason": "Comanda #108 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_skfj",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_salsa_tomate",
-      "ingredientName": "Salsa de Tomate Pomodoro Artesanal",
-      "type": "consumo_comanda",
-      "change": "-0.04 kg",
-      "resultingStock": 13.92,
-      "reason": "Comanda #108 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_mhw0",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_bollo_pizza",
-      "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-0.5 u",
-      "resultingStock": 41.5,
-      "reason": "Comanda #108 (Pizza Muzzarella Individual / Chica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_ctcr",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_aceitunas_verdes",
-      "ingredientName": "Aceitunas Verdes Descarozadas",
-      "type": "consumo_comanda",
-      "change": "-8 u",
-      "resultingStock": 326,
-      "reason": "Comanda #108 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_jjbi",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.25 kg",
-      "resultingStock": 27.75,
-      "reason": "Comanda #108 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_ye6k",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_salsa_tomate",
-      "ingredientName": "Salsa de Tomate Pomodoro Artesanal",
-      "type": "consumo_comanda",
-      "change": "-0.08 kg",
-      "resultingStock": 13.96,
-      "reason": "Comanda #108 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655687238_7zrs",
-      "timestamp": "2026-11-02T21:41:27.238Z",
-      "ingredientId": "ing_bollo_pizza",
-      "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 42,
-      "reason": "Comanda #108 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_0aas",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_panceta_ahumada",
-      "ingredientName": "Panceta Ahumada Crocante",
-      "type": "consumo_comanda",
-      "change": "-0.03 kg",
-      "resultingStock": 5.34,
-      "reason": "Comanda #106 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_i0e0",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_cheddar_fetas",
-      "ingredientName": "Queso Cheddar Americano en Fetas",
-      "type": "consumo_comanda",
-      "change": "-3 u",
-      "resultingStock": 112,
-      "reason": "Comanda #106 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_t75z",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_papas_baston",
-      "ingredientName": "Papas Bastón Pre-fritas",
-      "type": "consumo_comanda",
-      "change": "-0.35 kg",
-      "resultingStock": 27.3,
-      "reason": "Comanda #106 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_kz2f",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_cerveza_ipa",
-      "ingredientName": "Barril Cerveza Artesanal IPA (Litros)",
-      "type": "consumo_comanda",
-      "change": "-0.5 l",
-      "resultingStock": 41.5,
-      "reason": "Comanda #106 (Cerveza Artesanal IPA (Pinta 500ml) x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_g7w7",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_aceitunas_verdes",
-      "ingredientName": "Aceitunas Verdes Descarozadas",
-      "type": "consumo_comanda",
-      "change": "-8 u",
-      "resultingStock": 334,
-      "reason": "Comanda #106 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_ebgc",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.25 kg",
-      "resultingStock": 28,
-      "reason": "Comanda #106 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_ma9w",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_salsa_tomate",
-      "ingredientName": "Salsa de Tomate Pomodoro Artesanal",
-      "type": "consumo_comanda",
-      "change": "-0.08 kg",
-      "resultingStock": 14.04,
-      "reason": "Comanda #106 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793655533413_1ioa",
-      "timestamp": "2026-11-02T21:38:53.413Z",
-      "ingredientId": "ing_bollo_pizza",
-      "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 43,
-      "reason": "Comanda #106 (Pizza Muzzarella Grande x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793654308485_m7ci",
-      "timestamp": "2026-11-02T21:18:28.485Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "compra_proveedor",
-      "change": "+10 kg",
-      "resultingStock": 28.25,
-      "reason": "Factura A 5465 (Distribuidora Lácteos del Sur S.R.L.)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653625674_f7in",
-      "timestamp": "2026-11-02T21:07:05.674Z",
-      "ingredientId": "ing_disco_empanada",
-      "ingredientName": "Discos de Empanadas Caseros",
-      "type": "compra_proveedor",
-      "change": "+10 u",
-      "resultingStock": 106,
-      "reason": "Factura A 123 (Molinos & Harinas San Martín)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_h821",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_cheddar_fetas",
-      "ingredientName": "Queso Cheddar Americano en Fetas",
-      "type": "consumo_comanda",
-      "change": "-2 u",
-      "resultingStock": 115,
-      "reason": "Comanda #107 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_bnd1",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_carne_smash",
-      "ingredientName": "Medallón de Carne Smash 80g (Blend)",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 59,
-      "reason": "Comanda #107 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_07qb",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_pan_brioche",
-      "ingredientName": "Pan de Hamburguesa Brioche con Sésamo",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 39,
-      "reason": "Comanda #107 (Hamburguesa Simple Clásica x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_d0ox",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_panceta_ahumada",
-      "ingredientName": "Panceta Ahumada Crocante",
-      "type": "consumo_comanda",
-      "change": "-0.03 kg",
-      "resultingStock": 5.37,
-      "reason": "Comanda #107 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_v1rz",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_cheddar_fetas",
-      "ingredientName": "Queso Cheddar Americano en Fetas",
-      "type": "consumo_comanda",
-      "change": "-3 u",
-      "resultingStock": 117,
-      "reason": "Comanda #107 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653570551_klq8",
-      "timestamp": "2026-11-02T21:06:10.551Z",
-      "ingredientId": "ing_papas_baston",
-      "ingredientName": "Papas Bastón Pre-fritas",
-      "type": "consumo_comanda",
-      "change": "-0.35 kg",
-      "resultingStock": 27.65,
-      "reason": "Comanda #107 (Papas Rústicas Cheddar & Panceta x1)",
-      "user": "Martín (Cajero Principal)"
-    },
-    {
-      "id": "log_1793653478493_83a5",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_cerveza_ipa",
-      "ingredientName": "Barril Cerveza Artesanal IPA (Litros)",
-      "type": "consumo_comanda",
-      "change": "-0.5 l",
-      "resultingStock": 42,
-      "reason": "Comanda #106 (Cerveza Artesanal IPA (Pinta 500ml) x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478493_uqjv",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_aceitunas_verdes",
-      "ingredientName": "Aceitunas Verdes Descarozadas",
-      "type": "consumo_comanda",
-      "change": "-8 u",
-      "resultingStock": 342,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478493_0ehg",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_morron_conserva",
-      "ingredientName": "Morrones Asados en Conserva",
-      "type": "consumo_comanda",
-      "change": "-0.08 kg",
-      "resultingStock": 4.12,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478493_qz1l",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_jamon_cocido",
-      "ingredientName": "Jamón Cocido Feteado Primera Calidad",
-      "type": "consumo_comanda",
-      "change": "-0.15 kg",
-      "resultingStock": 6.65,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478493_lh1y",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_muzza",
-      "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.25 kg",
-      "resultingStock": 18.25,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478493_9ehw",
-      "timestamp": "2026-11-02T21:04:38.493Z",
-      "ingredientId": "ing_salsa_tomate",
-      "ingredientName": "Salsa de Tomate Pomodoro Artesanal",
-      "type": "consumo_comanda",
-      "change": "-0.08 kg",
-      "resultingStock": 14.12,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
-      "id": "log_1793653478492_skw7",
-      "timestamp": "2026-11-02T21:04:38.492Z",
-      "ingredientId": "ing_bollo_pizza",
-      "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-1 u",
-      "resultingStock": 44,
-      "reason": "Comanda #106 (Pizza Especial con Jamón y Morrones Grande x1)",
-      "user": "Rodrigo (Encargado / Admin)"
-    },
-    {
       "id": "log_1",
-      "timestamp": "2026-11-02T16:01:24.717Z",
+      "timestamp": "2026-11-02T19:40:02.334Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
       "type": "compra",
@@ -1649,25 +976,25 @@
     },
     {
       "id": "log_2",
-      "timestamp": "2026-11-02T20:16:24.717Z",
+      "timestamp": "2026-11-02T23:55:02.334Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
-      "type": "consumo_comanda",
-      "change": "-0.25 kg",
+      "type": "merma",
+      "change": "-1 kg",
       "resultingStock": 18.5,
-      "reason": "Comanda #101 (Pizza Muzzarella Grande)",
-      "user": "Lucas"
+      "reason": "Recorte de horma en cámara",
+      "user": "Rodrigo (Encargado / Admin)"
     },
     {
       "id": "log_3",
-      "timestamp": "2026-11-02T20:16:24.717Z",
+      "timestamp": "2026-11-03T00:10:02.334Z",
       "ingredientId": "ing_bollo_pizza",
       "ingredientName": "Bollo de Masa Madre Pizza",
-      "type": "consumo_comanda",
-      "change": "-1 u",
+      "type": "ajuste_manual",
+      "change": "+5 u",
       "resultingStock": 45,
-      "reason": "Comanda #101 (Pizza Muzzarella Grande)",
-      "user": "Lucas"
+      "reason": "Recuento manual de batea",
+      "user": "Rodrigo (Encargado / Admin)"
     }
   ]
 }

@@ -305,23 +305,18 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
             {/* Search & Category Bar */}
             <div className="p-3 bg-[var(--bg-surface)] border-b border-[var(--border-subtle)] space-y-2.5 shrink-0">
               <div className="flex items-center gap-2">
-                <label htmlFor="order-product-search" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">
-                  Buscar:
+                <label htmlFor="order-product-search" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0 inline-flex items-center gap-1.5">
+                  <i className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)]" aria-hidden="true"></i>
+                  <span>Buscar:</span>
                 </label>
-                <div className="relative flex-1">
-                  <i
-                    className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                    aria-hidden="true"
-                  ></i>
-                  <input
-                    id="order-product-search"
-                    type="search"
-                    placeholder="Plato por nombre..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.target.value)}
-                    className="pos-input pl-9"
-                  />
-                </div>
+                <input
+                  id="order-product-search"
+                  type="search"
+                  placeholder="Plato por nombre..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pos-input flex-1"
+                />
               </div>
 
               <div className="flex items-center gap-2 overflow-x-auto no-scrollbar pb-0.5" role="group" aria-label="Categorías de platos">

@@ -782,22 +782,22 @@ export const initialData = {
       timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
       ingredientId: "ing_muzza",
       ingredientName: "Queso Muzzarella en Barra",
-      type: "consumo_comanda",
-      change: "-0.25 kg",
+      type: "merma",
+      change: "-1 kg",
       resultingStock: 18.5,
-      reason: "Comanda #101 (Pizza Muzzarella Grande)",
-      user: "Lucas"
+      reason: "Recorte de horma en cámara",
+      user: "Rodrigo (Encargado / Admin)"
     },
     {
       id: "log_3",
-      timestamp: new Date(Date.now() - 45 * 60000).toISOString(),
+      timestamp: new Date(Date.now() - 30 * 60000).toISOString(),
       ingredientId: "ing_bollo_pizza",
       ingredientName: "Bollo de Masa Madre Pizza",
-      type: "consumo_comanda",
-      change: "-1 u",
+      type: "ajuste_manual",
+      change: "+5 u",
       resultingStock: 45,
-      reason: "Comanda #101 (Pizza Muzzarella Grande)",
-      user: "Lucas"
+      reason: "Recuento manual de batea",
+      user: "Rodrigo (Encargado / Admin)"
     }
   ]
 };

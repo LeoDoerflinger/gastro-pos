@@ -64,6 +64,7 @@ export function AppProvider({ children }) {
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
+  const [users, setUsers] = useState([]);
   const [tables, setTables] = useState([]);
   const [products, setProducts] = useState([]);
   const [ingredients, setIngredients] = useState([]);
@@ -86,6 +87,7 @@ export function AppProvider({ children }) {
   const refreshData = useCallback(async () => {
     try {
       const [
+        usersData,
         tablesData,
         productsData,
         ingredientsData,
@@ -96,6 +98,7 @@ export function AppProvider({ children }) {
         analyticsData,
         logData
       ] = await Promise.all([
+        api.getUsers(),
         api.getTables(),
         api.getProducts(),
         api.getIngredients(),
@@ -107,6 +110,7 @@ export function AppProvider({ children }) {
         api.getStockLog()
       ]);
 
+      setUsers(usersData);
       setTables(tablesData);
       setProducts(productsData);
       setIngredients(ingredientsData);
@@ -127,8 +131,6 @@ export function AppProvider({ children }) {
 
   useEffect(() => {
     refreshData();
-    const interval = setInterval(refreshData, 10000);
-    return () => clearInterval(interval);
   }, [refreshData]);
 
   // Enforce domain rule: mozos can only access Salón / Mesas
@@ -185,6 +187,8 @@ export function AppProvider({ children }) {
         setIsMobileSimulated,
         toast,
         showToast,
+        users,
+        setUsers,
         tables,
         products,
         ingredients,

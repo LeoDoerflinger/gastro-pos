@@ -374,14 +374,14 @@ export default function DeliveryManager() {
                   </div>
 
                   <div className="grid grid-cols-2 gap-2">
-                    {kStatus === 'en_preparacion' && (
+                    {(kStatus === 'en_preparacion' || kStatus === 'pendiente') && (
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(order, 'listo')}
                         className="pos-btn-secondary text-xs"
                       >
                         <i className="fa-solid fa-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
-                        <span>Marcar listo</span>
+                        <span>Listo</span>
                       </button>
                     )}
                     {kStatus === 'listo' && isDelivery && (
@@ -391,7 +391,7 @@ export default function DeliveryManager() {
                         className="pos-btn-secondary text-xs"
                       >
                         <i className="fa-solid fa-motorcycle text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
-                        <span>Despachar</span>
+                        <span>En camino</span>
                       </button>
                     )}
                     {kStatus === 'listo' && !isDelivery && (
@@ -411,13 +411,18 @@ export default function DeliveryManager() {
                         className="pos-btn-secondary text-xs"
                       >
                         <i className="fa-solid fa-circle-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
-                        <span>Entregado</span>
+                        <span>Entregar</span>
                       </button>
                     )}
                     {kStatus === 'entregado' && (
-                      <span className="min-h-[44px] rounded bg-[var(--bg-subtle)] text-[var(--text-muted)] text-xs font-semibold border border-[var(--border-subtle)] flex items-center justify-center">
-                        Completado
-                      </span>
+                      <button
+                        type="button"
+                        onClick={() => handleUpdateStatus(order, 'en_preparacion')}
+                        className="pos-btn-secondary text-xs"
+                      >
+                        <i className="fa-solid fa-rotate-left text-xs text-[var(--text-muted)]" aria-hidden="true"></i>
+                        <span>Reabrir</span>
+                      </button>
                     )}
 
                     <button

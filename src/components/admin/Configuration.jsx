@@ -4,10 +4,9 @@ import { api } from '../../api/client';
 import { getTableCode } from '../mozo/MozoSalonView';
 
 export default function Configuration() {
-  const { tables, currentUser, showToast, refreshData } = useApp();
+  const { tables, users: userList, currentUser, showToast, refreshData } = useApp();
 
   const [configSubtab, setConfigSubtab] = useState('tables');
-  const [userList, setUserList] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
   const [tableNumber, setTableNumber] = useState('');
@@ -17,10 +16,6 @@ export default function Configuration() {
   const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('mozo');
   const [userPin, setUserPin] = useState('');
-
-  useEffect(() => {
-    api.getUsers().then(setUserList).catch(console.error);
-  }, []);
 
   const handleAddTable = async (e) => {
     e.preventDefault();
@@ -69,16 +64,15 @@ export default function Configuration() {
           : 'fa-solid fa-user-tie';
 
       const created = await api.createUser({
-        name: userName,
+        name: userName.trim(),
         role: userRole,
-        pin: userPin,
+        pin: userPin.trim(),
         avatar: avatarIcon
       });
-      showToast(`Operador ${created.name} habilitado`);
+      await refreshData();
+      showToast(`Operador ${created.name} (PIN ${created.pin}) habilitado`);
       setUserName('');
       setUserPin('');
-      const updated = await api.getUsers();
-      setUserList(updated);
     } catch (err) {
       showToast(err.message || 'No se pudo registrar el operador', 'error');
     } finally {
@@ -94,9 +88,8 @@ export default function Configuration() {
     if (window.confirm(`¿Dar de baja a ${name}?`)) {
       try {
         await api.deleteUser(id);
+        await refreshData();
         showToast(`Operador ${name} dado de baja`);
-        const updated = await api.getUsers();
-        setUserList(updated);
       } catch (err) {
         showToast('No se pudo eliminar el operador', 'error');
       }

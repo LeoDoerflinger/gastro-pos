@@ -3,15 +3,23 @@ import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function PinModal() {
-  const { isPinModalOpen, setIsPinModalOpen, switchUser, currentUser } = useApp();
+  const { isPinModalOpen, setIsPinModalOpen, switchUser, currentUser, users, refreshData } = useApp();
   const [pin, setPin] = useState('');
-  const [users, setUsers] = useState([]);
   const [error, setError] = useState('');
 
   const verifyPin = useCallback(async (inputPin) => {
+    const cleanPin = String(inputPin || '').trim();
+    const matched = (users || []).find(u => String(u.pin).trim() === cleanPin);
+    if (matched) {
+      setPin('');
+      switchUser(matched);
+      setIsPinModalOpen(false);
+      return;
+    }
     try {
-      const res = await api.loginWithPin(inputPin);
+      const res = await api.loginWithPin(cleanPin);
       if (res.user) {
+        setPin('');
         switchUser(res.user);
         setIsPinModalOpen(false);
       }
@@ -19,15 +27,15 @@ export default function PinModal() {
       setError('Ese PIN no coincide con ningún operador registrado.');
       setPin('');
     }
-  }, [switchUser, setIsPinModalOpen]);
+  }, [users, switchUser, setIsPinModalOpen]);
 
   const handleKeyPress = useCallback((num) => {
+    setError('');
     setPin(prev => {
       if (prev.length >= 4) return prev;
       const nextPin = prev + String(num);
-      setError('');
       if (nextPin.length === 4) {
-        verifyPin(nextPin);
+        setTimeout(() => verifyPin(nextPin), 0);
       }
       return nextPin;
     });
@@ -42,9 +50,9 @@ export default function PinModal() {
     if (isPinModalOpen) {
       setPin('');
       setError('');
-      api.getUsers().then(setUsers).catch(console.error);
+      refreshData();
     }
-  }, [isPinModalOpen]);
+  }, [isPinModalOpen, refreshData]);
 
   useEffect(() => {
     if (!isPinModalOpen) return;

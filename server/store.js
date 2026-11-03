@@ -71,19 +71,28 @@ class Store {
   }
 
   findUserByPin(pin) {
-    return this.data.users.find(u => u.pin === pin);
+    const cleanPin = String(pin || '').trim();
+    return (this.data.users || []).find(u => String(u.pin).trim() === cleanPin);
   }
 
   findUserById(id) {
-    return this.data.users.find(u => u.id === id);
+    return (this.data.users || []).find(u => u.id === id);
   }
 
   addUser(userData) {
+    const cleanPin = String(userData.pin || '').trim();
+    if (!cleanPin || cleanPin.length !== 4) {
+      throw new Error('Ingresá un PIN válido de 4 dígitos');
+    }
+    const existing = (this.data.users || []).find(u => String(u.pin).trim() === cleanPin);
+    if (existing) {
+      throw new Error(`El PIN ${cleanPin} ya está asignado a ${existing.name}`);
+    }
     const newUser = {
-      id: 'u_' + Date.now(),
-      name: userData.name,
-      role: userData.role,
-      pin: userData.pin,
+      id: userData.id || ('u_' + Date.now()),
+      name: String(userData.name || '').trim(),
+      role: userData.role || 'mozo',
+      pin: cleanPin,
       email: userData.email || '',
       avatar: userData.avatar || (userData.role === 'admin' ? 'fa-solid fa-user-shield' : userData.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie')
     };
@@ -332,9 +341,6 @@ class Store {
       closedBy: null
     };
 
-    // Descontar materias primas automáticamente del stock según receta
-    this.deductStockFromRecipe(newOrder.items, newOrder.orderNumber, user?.name);
-
     this.data.orders.unshift(newOrder);
 
     // Si es de mesa, actualizar estado de la mesa
@@ -353,7 +359,6 @@ class Store {
     return newOrder;
   }
 
-  // Agregar items a comanda existente (por ejemplo cuando una mesa pide más cosas)
   addItemsToOrder(orderId, newItems, user) {
     const order = this.data.orders.find(o => o.id === orderId);
     if (!order) return null;
@@ -370,12 +375,8 @@ class Store {
 
     order.items.push(...formattedItems);
 
-    // Recalcular montos
     order.subtotal = order.items.reduce((acc, it) => acc + it.subtotal, 0);
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + (order.tip || 0);
-
-    // Descontar del stock los nuevos items
-    this.deductStockFromRecipe(formattedItems, order.orderNumber, user?.name);
 
     this.save();
     return order;

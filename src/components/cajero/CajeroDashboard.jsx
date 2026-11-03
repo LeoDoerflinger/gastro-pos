@@ -48,6 +48,21 @@ export default function CajeroDashboard() {
     }
   };
 
+  const handleAdvanceKitchenStatus = async (order, nextStatus) => {
+    try {
+      await api.updateOrderStatus(order.id, { kitchenStatus: nextStatus });
+      const labels = {
+        listo: 'Listo',
+        en_camino: 'En camino',
+        entregado: 'Entregado'
+      };
+      showToast(`Pedido #${order.orderNumber}: ${labels[nextStatus] || nextStatus}`);
+      await refreshData();
+    } catch (err) {
+      showToast(err.message || 'No se pudo cambiar el estado del pedido', 'error');
+    }
+  };
+
   const renderOrderLocation = (order) => {
     if (order.channel === 'mesa') {
       const code = getOrderTableCode(order);
@@ -94,22 +109,25 @@ export default function CajeroDashboard() {
   };
 
   const renderOrderStatusBadge = (order) => {
-    if (order.status === 'cuenta_pedida') {
-      return (
-        <span className="pos-badge pos-badge-bill">
-          <i className="fa-solid fa-receipt text-[11px]" aria-hidden="true"></i>
-          <span>Pendiente cobro</span>
-        </span>
-      );
-    }
     const statusMap = {
+      pendiente: 'Pendiente',
       en_preparacion: 'En cocina',
       listo: 'Listo',
       en_camino: 'En reparto',
       entregado: 'Entregado'
     };
-    const label = statusMap[order.kitchenStatus] || 'Abierta';
-    return <span className="pos-badge pos-badge-open">{label}</span>;
+    const label = statusMap[order.kitchenStatus] || 'En cocina';
+    return (
+      <div className="flex flex-wrap items-center gap-1.5">
+        {order.status === 'cuenta_pedida' && (
+          <span className="pos-badge pos-badge-bill">
+            <i className="fa-solid fa-receipt text-[11px]" aria-hidden="true"></i>
+            <span>Pendiente cobro</span>
+          </span>
+        )}
+        <span className="pos-badge pos-badge-open">{label}</span>
+      </div>
+    );
   };
 
   const channels = [
@@ -251,78 +269,100 @@ export default function CajeroDashboard() {
           </div>
         ) : (
           <div className="divide-y divide-[var(--border-subtle)]">
-            {/* Desktop Column Headers */}
-            <div className="hidden md:grid md:grid-cols-12 gap-3 px-4 py-2.5 bg-[var(--bg-subtle)] text-xs font-semibold text-[var(--text-secondary)]">
-              <div className="col-span-3">Mesa / Canal</div>
-              <div className="col-span-2">Estado</div>
-              <div className="col-span-3">Mozo / Operador</div>
-              <div className="col-span-2 text-right">Saldo</div>
-              <div className="col-span-2 text-right">Acciones</div>
-            </div>
-
             {filteredOrders.map(order => {
               const isPendiente = order.status === 'cuenta_pedida';
+              const kStatus = order.kitchenStatus || 'en_preparacion';
 
               return (
                 <div
                   key={order.id}
-                  className={`px-4 py-3 transition-colors flex flex-col md:grid md:grid-cols-12 gap-2.5 md:gap-3 md:items-center ${
+                  className={`px-4 py-3.5 transition-colors flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 ${
                     isPendiente
                       ? 'bg-[var(--status-bill-bg)] border-l-4 border-l-[var(--status-bill-bar)]'
                       : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
-                  <div className="md:col-span-3 flex items-center justify-between md:justify-start min-w-0">
-                    {renderOrderLocation(order)}
-                    <div className="md:hidden shrink-0">{renderOrderStatusBadge(order)}</div>
+                  {/* Left & Middle Info: Mesa/Canal + Estado + Mozo */}
+                  <div className="flex flex-wrap items-center gap-3 sm:gap-5 min-w-0 flex-1">
+                    <div className="min-w-[130px] shrink-0">
+                      {renderOrderLocation(order)}
+                    </div>
+
+                    <div className="shrink-0">
+                      {renderOrderStatusBadge(order)}
+                    </div>
+
+                    <div className="text-sm text-[var(--text-secondary)] flex items-center gap-1.5 min-w-0">
+                      <span className="text-xs text-[var(--text-muted)]">Mozo:</span>
+                      <span className="font-medium text-[var(--text-primary)] truncate">
+                        {order.waiterName || order.driverName || 'Cajero'}
+                      </span>
+                    </div>
                   </div>
 
-                  <div className="hidden md:block md:col-span-2">{renderOrderStatusBadge(order)}</div>
+                  {/* Right Side: Price (with guaranteed spacing) + Action Buttons */}
+                  <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 sm:gap-4 pt-2.5 lg:pt-0 border-t border-[var(--border-subtle)] lg:border-t-0 shrink-0">
+                    <div className="text-left lg:text-right pr-1 shrink-0">
+                      <span className="lg:hidden text-xs text-[var(--text-muted)] mr-2">Saldo:</span>
+                      <span className="font-mono font-bold text-base sm:text-lg text-[var(--text-primary)] whitespace-nowrap">
+                        ${(order.total || order.subtotal).toLocaleString('es-AR')}
+                      </span>
+                    </div>
 
-                  <div className="md:col-span-3 text-sm text-[var(--text-secondary)] flex items-center justify-between md:justify-start">
-                    <span className="md:hidden text-xs text-[var(--text-muted)]">Atiende:</span>
-                    <span className="font-medium text-[var(--text-primary)]">
-                      {order.waiterName || order.driverName || 'Cajero'}
-                    </span>
-                  </div>
+                    <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                      {(kStatus === 'en_preparacion' || kStatus === 'pendiente') && (
+                        <button
+                          type="button"
+                          onClick={() => handleAdvanceKitchenStatus(order, 'listo')}
+                          className="pos-btn-secondary text-xs px-3"
+                        >
+                          <i className="fa-solid fa-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
+                          <span>Listo</span>
+                        </button>
+                      )}
 
-                  <div className="md:col-span-2 flex items-center justify-between md:justify-end">
-                    <span className="md:hidden text-xs text-[var(--text-muted)]">Saldo:</span>
-                    <span className="font-mono font-bold text-base text-[var(--text-primary)]">
-                      ${(order.total || order.subtotal).toLocaleString('es-AR')}
-                    </span>
-                  </div>
+                      {(kStatus === 'listo' || kStatus === 'en_camino') && (
+                        <button
+                          type="button"
+                          onClick={() => handleAdvanceKitchenStatus(order, 'entregado')}
+                          className="pos-btn-secondary text-xs px-3"
+                        >
+                          <i className="fa-solid fa-circle-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
+                          <span>Entregar</span>
+                        </button>
+                      )}
 
-                  <div className="md:col-span-2 flex items-center justify-end gap-2 pt-2 md:pt-0 border-t border-[var(--border-subtle)] md:border-t-0">
-                    {isPendiente && (
+                      {isPendiente && (
+                        <button
+                          type="button"
+                          onClick={() => handleRevertBill(order)}
+                          title="Revertir mesa a Abierta"
+                          aria-label="Revertir mesa a Abierta"
+                          className="pos-btn-secondary text-xs px-3"
+                        >
+                          <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
+                          <span>Revertir</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => handleRevertBill(order)}
-                        title="Revertir mesa a Abierta"
-                        aria-label="Revertir mesa a Abierta"
-                        className="pos-btn-secondary px-3"
+                        onClick={() => handleOpenReceipt(order, 'precuenta')}
+                        className="pos-btn-secondary text-xs px-3"
                       >
-                        <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
+                        <i className="fa-solid fa-receipt text-xs" aria-hidden="true"></i>
+                        <span>Cuenta</span>
                       </button>
-                    )}
 
-                    <button
-                      type="button"
-                      onClick={() => handleOpenReceipt(order, 'precuenta')}
-                      className="pos-btn-secondary text-xs px-3"
-                    >
-                      <i className="fa-solid fa-receipt text-xs" aria-hidden="true"></i>
-                      <span>Cuenta</span>
-                    </button>
-
-                    <button
-                      type="button"
-                      onClick={() => handleOpenCobro(order)}
-                      className="pos-btn-primary text-xs px-3.5"
-                    >
-                      <i className="fa-solid fa-dollar-sign text-xs" aria-hidden="true"></i>
-                      <span>Cobrar</span>
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => handleOpenCobro(order)}
+                        className="pos-btn-primary text-xs px-3.5"
+                      >
+                        <i className="fa-solid fa-dollar-sign text-xs" aria-hidden="true"></i>
+                        <span>Cobrar</span>
+                      </button>
+                    </div>
                   </div>
                 </div>
               );

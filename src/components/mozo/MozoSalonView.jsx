@@ -128,23 +128,18 @@ export default function MozoSalonView() {
 
           {/* Search Input */}
           <div className="flex items-center gap-2 w-full lg:w-72 shrink-0">
-            <label htmlFor="table-search-input" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0">
-              Buscar:
+            <label htmlFor="table-search-input" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0 inline-flex items-center gap-1.5">
+              <i className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)]" aria-hidden="true"></i>
+              <span>Buscar:</span>
             </label>
-            <div className="relative flex-1">
-              <i
-                className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)] absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none"
-                aria-hidden="true"
-              ></i>
-              <input
-                id="table-search-input"
-                type="search"
-                placeholder="Mesa (ej. S4, T10)..."
-                value={searchTable}
-                onChange={(e) => setSearchTable(e.target.value)}
-                className="pos-input pl-9"
-              />
-            </div>
+            <input
+              id="table-search-input"
+              type="search"
+              placeholder="Mesa (ej. S4, T10)..."
+              value={searchTable}
+              onChange={(e) => setSearchTable(e.target.value)}
+              className="pos-input flex-1"
+            />
           </div>
         </div>
 
