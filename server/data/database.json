@@ -2,7 +2,7 @@
   "users": [
     {
       "id": "u_admin",
-      "name": "Rodrigo (Encargado / Admin)",
+      "name": "Admin",
       "role": "admin",
       "pin": "9999",
       "email": "admin@gastrogestion.com",
@@ -10,7 +10,7 @@
     },
     {
       "id": "u_cajero",
-      "name": "Martín (Cajero Principal)",
+      "name": "Cajero",
       "role": "cajero",
       "pin": "2222",
       "email": "caja@gastrogestion.com",
@@ -18,18 +18,18 @@
     },
     {
       "id": "u_mozo1",
-      "name": "Lucas (Mozo Salón)",
+      "name": "Mozo 1",
       "role": "mozo",
       "pin": "1111",
-      "email": "lucas@gastrogestion.com",
+      "email": "mozo1@gastrogestion.com",
       "avatar": "fa-solid fa-user-tie"
     },
     {
       "id": "u_mozo2",
-      "name": "Sofía (Moza Terraza)",
+      "name": "Mozo 2",
       "role": "mozo",
       "pin": "1112",
-      "email": "sofia@gastrogestion.com",
+      "email": "mozo2@gastrogestion.com",
       "avatar": "fa-solid fa-user-tie"
     }
   ],
@@ -42,7 +42,7 @@
       "stock": 18.5,
       "minStock": 5,
       "costPerUnit": 7800,
-      "lastUpdated": "2026-11-03T18:07:26.374Z"
+      "lastUpdated": "2026-11-03T18:42:12.782Z"
     },
     {
       "id": "ing_salsa_tomate",
@@ -52,7 +52,7 @@
       "stock": 14.2,
       "minStock": 4,
       "costPerUnit": 2400,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_bollo_pizza",
@@ -62,7 +62,7 @@
       "stock": 45,
       "minStock": 15,
       "costPerUnit": 950,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_aceitunas_verdes",
@@ -72,7 +72,7 @@
       "stock": 350,
       "minStock": 80,
       "costPerUnit": 45,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_jamon_cocido",
@@ -82,7 +82,7 @@
       "stock": 6.8,
       "minStock": 2,
       "costPerUnit": 9200,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_morron_conserva",
@@ -92,7 +92,7 @@
       "stock": 4.2,
       "minStock": 1.5,
       "costPerUnit": 6500,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_carne_smash",
@@ -102,7 +102,7 @@
       "stock": 60,
       "minStock": 20,
       "costPerUnit": 1400,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_pan_brioche",
@@ -112,7 +112,7 @@
       "stock": 40,
       "minStock": 15,
       "costPerUnit": 680,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_cheddar_fetas",
@@ -122,7 +122,7 @@
       "stock": 120,
       "minStock": 30,
       "costPerUnit": 350,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_panceta_ahumada",
@@ -132,7 +132,7 @@
       "stock": 5.4,
       "minStock": 1.5,
       "costPerUnit": 11500,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_papas_baston",
@@ -142,7 +142,7 @@
       "stock": 28,
       "minStock": 8,
       "costPerUnit": 2900,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_cerveza_ipa",
@@ -152,7 +152,7 @@
       "stock": 42.5,
       "minStock": 15,
       "costPerUnit": 1900,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_coca_cola_lata",
@@ -162,7 +162,7 @@
       "stock": 72,
       "minStock": 24,
       "costPerUnit": 980,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_agua_mineral",
@@ -172,7 +172,7 @@
       "stock": 50,
       "minStock": 20,
       "costPerUnit": 650,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_disco_empanada",
@@ -182,7 +182,7 @@
       "stock": 96,
       "minStock": 24,
       "costPerUnit": 220,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     },
     {
       "id": "ing_relleno_carne",
@@ -192,7 +192,7 @@
       "stock": 8.5,
       "minStock": 2,
       "costPerUnit": 6200,
-      "lastUpdated": "2026-11-03T18:07:26.376Z"
+      "lastUpdated": "2026-11-03T18:42:12.783Z"
     }
   ],
   "products": [
@@ -463,18 +463,18 @@
       "activeOrderId": "ord_demo_1",
       "diners": 3,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-03T17:22:26.376Z"
+      "openedAt": "2026-11-03T17:57:12.783Z"
     },
     {
       "id": "m3",
       "number": 3,
       "sector": "Salón Principal",
       "capacity": 4,
-      "status": "cuenta_pedida",
+      "status": "pendiente_cobro",
       "activeOrderId": "ord_demo_2",
       "diners": 2,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-03T16:57:26.376Z"
+      "openedAt": "2026-11-03T17:32:12.783Z"
     },
     {
       "id": "m4",
@@ -492,11 +492,11 @@
       "number": 5,
       "sector": "Terraza",
       "capacity": 4,
-      "status": "ocupada",
+      "status": "cuenta_solicitada",
       "activeOrderId": "ord_demo_3",
       "diners": 4,
       "waiterId": "u_mozo2",
-      "openedAt": "2026-11-03T17:42:26.376Z"
+      "openedAt": "2026-11-03T18:17:12.783Z"
     },
     {
       "id": "m6",
@@ -567,7 +567,7 @@
       "deliveryFee": 0,
       "driverName": null,
       "waiterId": "u_mozo1",
-      "waiterName": "Lucas",
+      "waiterName": "Mozo 1",
       "status": "abierto",
       "kitchenStatus": "en_preparacion",
       "diners": 3,
@@ -605,7 +605,7 @@
       "tip": 0,
       "total": 24600,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T17:22:26.376Z",
+      "createdAt": "2026-11-03T17:57:12.784Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -621,8 +621,8 @@
       "deliveryFee": 0,
       "driverName": null,
       "waiterId": "u_mozo1",
-      "waiterName": "Lucas",
-      "status": "cuenta_pedida",
+      "waiterName": "Mozo 1",
+      "status": "pendiente_cobro",
       "kitchenStatus": "entregado",
       "diners": 2,
       "items": [
@@ -659,7 +659,7 @@
       "tip": 3670,
       "total": 40370,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T16:57:26.376Z",
+      "createdAt": "2026-11-03T17:32:12.784Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -675,9 +675,9 @@
       "deliveryFee": 0,
       "driverName": null,
       "waiterId": "u_mozo2",
-      "waiterName": "Sofía",
-      "status": "abierto",
-      "kitchenStatus": "en_preparacion",
+      "waiterName": "Mozo 2",
+      "status": "cuenta_solicitada",
+      "kitchenStatus": "entregado",
       "diners": 4,
       "items": [
         {
@@ -713,7 +713,7 @@
       "tip": 0,
       "total": 37900,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T17:42:26.376Z",
+      "createdAt": "2026-11-03T18:17:12.784Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -729,7 +729,7 @@
       "deliveryFee": 0,
       "driverName": null,
       "waiterId": "u_cajero",
-      "waiterName": "Martín",
+      "waiterName": "Cajero",
       "status": "abierto",
       "kitchenStatus": "listo",
       "diners": 1,
@@ -749,7 +749,7 @@
       "tip": 0,
       "total": 27000,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T17:47:26.376Z",
+      "createdAt": "2026-11-03T18:22:12.784Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -763,9 +763,9 @@
       "customerPhone": "11-9876-5432",
       "deliveryAddress": "Av. Corrientes 3450, Piso 4 B (Timbre Rossi)",
       "deliveryFee": 1800,
-      "driverName": "Gastón (Moto 1)",
+      "driverName": "Repartidor 1",
       "waiterId": "u_cajero",
-      "waiterName": "Martín",
+      "waiterName": "Cajero",
       "status": "abierto",
       "kitchenStatus": "en_camino",
       "diners": 1,
@@ -794,7 +794,7 @@
       "tip": 0,
       "total": 16200,
       "paymentMethod": "mercadopago",
-      "createdAt": "2026-11-03T17:32:26.376Z",
+      "createdAt": "2026-11-03T18:07:12.784Z",
       "closedAt": null,
       "closedBy": null
     }
@@ -863,7 +863,7 @@
       "paymentMethod": "transferencia",
       "paymentStatus": "pagado",
       "notes": "Entrega en cámara frigorífica 1",
-      "registeredBy": "Martín (Cajero)"
+      "registeredBy": "Cajero"
     },
     {
       "id": "pur_102",
@@ -894,7 +894,7 @@
       "paymentMethod": "efectivo",
       "paymentStatus": "pagado",
       "notes": "Ingreso directo a heladera de producción",
-      "registeredBy": "Rodrigo (Admin)"
+      "registeredBy": "Admin"
     }
   ],
   "cashShifts": [
@@ -902,8 +902,10 @@
       "id": "shift_current",
       "shiftNumber": 42,
       "cashierId": "u_cajero",
-      "cashierName": "Martín",
-      "openedAt": "2026-11-03T13:07:26.376Z",
+      "cashierName": "Cajero",
+      "openedAt": "2026-11-03T13:42:12.784Z",
+      "openedDate": "3/11/2026",
+      "openedTime": "10:42",
       "initialCash": 45000,
       "status": "abierta",
       "movements": [
@@ -912,22 +914,58 @@
           "type": "egreso",
           "amount": 3500,
           "reason": "Compra urgente 2 bolsas de hielo rolo",
-          "createdAt": "2026-11-03T15:07:26.376Z",
-          "user": "Martín (Cajero)"
+          "createdAt": "2026-11-03T15:42:12.810Z",
+          "user": "Cajero"
         },
         {
           "id": "mov_2",
           "type": "ingreso",
           "amount": 15000,
           "reason": "Refuerzo cambio de billetes chicos",
-          "createdAt": "2026-11-03T16:07:26.376Z",
-          "user": "Rodrigo (Admin)"
+          "createdAt": "2026-11-03T16:42:12.810Z",
+          "user": "Admin"
         }
       ],
       "actualCash": null,
       "difference": null,
       "closedAt": null,
+      "closedDate": null,
+      "closedTime": null,
       "notes": ""
+    }
+  ],
+  "notifications": [
+    {
+      "id": "notif_demo_1",
+      "type": "cuenta",
+      "title": "Cuenta solicitada · Mesa T5",
+      "message": "Mozo 2 solicitó la cuenta de Mesa T5 (Comanda #103 · Total $37.900).",
+      "orderId": "ord_demo_3",
+      "orderNumber": 103,
+      "tableId": "m5",
+      "tableCode": "T5",
+      "channel": "mesa",
+      "waiterName": "Mozo 2",
+      "total": 37900,
+      "items": [
+        {
+          "productName": "Pizza Especial con Jamón y Morrones Grande",
+          "quantity": 1,
+          "notes": ""
+        },
+        {
+          "productName": "Empanada de Carne a Cuchillo",
+          "quantity": 4,
+          "notes": ""
+        },
+        {
+          "productName": "Cerveza Artesanal IPA (Pinta 500ml)",
+          "quantity": 3,
+          "notes": ""
+        }
+      ],
+      "createdAt": "2026-11-03T18:32:12.810Z",
+      "read": true
     }
   ],
   "historicalSales": [
@@ -938,8 +976,8 @@
       "tableNumber": 1,
       "total": 31200,
       "paymentMethod": "efectivo",
-      "closedAt": "2026-11-03T14:07:26.376Z",
-      "waiterName": "Lucas"
+      "closedAt": "2026-11-03T14:42:12.811Z",
+      "waiterName": "Mozo 1"
     },
     {
       "id": "sale_prev_2",
@@ -948,8 +986,8 @@
       "tableNumber": null,
       "total": 16000,
       "paymentMethod": "mercadopago",
-      "closedAt": "2026-11-03T15:07:26.376Z",
-      "waiterName": "Martín"
+      "closedAt": "2026-11-03T15:42:12.811Z",
+      "waiterName": "Cajero"
     },
     {
       "id": "sale_prev_3",
@@ -958,44 +996,44 @@
       "tableNumber": null,
       "total": 28500,
       "paymentMethod": "debito",
-      "closedAt": "2026-11-03T17:07:26.376Z",
-      "waiterName": "Martín"
+      "closedAt": "2026-11-03T17:42:12.811Z",
+      "waiterName": "Cajero"
     }
   ],
   "stockLog": [
     {
       "id": "log_1",
-      "timestamp": "2026-11-03T13:07:26.376Z",
+      "timestamp": "2026-11-03T13:42:12.811Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
       "type": "compra",
       "change": "+20 kg",
       "resultingStock": 19.5,
       "reason": "Factura A 0003-00012489",
-      "user": "Martín"
+      "user": "Cajero"
     },
     {
       "id": "log_2",
-      "timestamp": "2026-11-03T17:22:26.376Z",
+      "timestamp": "2026-11-03T17:57:12.811Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
       "type": "merma",
       "change": "-1 kg",
       "resultingStock": 18.5,
       "reason": "Recorte de horma en cámara",
-      "user": "Rodrigo (Encargado / Admin)"
+      "user": "Admin"
     },
     {
       "id": "log_3",
-      "timestamp": "2026-11-03T17:37:26.376Z",
+      "timestamp": "2026-11-03T18:12:12.811Z",
       "ingredientId": "ing_bollo_pizza",
       "ingredientName": "Bollo de Masa Madre Pizza",
       "type": "ajuste_manual",
       "change": "+5 u",
       "resultingStock": 45,
       "reason": "Recuento manual de batea",
-      "user": "Rodrigo (Encargado / Admin)"
+      "user": "Admin"
     }
   ],
-  "lastUpdated": 1793729266728
+  "lastUpdated": 1793731356717
 }

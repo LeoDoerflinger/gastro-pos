@@ -4,6 +4,7 @@ import Header from './components/common/Header';
 import SidebarDrawer from './components/common/SidebarDrawer';
 import PinModal from './components/common/PinModal';
 import MobileQrModal from './components/common/MobileQrModal';
+import NotificationCenter from './components/common/NotificationCenter';
 import Toast from './components/common/Toast';
 import UserLoginDashboard from './components/auth/UserLoginDashboard';
 import MobileComanderaApp from './components/mobile/MobileComanderaApp';
@@ -11,6 +12,7 @@ import MobileComanderaApp from './components/mobile/MobileComanderaApp';
 import MozoSalonView from './components/mozo/MozoSalonView';
 import CajeroDashboard from './components/cajero/CajeroDashboard';
 import ArqueoCaja from './components/cajero/ArqueoCaja';
+import ShiftBalanceModal from './components/cajero/ShiftBalanceModal';
 import StockPurchases from './components/cajero/StockPurchases';
 import DeliveryManager from './components/delivery/DeliveryManager';
 import RecipeManager from './components/admin/RecipeManager';
@@ -35,6 +37,8 @@ export default function App() {
       <>
         <UserLoginDashboard />
         <MobileQrModal />
+        <ShiftBalanceModal />
+        <NotificationCenter />
         <Toast />
       </>
     );
@@ -150,7 +154,7 @@ export default function App() {
             <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
-            <span>{activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}</span>
+            <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>
             <span>·</span>
             <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
           </div>
@@ -159,6 +163,8 @@ export default function App() {
 
       <PinModal />
       <MobileQrModal />
+      <ShiftBalanceModal />
+      <NotificationCenter />
       <Toast />
     </div>
   );

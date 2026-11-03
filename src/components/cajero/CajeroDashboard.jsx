@@ -14,8 +14,12 @@ export default function CajeroDashboard() {
   const [receiptType, setReceiptType] = useState('precuenta');
   const [isCounterOrderModalOpen, setIsCounterOrderModalOpen] = useState(false);
 
-  const activeOrders = orders.filter(o => o.status === 'abierto' || o.status === 'cuenta_pedida');
-  const billRequestedOrders = activeOrders.filter(o => o.status === 'cuenta_pedida');
+  const activeOrders = orders.filter(
+    o => o.status === 'abierto' || o.status === 'cuenta_solicitada' || o.status === 'pendiente_cobro' || o.status === 'cuenta_pedida'
+  );
+  const billRequestedOrders = activeOrders.filter(
+    o => o.status === 'cuenta_solicitada' || o.status === 'pendiente_cobro' || o.status === 'cuenta_pedida'
+  );
 
   const filteredOrders = activeOrders.filter(o => {
     if (channelFilter === 'todos') return true;
@@ -45,6 +49,17 @@ export default function CajeroDashboard() {
       await refreshData();
     } catch (err) {
       showToast(err.message || 'No se pudo revertir el estado', 'error');
+    }
+  };
+
+  const handleMarkPendingPayment = async (order) => {
+    try {
+      await api.markPendingPayment(order.id);
+      const code = getOrderTableCode(order) || `#${order.orderNumber}`;
+      showToast(`Mesa ${code} marcada como Pendiente de cobro`);
+      await refreshData();
+    } catch (err) {
+      showToast(err.message || 'No se pudo cambiar el estado', 'error');
     }
   };
 
@@ -119,7 +134,13 @@ export default function CajeroDashboard() {
     const label = statusMap[order.kitchenStatus] || 'En cocina';
     return (
       <div className="flex flex-wrap items-center gap-1.5">
-        {order.status === 'cuenta_pedida' && (
+        {order.status === 'cuenta_solicitada' && (
+          <span className="pos-badge pos-badge-account">
+            <i className="fa-solid fa-bell-concierge text-[11px]" aria-hidden="true"></i>
+            <span>Cuenta</span>
+          </span>
+        )}
+        {(order.status === 'pendiente_cobro' || order.status === 'cuenta_pedida') && (
           <span className="pos-badge pos-badge-bill">
             <i className="fa-solid fa-receipt text-[11px]" aria-hidden="true"></i>
             <span>Pendiente cobro</span>
@@ -179,29 +200,39 @@ export default function CajeroDashboard() {
             <div className="flex items-center gap-2.5">
               <i className="fa-solid fa-bell text-sm text-[var(--status-bill-fg)]" aria-hidden="true"></i>
               <h2 className="font-display font-bold text-base text-[var(--status-bill-fg)]">
-                Pendientes de cobro ({billRequestedOrders.length})
+                Cuentas y pendientes de cobro ({billRequestedOrders.length})
               </h2>
             </div>
             <span className="text-xs font-medium text-[var(--status-bill-fg)]">
-              Pidieron la cuenta
+              Prioridad de caja
             </span>
           </div>
 
           <div className="divide-y divide-[var(--border-subtle)]">
             {billRequestedOrders.map(order => {
               const tableCode = getOrderTableCode(order);
+              const isCuentaStep = order.status === 'cuenta_solicitada';
               return (
                 <div
                   key={order.id}
                   className="px-4 py-3 flex flex-col sm:flex-row sm:items-center justify-between gap-3 bg-[var(--bg-surface)]"
                 >
                   <div className="flex items-center gap-3">
-                    <span className="font-mono font-bold text-sm text-[var(--status-bill-fg)] bg-[var(--status-bill-bg)] px-3 py-1 rounded border border-[var(--status-bill-border)]">
+                    <span
+                      className={`font-mono font-bold text-sm px-3 py-1 rounded border ${
+                        isCuentaStep
+                          ? 'text-[var(--status-account-fg)] bg-[var(--status-account-bg)] border-[var(--status-account-border)]'
+                          : 'text-[var(--status-bill-fg)] bg-[var(--status-bill-bg)] border-[var(--status-bill-border)]'
+                      }`}
+                    >
                       {tableCode || `#${order.orderNumber}`}
                     </span>
                     <div>
-                      <div className="text-sm font-medium text-[var(--text-primary)]">
-                        Atendió: <strong>{order.waiterName || 'Personal'}</strong>
+                      <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2">
+                        <span>Atendió: <strong>{order.waiterName || 'Personal'}</strong></span>
+                        <span className={`pos-badge ${isCuentaStep ? 'pos-badge-account' : 'pos-badge-bill'}`}>
+                          {isCuentaStep ? 'Cuenta' : 'Pendiente cobro'}
+                        </span>
                       </div>
                       <div className="text-xs text-[var(--text-secondary)] font-mono">
                         {(order.items || []).length} platos registrados
@@ -217,7 +248,7 @@ export default function CajeroDashboard() {
                       </span>
                     </div>
 
-                    <div className="flex items-center gap-2 shrink-0">
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
                       <button
                         type="button"
                         onClick={() => handleRevertBill(order)}
@@ -226,6 +257,17 @@ export default function CajeroDashboard() {
                         <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
                         <span>Revertir</span>
                       </button>
+
+                      {isCuentaStep && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkPendingPayment(order)}
+                          className="pos-btn-secondary text-xs"
+                        >
+                          <i className="fa-solid fa-receipt text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+                          <span>Pendiente cobro</span>
+                        </button>
+                      )}
 
                       <button
                         type="button"
@@ -270,7 +312,8 @@ export default function CajeroDashboard() {
         ) : (
           <div className="divide-y divide-[var(--border-subtle)]">
             {filteredOrders.map(order => {
-              const isPendiente = order.status === 'cuenta_pedida';
+              const isCuenta = order.status === 'cuenta_solicitada';
+              const isPendiente = order.status === 'pendiente_cobro' || order.status === 'cuenta_pedida';
               const kStatus = order.kitchenStatus || 'en_preparacion';
 
               return (
@@ -279,6 +322,8 @@ export default function CajeroDashboard() {
                   className={`px-4 py-3.5 transition-colors flex flex-col lg:flex-row lg:items-center lg:justify-between gap-3 ${
                     isPendiente
                       ? 'bg-[var(--status-bill-bg)] border-l-4 border-l-[var(--status-bill-bar)]'
+                      : isCuenta
+                      ? 'bg-[var(--status-account-bg)] border-l-4 border-l-[var(--status-account-bar)]'
                       : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
@@ -332,7 +377,7 @@ export default function CajeroDashboard() {
                         </button>
                       )}
 
-                      {isPendiente && (
+                      {(isCuenta || isPendiente) && (
                         <button
                           type="button"
                           onClick={() => handleRevertBill(order)}
@@ -342,6 +387,17 @@ export default function CajeroDashboard() {
                         >
                           <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
                           <span>Revertir</span>
+                        </button>
+                      )}
+
+                      {isCuenta && (
+                        <button
+                          type="button"
+                          onClick={() => handleMarkPendingPayment(order)}
+                          className="pos-btn-secondary text-xs px-3"
+                        >
+                          <i className="fa-solid fa-file-invoice-dollar text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+                          <span>Pendiente cobro</span>
                         </button>
                       )}
 

@@ -28,10 +28,15 @@
   --status-open-bar: #49b379;
   --status-open-border: #2f5c44;
 
-  --status-bill-bg: #2a2217;
-  --status-bill-fg: #f6bd6a;
-  --status-bill-bar: #e39a3b;
-  --status-bill-border: #6e4f26;
+  --status-account-bg: #142634;
+  --status-account-fg: #7dd3fc;
+  --status-account-bar: #38bdf8;
+  --status-account-border: #2b5778;
+
+  --status-bill-bg: #2b181a;
+  --status-bill-fg: #fca5a5;
+  --status-bill-bar: #ef4444;
+  --status-bill-border: #782a30;
 
   --status-danger-bg: #2b1c1e;
   --status-danger-fg: #f99696;
@@ -49,13 +54,13 @@
 }
 
 [data-theme="paper"] {
-  --bg-canvas: #eeebe4;
-  --bg-surface: #faf9f5;
-  --bg-elevated: #ffffff;
-  --bg-hover: #f0ede6;
-  --bg-subtle: #e5e1d8;
-  --border-subtle: #cfc9be;
-  --border-strong: #767168;
+  --bg-canvas: #ffffff;
+  --bg-surface: #ffffff;
+  --bg-elevated: #f8fafc;
+  --bg-hover: #f1f5f9;
+  --bg-subtle: #f1f5f9;
+  --border-subtle: #cbd5e1;
+  --border-strong: #64748b;
 
   --text-primary: #18191b;
   --text-secondary: #43464c;
@@ -67,7 +72,7 @@
 
   --btn-primary-bg: #1f2226;
   --btn-primary-hover: #111316;
-  --btn-primary-fg: #faf9f5;
+  --btn-primary-fg: #ffffff;
   --btn-primary-border: #111316;
 
   --status-open-bg: #e4f1e9;
@@ -75,10 +80,15 @@
   --status-open-bar: #237a4b;
   --status-open-border: #8abfa1;
 
-  --status-bill-bg: #faefe0;
-  --status-bill-fg: #7d4305;
-  --status-bill-bar: #c96f10;
-  --status-bill-border: #d9aa73;
+  --status-account-bg: #e0f2fe;
+  --status-account-fg: #0c4a6e;
+  --status-account-bar: #0284c7;
+  --status-account-border: #38bdf8;
+
+  --status-bill-bg: #fee2e2;
+  --status-bill-fg: #7f1d1d;
+  --status-bill-bar: #dc2626;
+  --status-bill-border: #f87171;
 
   --status-danger-bg: #fae8e8;
   --status-danger-fg: #961e1e;
@@ -396,6 +406,11 @@ button, input, select, textarea, a {
     color: var(--status-open-fg);
     border-color: var(--status-open-border);
   }
+  .pos-badge-account {
+    background-color: var(--status-account-bg);
+    color: var(--status-account-fg);
+    border-color: var(--status-account-border);
+  }
   .pos-badge-bill {
     background-color: var(--status-bill-bg);
     color: var(--status-bill-fg);
@@ -445,6 +460,16 @@ button, input, select, textarea, a {
     box-shadow: var(--shadow-keycap);
   }
   .table-card-abierta:hover {
+    filter: brightness(1.05);
+  }
+
+  .table-card-cuenta {
+    background-color: var(--status-account-bg);
+    border: 1px solid var(--status-account-border);
+    border-left: 4px solid var(--status-account-bar);
+    box-shadow: var(--shadow-keycap);
+  }
+  .table-card-cuenta:hover {
     filter: brightness(1.05);
   }
 

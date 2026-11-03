@@ -58,13 +58,15 @@ export default function MobileComanderaApp() {
 
     if (!matchesSector || !matchesSearch) return false;
     if (statusFilter === 'abiertas') return table.status === 'ocupada';
-    if (statusFilter === 'cobro') return table.status === 'cuenta_pedida';
+    if (statusFilter === 'cuenta') return table.status === 'cuenta_solicitada';
+    if (statusFilter === 'cobro') return table.status === 'pendiente_cobro' || table.status === 'cuenta_pedida';
     if (statusFilter === 'libres') return table.status === 'libre';
     return true;
   });
 
   const openCount = tables.filter(t => t.status === 'ocupada').length;
-  const billCount = tables.filter(t => t.status === 'cuenta_pedida').length;
+  const accountCount = tables.filter(t => t.status === 'cuenta_solicitada').length;
+  const billCount = tables.filter(t => t.status === 'pendiente_cobro' || t.status === 'cuenta_pedida').length;
 
   const handleManualSync = async () => {
     setSyncing(true);
@@ -92,7 +94,7 @@ export default function MobileComanderaApp() {
                 </span>
               </div>
               <div className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
-                Mozo: <strong className="text-[var(--text-primary)]">{currentUser.name.split(' ')[0]}</strong>
+                Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
               </div>
             </div>
           </div>
@@ -152,12 +154,13 @@ export default function MobileComanderaApp() {
         <div className="max-w-xl mx-auto space-y-2.5">
           {/* Status Filter + Search */}
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="pos-segment-group" role="group" aria-label="Estado de mesas">
+            <div className="pos-segment-group overflow-x-auto no-scrollbar" role="group" aria-label="Estado de mesas">
               {[
                 { id: 'todas', label: `Todas (${tables.length})` },
                 { id: 'abiertas', label: `Abiertas (${openCount})` },
-                { id: 'cobro', label: `Cobro (${billCount})` },
-                { id: 'libres', label: 'Libres' }
+                { id: 'cuenta', label: `Cuenta (${accountCount})` },
+                { id: 'cobro', label: `Pendiente (${billCount})` },
+                { id: 'libres', label: 'Cerradas' }
               ].map(st => (
                 <button
                   key={st.id}
@@ -236,11 +239,14 @@ export default function MobileComanderaApp() {
               const code = getTableCode(table);
               const order = getTableOrder(table);
               const isFree = table.status === 'libre';
-              const isBill = table.status === 'cuenta_pedida';
+              const isAccount = table.status === 'cuenta_solicitada';
+              const isBill = table.status === 'pendiente_cobro' || table.status === 'cuenta_pedida';
               const elapsed = getElapsedMinutes(order?.createdAt || table.openedAt);
 
               const stateClass = isFree
                 ? 'table-card-cerrada'
+                : isAccount
+                ? 'table-card-cuenta'
                 : isBill
                 ? 'table-card-pendiente'
                 : 'table-card-abierta';
@@ -269,12 +275,14 @@ export default function MobileComanderaApp() {
                         className={`text-xs font-bold ${
                           isFree
                             ? 'text-[var(--text-muted)]'
+                            : isAccount
+                            ? 'text-[var(--status-account-fg)]'
                             : isBill
                             ? 'text-[var(--status-bill-fg)]'
                             : 'text-[var(--status-open-fg)]'
                         }`}
                       >
-                        {isFree ? 'Cerrada' : isBill ? 'Pendiente cobro' : 'Abierta'}
+                        {isFree ? 'Cerrada' : isAccount ? 'Cuenta' : isBill ? 'Pendiente cobro' : 'Abierta'}
                       </span>
                       {order && (
                         <span className="font-mono font-bold text-xs text-[var(--text-primary)]">
@@ -303,7 +311,7 @@ export default function MobileComanderaApp() {
             <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
-            <span>{activeShift ? `Turno #${activeShift.shiftNumber}` : 'Caja cerrada'}</span>
+            <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>
             <a href="/" className="pos-btn-secondary text-xs px-3 font-sans">
               Versión escritorio
             </a>

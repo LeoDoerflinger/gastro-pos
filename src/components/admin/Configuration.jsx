@@ -13,7 +13,6 @@ export default function Configuration() {
   const [tableSector, setTableSector] = useState('Salón Principal');
   const [tableCapacity, setTableCapacity] = useState('4');
 
-  const [userName, setUserName] = useState('');
   const [userRole, setUserRole] = useState('mozo');
   const [userPin, setUserPin] = useState('');
 
@@ -50,8 +49,8 @@ export default function Configuration() {
 
   const handleAddUser = async (e) => {
     e.preventDefault();
-    if (!userName.trim() || userPin.length !== 4) {
-      showToast('Ingresá el nombre y un PIN numérico de 4 cifras', 'error');
+    if (userPin.length !== 4) {
+      showToast('Ingresá un PIN numérico de 4 cifras', 'error');
       return;
     }
     setSubmitting(true);
@@ -64,14 +63,12 @@ export default function Configuration() {
           : 'fa-solid fa-user-tie';
 
       const created = await api.createUser({
-        name: userName.trim(),
         role: userRole,
         pin: userPin.trim(),
         avatar: avatarIcon
       });
       await refreshData();
       showToast(`Operador ${created.name} (PIN ${created.pin}) habilitado`);
-      setUserName('');
       setUserPin('');
     } catch (err) {
       showToast(err.message || 'No se pudo registrar el operador', 'error');
@@ -245,29 +242,16 @@ export default function Configuration() {
 
             <form onSubmit={handleAddUser} className="space-y-3.5">
               <div>
-                <label htmlFor="cfg-user-name" className="pos-label">Nombre y apellido:</label>
-                <input
-                  id="cfg-user-name"
-                  type="text"
-                  placeholder="Ej. Nicolás Gómez"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="pos-input"
-                  required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="cfg-user-role" className="pos-label">Rol asignado:</label>
+                <label htmlFor="cfg-user-role" className="pos-label">Puesto / Rol asignado:</label>
                 <select
                   id="cfg-user-role"
                   value={userRole}
                   onChange={(e) => setUserRole(e.target.value)}
                   className="pos-input"
                 >
-                  <option value="mozo">Mozo (Exclusivo Salón y Mesas)</option>
-                  <option value="cajero">Cajero (Cobros, Arqueos, Delivery y Facturas)</option>
-                  <option value="admin">Encargado / Admin (Acceso completo)</option>
+                  <option value="mozo">Mozo (Numeración automática: Mozo 1, Mozo 2...)</option>
+                  <option value="cajero">Cajero (Numeración automática: Cajero 1, Cajero 2...)</option>
+                  <option value="admin">Admin (Numeración automática: Admin 1, Admin 2...)</option>
                 </select>
               </div>
 
@@ -287,10 +271,8 @@ export default function Configuration() {
               </div>
 
               <div className="pos-subpanel p-3 text-xs text-[var(--text-secondary)] space-y-1">
-                <strong className="text-[var(--text-primary)] block">Alcance de cada rol:</strong>
-                <p>· <strong>Mozo:</strong> Carga de comandas en salón y solicitud de cierre.</p>
-                <p>· <strong>Cajero:</strong> Cobros, pre-cuenta, arqueos, delivery y compra de insumos.</p>
-                <p>· <strong>Admin:</strong> Escandallos, stock, métricas y configuración general.</p>
+                <strong className="text-[var(--text-primary)] block">Identificación por rol:</strong>
+                <p>· El sistema asigna automáticamente el nombre por puesto y agrega número correlativo si hay más de un usuario en ese rol.</p>
               </div>
 
               <button

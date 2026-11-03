@@ -10,10 +10,81 @@ const DB_PATH = process.env.VERCEL
   ? path.join('/tmp', 'database.json')
   : DEFAULT_DB_PATH;
 
+const ROLE_LABELS = {
+  admin: 'Admin',
+  cajero: 'Cajero',
+  mozo: 'Mozo'
+};
+
+export function normalizeUsersRoleNames(users = []) {
+  const counts = {};
+  for (const u of users) {
+    const r = u.role || 'mozo';
+    counts[r] = (counts[r] || 0) + 1;
+  }
+  const indices = {};
+  for (const u of users) {
+    const r = u.role || 'mozo';
+    const base = ROLE_LABELS[r] || 'Operador';
+    if (counts[r] > 1) {
+      indices[r] = (indices[r] || 0) + 1;
+      u.name = `${base} ${indices[r]}`;
+    } else {
+      u.name = base;
+    }
+  }
+  return users;
+}
+
+function getTableCodeForStore(table) {
+  if (!table) return 'Mostrador';
+  const sector = (table.sector || 'Salón').trim();
+  return `${sector.charAt(0).toUpperCase()}${table.number}`;
+}
+
+function formatDateAr(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatTimeAr(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
 class Store {
   constructor() {
     this.data = null;
     this.init();
+  }
+
+  normalizeData() {
+    if (!this.data) return;
+    if (!Array.isArray(this.data.users)) this.data.users = [];
+    normalizeUsersRoleNames(this.data.users);
+    if (!Array.isArray(this.data.notifications)) this.data.notifications = [];
+    if (Array.isArray(this.data.tables)) {
+      this.data.tables.forEach(t => {
+        if (t.status === 'cuenta_pedida') t.status = 'pendiente_cobro';
+      });
+    }
+    if (Array.isArray(this.data.orders)) {
+      this.data.orders.forEach(o => {
+        if (o.status === 'cuenta_pedida') o.status = 'pendiente_cobro';
+        const waiter = this.data.users.find(u => u.id === o.waiterId);
+        if (waiter) o.waiterName = waiter.name;
+      });
+    }
+    if (Array.isArray(this.data.cashShifts)) {
+      this.data.cashShifts.forEach(s => {
+        if (!s.openedDate && s.openedAt) s.openedDate = formatDateAr(s.openedAt);
+        if (!s.openedTime && s.openedAt) s.openedTime = formatTimeAr(s.openedAt);
+        if (!s.closedDate && s.closedAt) s.closedDate = formatDateAr(s.closedAt);
+        if (!s.closedTime && s.closedAt) s.closedTime = formatTimeAr(s.closedAt);
+        const cashier = this.data.users.find(u => u.id === s.cashierId);
+        if (cashier) s.cashierName = cashier.name;
+      });
+    }
   }
 
   init() {
@@ -30,16 +101,19 @@ class Store {
         const raw = fs.readFileSync(DB_PATH, 'utf-8');
         this.data = JSON.parse(raw);
         if (!this.data.lastUpdated) this.data.lastUpdated = Date.now();
+        this.normalizeData();
         console.log('[Store] Base de datos JSON cargada correctamente.');
       } else if (fs.existsSync(DEFAULT_DB_PATH)) {
         const raw = fs.readFileSync(DEFAULT_DB_PATH, 'utf-8');
         this.data = JSON.parse(raw);
         if (!this.data.lastUpdated) this.data.lastUpdated = Date.now();
+        this.normalizeData();
         this.save();
         console.log('[Store] Base de datos JSON inicializada.');
       } else {
         this.data = JSON.parse(JSON.stringify(initialData));
         this.data.lastUpdated = Date.now();
+        this.normalizeData();
         this.save();
         console.log('[Store] Base de datos JSON inicializada con datos demo.');
       }
@@ -47,6 +121,7 @@ class Store {
       console.error('[Store] Error cargando database.json, restaurando initialData:', err);
       this.data = JSON.parse(JSON.stringify(initialData));
       this.data.lastUpdated = Date.now();
+      this.normalizeData();
       this.save();
     }
   }
@@ -69,11 +144,13 @@ class Store {
   resetDemo() {
     this.data = JSON.parse(JSON.stringify(initialData));
     this.data.lastUpdated = Date.now();
+    this.normalizeData();
     this.save(false);
     return this.data;
   }
 
   getStateSnapshot() {
+    this.normalizeData();
     return {
       ...this.data,
       lastUpdated: this.data.lastUpdated || Date.now()
@@ -99,9 +176,11 @@ class Store {
         suppliers: Array.isArray(clientState.suppliers) ? clientState.suppliers : this.data.suppliers,
         purchases: Array.isArray(clientState.purchases) ? clientState.purchases : this.data.purchases,
         stockLog: Array.isArray(clientState.stockLog) ? clientState.stockLog : this.data.stockLog,
+        notifications: Array.isArray(clientState.notifications) ? clientState.notifications : (this.data.notifications || []),
         historicalSales: Array.isArray(clientState.historicalSales) ? clientState.historicalSales : this.data.historicalSales,
         lastUpdated: Number(clientState.lastUpdated)
       };
+      this.normalizeData();
       this.save(false);
     }
     return this.getStateSnapshot();
@@ -109,15 +188,18 @@ class Store {
 
   // --- Auth & Users ---
   getUsers() {
+    this.normalizeData();
     return this.data.users || [];
   }
 
   findUserByPin(pin) {
+    this.normalizeData();
     const cleanPin = String(pin || '').trim();
     return (this.data.users || []).find(u => String(u.pin).trim() === cleanPin);
   }
 
   findUserById(id) {
+    this.normalizeData();
     return (this.data.users || []).find(u => u.id === id);
   }
 
@@ -130,21 +212,71 @@ class Store {
     if (existing) {
       throw new Error(`El PIN ${cleanPin} ya está asignado a ${existing.name}`);
     }
+    const role = userData.role || 'mozo';
     const newUser = {
       id: userData.id || ('u_' + Date.now()),
-      name: String(userData.name || '').trim(),
-      role: userData.role || 'mozo',
+      name: ROLE_LABELS[role] || 'Operador',
+      role,
       pin: cleanPin,
       email: userData.email || '',
-      avatar: userData.avatar || (userData.role === 'admin' ? 'fa-solid fa-user-shield' : userData.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie')
+      avatar: userData.avatar || (role === 'admin' ? 'fa-solid fa-user-shield' : role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie')
     };
     this.data.users.push(newUser);
+    normalizeUsersRoleNames(this.data.users);
     this.save();
-    return newUser;
+    return this.data.users.find(u => u.id === newUser.id) || newUser;
   }
 
   deleteUser(id) {
     this.data.users = this.data.users.filter(u => u.id !== id);
+    normalizeUsersRoleNames(this.data.users);
+    this.save();
+    return true;
+  }
+
+  // --- Notificaciones Digitales (Comandas y Cuentas) ---
+  getNotifications() {
+    return this.data.notifications || [];
+  }
+
+  pushNotification(notifData) {
+    if (!Array.isArray(this.data.notifications)) this.data.notifications = [];
+    const notif = {
+      id: notifData.id || ('notif_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+      type: notifData.type || 'comanda',
+      title: notifData.title || 'Nuevo aviso',
+      message: notifData.message || '',
+      orderId: notifData.orderId || null,
+      orderNumber: notifData.orderNumber || null,
+      tableId: notifData.tableId || null,
+      tableCode: notifData.tableCode || null,
+      channel: notifData.channel || 'mesa',
+      waiterName: notifData.waiterName || 'Mozo',
+      total: Number(notifData.total) || 0,
+      items: Array.isArray(notifData.items) ? notifData.items : [],
+      createdAt: notifData.createdAt || new Date().toISOString(),
+      read: false
+    };
+    this.data.notifications.unshift(notif);
+    if (this.data.notifications.length > 50) {
+      this.data.notifications = this.data.notifications.slice(0, 50);
+    }
+    return notif;
+  }
+
+  markNotificationRead(id) {
+    const notif = (this.data.notifications || []).find(n => n.id === id);
+    if (notif) {
+      notif.read = true;
+      this.save();
+    }
+    return notif;
+  }
+
+  markAllNotificationsRead() {
+    (this.data.notifications || []).forEach(n => {
+      n.read = true;
+    });
     this.save();
     return true;
   }
@@ -385,7 +517,7 @@ class Store {
 
     this.data.orders.unshift(newOrder);
 
-    // Si es de mesa, actualizar estado de la mesa
+    let tableCode = 'Mostrador';
     if (newOrder.channel === 'mesa' && newOrder.tableId) {
       const table = this.data.tables.find(t => t.id === newOrder.tableId);
       if (table) {
@@ -394,8 +526,31 @@ class Store {
         table.diners = newOrder.diners;
         table.waiterId = newOrder.waiterId;
         table.openedAt = new Date().toISOString();
+        tableCode = getTableCodeForStore(table);
       }
+    } else if (newOrder.channel === 'delivery') {
+      tableCode = 'Delivery';
+    } else if (newOrder.channel === 'take_away') {
+      tableCode = 'Take Away';
     }
+
+    this.pushNotification({
+      type: 'comanda',
+      title: `Nueva comanda · ${tableCode}`,
+      message: `${newOrder.waiterName} envió ${newOrder.items.reduce((s, i) => s + i.quantity, 0)} platos a cocina (Comanda #${newOrder.orderNumber}).`,
+      orderId: newOrder.id,
+      orderNumber: newOrder.orderNumber,
+      tableId: newOrder.tableId,
+      tableCode,
+      channel: newOrder.channel,
+      waiterName: newOrder.waiterName,
+      total: newOrder.total,
+      items: newOrder.items.map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
 
     this.save();
     return newOrder;
@@ -420,23 +575,82 @@ class Store {
     order.subtotal = order.items.reduce((acc, it) => acc + it.subtotal, 0);
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + (order.tip || 0);
 
+    const table = order.tableId ? this.data.tables.find(t => t.id === order.tableId) : null;
+    const tableCode = table ? getTableCodeForStore(table) : `Comanda #${order.orderNumber}`;
+    const waiterName = user?.name || order.waiterName || 'Mozo';
+
+    this.pushNotification({
+      type: 'comanda',
+      title: `Adición a cocina · ${tableCode}`,
+      message: `${waiterName} sumó ${formattedItems.reduce((s, i) => s + i.quantity, 0)} platos a ${tableCode} (Comanda #${order.orderNumber}).`,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      tableCode,
+      channel: order.channel,
+      waiterName,
+      total: order.total,
+      items: formattedItems.map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
+
     this.save();
     return order;
   }
 
-  // Mozo solicita cuenta ("Sacar cuenta")
+  // Mozo solicita cuenta ("Cuenta" - estado celeste)
   requestBill(orderId, tipAmount = 0) {
     const order = this.data.orders.find(o => o.id === orderId);
     if (!order) return null;
 
-    order.status = 'cuenta_pedida';
+    order.status = 'cuenta_solicitada';
     order.tip = Number(tipAmount) || 0;
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + order.tip;
 
+    let tableCode = `Comanda #${order.orderNumber}`;
     if (order.tableId) {
       const table = this.data.tables.find(t => t.id === order.tableId);
       if (table) {
-        table.status = 'cuenta_pedida';
+        table.status = 'cuenta_solicitada';
+        tableCode = getTableCodeForStore(table);
+      }
+    }
+
+    this.pushNotification({
+      type: 'cuenta',
+      title: `Cuenta solicitada · ${tableCode}`,
+      message: `${order.waiterName || 'Mozo'} solicitó la cuenta de ${tableCode} (Total $${order.total.toLocaleString('es-AR')}).`,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      tableCode,
+      channel: order.channel,
+      waiterName: order.waiterName || 'Mozo',
+      total: order.total,
+      items: (order.items || []).map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
+
+    this.save();
+    return order;
+  }
+
+  // Pasar de "Cuenta" (celeste) a "Pendiente de cobro" (rojo)
+  markPendingPayment(orderId) {
+    const order = this.data.orders.find(o => o.id === orderId);
+    if (!order) return null;
+
+    order.status = 'pendiente_cobro';
+    if (order.tableId) {
+      const table = this.data.tables.find(t => t.id === order.tableId);
+      if (table) {
+        table.status = 'pendiente_cobro';
       }
     }
 
@@ -615,19 +829,24 @@ class Store {
       throw new Error('Ya existe una caja abierta en el sistema.');
     }
 
+    const nowIso = new Date().toISOString();
     const nextShiftNumber = Math.max(0, ...(this.data.cashShifts || []).map(s => s.shiftNumber || 0)) + 1;
     const newShift = {
       id: 'shift_' + Date.now(),
       shiftNumber: nextShiftNumber,
       cashierId: cashierId || 'u_cajero',
       cashierName: cashierName || 'Cajero',
-      openedAt: new Date().toISOString(),
+      openedAt: nowIso,
+      openedDate: formatDateAr(nowIso),
+      openedTime: formatTimeAr(nowIso),
       initialCash: Number(initialCash) || 0,
       status: 'abierta',
       movements: [],
       actualCash: null,
       difference: null,
       closedAt: null,
+      closedDate: null,
+      closedTime: null,
       notes: ''
     };
 
@@ -643,7 +862,7 @@ class Store {
 
     const movement = {
       id: 'mov_' + Date.now(),
-      type: type, // 'ingreso' o 'egreso'
+      type: type,
       amount: Number(amount),
       reason: reason || '',
       createdAt: new Date().toISOString(),
@@ -659,11 +878,25 @@ class Store {
     const shift = (this.data.cashShifts || []).find(s => s.id === shiftId);
     if (!shift) return null;
 
-    // Calcular ventas en efectivo desde que se abrió este turno
     const shiftStart = new Date(shift.openedAt).getTime();
-    const cashSales = (this.data.orders || [])
-      .filter(o => o.status === 'cobrado' && o.paymentMethod === 'efectivo' && new Date(o.closedAt).getTime() >= shiftStart)
-      .reduce((acc, o) => acc + (o.total || 0), 0);
+    const shiftOrders = (this.data.orders || []).filter(
+      o => o.status === 'cobrado' && new Date(o.closedAt).getTime() >= shiftStart
+    );
+
+    const salesByMethod = {
+      efectivo: 0,
+      debito: 0,
+      credito: 0,
+      mercadopago: 0,
+      transferencia: 0
+    };
+    shiftOrders.forEach(o => {
+      const pm = o.paymentMethod || 'efectivo';
+      salesByMethod[pm] = (salesByMethod[pm] || 0) + (o.total || 0);
+    });
+
+    const cashSales = salesByMethod.efectivo || 0;
+    const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
 
     const totalIngresos = (shift.movements || [])
       .filter(m => m.type === 'ingreso')
@@ -675,13 +908,21 @@ class Store {
 
     const expectedCash = (shift.initialCash || 0) + cashSales + totalIngresos - totalEgresos;
     const diff = Number(actualCash) - expectedCash;
+    const closedIso = new Date().toISOString();
 
     shift.status = 'cerrada';
     shift.actualCash = Number(actualCash);
     shift.expectedCash = expectedCash;
+    shift.cashSales = cashSales;
+    shift.totalSales = totalSales;
+    shift.salesByMethod = salesByMethod;
+    shift.totalIngresos = totalIngresos;
+    shift.totalEgresos = totalEgresos;
     shift.difference = diff;
     shift.notes = notes || '';
-    shift.closedAt = new Date().toISOString();
+    shift.closedAt = closedIso;
+    shift.closedDate = formatDateAr(closedIso);
+    shift.closedTime = formatTimeAr(closedIso);
     shift.closedBy = closedBy || 'Cajero';
 
     this.save();
@@ -737,8 +978,8 @@ class Store {
       byPaymentMethod,
       topProducts,
       lowStockIngredients,
-      activeOrdersCount: orders.filter(o => o.status === 'abierto' || o.status === 'cuenta_pedida').length,
-      openTablesCount: (this.data.tables || []).filter(t => t.status === 'ocupada' || t.status === 'cuenta_pedida').length
+      activeOrdersCount: orders.filter(o => o.status === 'abierto' || o.status === 'cuenta_solicitada' || o.status === 'pendiente_cobro' || o.status === 'cuenta_pedida').length,
+      openTablesCount: (this.data.tables || []).filter(t => t.status !== 'libre').length
     };
   }
 

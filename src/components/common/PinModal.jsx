@@ -132,9 +132,9 @@ export default function PinModal() {
                     <i className={uIcon} aria-hidden="true"></i>
                   </span>
                   <div className="overflow-hidden">
-                    <div className="text-sm font-bold truncate leading-tight">{u.name.split(' ')[0]}</div>
-                    <div className="text-xs text-[var(--text-secondary)] font-mono capitalize">
-                      {u.role} · {u.pin}
+                    <div className="text-sm font-bold truncate leading-tight">{u.name}</div>
+                    <div className="text-xs text-[var(--text-secondary)] font-mono">
+                      PIN {u.pin}
                     </div>
                   </div>
                 </button>

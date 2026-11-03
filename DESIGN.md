@@ -14,10 +14,10 @@
 - **Display Font (`Bricolage Grotesque`):** Aporta carácter editorial moderno y lectura instantánea en títulos de vistas, KPIs y nombres de platos sin recurrir a Inter o Roboto.
 - **UI Body Font (`Plus Jakarta Sans`):** Mantiene legibilidad nítida en etiquetas operativas, formularios y filtros a tamaño real de lectura (`13px` a `15px`), eliminando el abuso de mayúsculas monoespaciadas diminutas.
 - **Tabular Data Font (`IBM Plex Mono` con `tabular-nums`):** Alinea verticalmente precios en pesos, códigos de mesa (`S1`, `T5`, `G3`), tiempos de espera, cantidades y PINs sin saltos visuales al actualizarse.
-- **Dual Theme System (`Grafito Táctil` + `Papel Técnico`):** Ofrece por defecto un gris piedra intermedio cálido (`#17191c` / `#1f2226`) ideal para salones con luz tenue, y un modo claro mineral (`#eeebe4` / `#faf9f5`) para mostradores diurnos, ambos verificados con `contrast-check.py` (>= 4.5:1 texto, >= 3.0:1 bordes interactivos).
+- **Dual Theme System (`Grafito Táctil` + `Papel Técnico`):** Ofrece por defecto un gris piedra intermedio cálido (`#17191c` / `#1f2226`) ideal para salones con luz tenue, y un modo claro blanco puro (`#ffffff`) para mostradores diurnos, ambos verificados con `contrast-check.py` (>= 4.5:1 texto, >= 3.0:1 bordes interactivos).
 - **Acento Deliberado (`Terracota Cobre` `#eb855e` / `#9e3c16`):** Conecta con materiales gastronómicos reales (horno de barro, cobre, madera) para marcar navegación activa e indicadores clave sin saturar los botones de acción.
 - **Botones Tipo Tecla Física (`Acero / Marfil Táctil`):** Resuelve el pedido explícito de botones sobrios en gama de grises/piedra mediante relieve sutil superior, borde definido >= 3:1 y área mínima de `44x44px` para dedos en pantalla táctil.
-- **Semántica de Mesas No Neón (Salvia, Ocre, Grafito):** Diferencia por color, borde lateral e ícono las mesas *Cerradas* (neutro recedido), *Abiertas* (verde salvia mineral) y *Pendientes de cobro* (ocre cálido prioritario).
+- **Semántica de Mesas en 4 Estados (Cerrada, Abierta, Cuenta, Pendiente de cobro):** Diferencia por color, borde lateral e ícono las mesas *Cerradas* (neutro recedido), *Abiertas* (verde salvia), *Cuenta* (celeste técnico) y *Pendientes de cobro* (rojo prioritario).
 
 ## 3. Tokens de Color Verificados (WCAG AA)
 
@@ -27,15 +27,15 @@
 - `--text-primary`: `#f3f1ec` (`14.15:1`) | `--text-secondary`: `#c2c6ce` (`9.32:1`) | `--text-muted`: `#a1a7b3` (`6.61:1`)
 - `--btn-primary-bg`: `#edeae2` | `--btn-primary-fg`: `#17191c` (`14.65:1`)
 - `--accent-brand`: `#eb855e` (`6.12:1`)
-- Estados: Abierta (`#7be0a8` sobre `#1a2821`, `9.54:1`), Pendiente cobro (`#f6bd6a` sobre `#2a2217`, `9.26:1`), Crítico (`#f99696` sobre `#2b1c1e`, `7.64:1`).
+- Estados: Abierta (`#7be0a8` sobre `#1a2821`, `9.54:1`), Cuenta (`#7dd3fc` sobre `#142634`, `8.91:1`), Pendiente cobro (`#fca5a5` sobre `#2b181a`, `7.92:1`), Crítico (`#f99696` sobre `#2b1c1e`, `7.64:1`).
 
-### Tema `paper` (Papel Técnico, Modo Claro Cálido)
-- `--bg-canvas`: `#eeebe4` | `--bg-surface`: `#faf9f5` | `--bg-elevated`: `#ffffff` | `--bg-subtle`: `#e5e1d8`
-- `--border-subtle`: `#cfc9be` | `--border-strong`: `#767168` (`4.60:1` sobre surface)
-- `--text-primary`: `#18191b` (`16.70:1`) | `--text-secondary`: `#43464c` (`8.98:1`) | `--text-muted`: `#565a61` (`6.58:1`)
-- `--btn-primary-bg`: `#1f2226` | `--btn-primary-fg`: `#faf9f5` (`15.16:1`)
-- `--accent-brand`: `#9e3c16` (`6.41:1`)
-- Estados: Abierta (`#185936` sobre `#e4f1e9`, `7.16:1`), Pendiente cobro (`#7d4305` sobre `#faefe0`, `6.91:1`), Crítico (`#961e1e` sobre `#fae8e8`, `7.11:1`).
+### Tema `paper` (Papel Técnico, Modo Claro Blanco)
+- `--bg-canvas`: `#ffffff` | `--bg-surface`: `#ffffff` | `--bg-elevated`: `#f8fafc` | `--bg-subtle`: `#f1f5f9`
+- `--border-subtle`: `#cbd5e1` | `--border-strong`: `#64748b` (`4.76:1` sobre surface)
+- `--text-primary`: #18191b (`17.50:1`) | `--text-secondary`: #43464c (`9.42:1`) | `--text-muted`: #565a61 (`6.89:1`)
+- `--btn-primary-bg`: `#1f2226` | `--btn-primary-fg`: `#ffffff` (`15.90:1`)
+- `--accent-brand`: `#9e3c16` (`6.72:1`)
+- Estados: Abierta (`#185936` sobre `#e4f1e9`, `7.16:1`), Cuenta (`#0c4a6e` sobre `#e0f2fe`, `8.32:1`), Pendiente cobro (`#7f1d1d` sobre `#fee2e2`, `8.41:1`), Crítico (`#961e1e` sobre `#fae8e8`, `7.11:1`).
 
 ## 4. Geometría, Ergonomía e Íconos
 - **Radios:** Micro-radio arquitectónico de `4px` a `6px` (`rounded` / `rounded-md`). Prohibidas las píldoras (`rounded-full`) en botones y las tarjetas burbuja (`rounded-2xl`+).

@@ -23,7 +23,11 @@ export default function MozoSalonView() {
 
   const tableOrderMap = {};
   orders.forEach(ord => {
-    if (ord.channel === 'mesa' && ord.tableId && (ord.status === 'abierto' || ord.status === 'cuenta_pedida')) {
+    if (
+      ord.channel === 'mesa' &&
+      ord.tableId &&
+      (ord.status === 'abierto' || ord.status === 'cuenta_solicitada' || ord.status === 'pendiente_cobro' || ord.status === 'cuenta_pedida')
+    ) {
       tableOrderMap[ord.tableId] = ord;
     }
   });
@@ -46,7 +50,8 @@ export default function MozoSalonView() {
 
     let tableMappedStatus = 'cerrada';
     if (table.status === 'ocupada') tableMappedStatus = 'abierta';
-    if (table.status === 'cuenta_pedida') tableMappedStatus = 'pendiente_cobro';
+    if (table.status === 'cuenta_solicitada') tableMappedStatus = 'cuenta';
+    if (table.status === 'pendiente_cobro' || table.status === 'cuenta_pedida') tableMappedStatus = 'pendiente_cobro';
 
     const matchesStatus = statusFilter === 'todas' || tableMappedStatus === statusFilter;
     const tableCode = getTableCode(table).toLowerCase();
@@ -60,7 +65,8 @@ export default function MozoSalonView() {
 
   const countCerradas = tables.filter(t => t.status === 'libre').length;
   const countAbiertas = tables.filter(t => t.status === 'ocupada').length;
-  const countPendientes = tables.filter(t => t.status === 'cuenta_pedida').length;
+  const countCuentas = tables.filter(t => t.status === 'cuenta_solicitada').length;
+  const countPendientes = tables.filter(t => t.status === 'pendiente_cobro' || t.status === 'cuenta_pedida').length;
 
   const handleTableClick = (table) => {
     setSelectedTableForOrder(table);
@@ -100,6 +106,17 @@ export default function MozoSalonView() {
                 <span className="w-2.5 h-2.5 rounded-full bg-[var(--status-open-bar)]" aria-hidden="true"></span>
                 <span>Abiertas</span>
                 <span className="font-mono text-xs">{countAbiertas}</span>
+              </button>
+
+              <button
+                type="button"
+                aria-pressed={statusFilter === 'cuenta'}
+                onClick={() => setStatusFilter('cuenta')}
+                className="pos-segment-btn"
+              >
+                <span className="w-2.5 h-2.5 rounded-full bg-[var(--status-account-bar)]" aria-hidden="true"></span>
+                <span>Cuenta</span>
+                <span className="font-mono text-xs">{countCuentas}</span>
               </button>
 
               <button
@@ -193,7 +210,8 @@ export default function MozoSalonView() {
           {filteredTables.map(table => {
             const order = tableOrderMap[table.id];
             const isAbierta = table.status === 'ocupada';
-            const isPendiente = table.status === 'cuenta_pedida';
+            const isCuenta = table.status === 'cuenta_solicitada';
+            const isPendiente = table.status === 'pendiente_cobro' || table.status === 'cuenta_pedida';
 
             const tableCode = getTableCode(table);
             const elapsedTime = getElapsedTimeString(table, order);
@@ -208,6 +226,11 @@ export default function MozoSalonView() {
               statusLabel = 'Abierta';
               statusClass = 'text-[var(--status-open-fg)] font-bold';
               statusIcon = 'fa-solid fa-circle text-[var(--status-open-bar)]';
+            } else if (isCuenta) {
+              cardVariant = 'table-card-cuenta';
+              statusLabel = 'Cuenta';
+              statusClass = 'text-[var(--status-account-fg)] font-bold';
+              statusIcon = 'fa-solid fa-bell-concierge text-[var(--status-account-bar)]';
             } else if (isPendiente) {
               cardVariant = 'table-card-pendiente';
               statusLabel = 'Pendiente cobro';

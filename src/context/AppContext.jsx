@@ -27,7 +27,7 @@ export function AppProvider({ children }) {
     document.documentElement.setAttribute('data-theme', theme);
     const meta = document.getElementById('meta-theme-color');
     if (meta) {
-      meta.setAttribute('content', theme === 'paper' ? '#eeebe4' : '#17191c');
+      meta.setAttribute('content', theme === 'paper' ? '#ffffff' : '#17191c');
     }
     try {
       localStorage.setItem('gastro_theme', theme);
@@ -56,6 +56,8 @@ export function AppProvider({ children }) {
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
   const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
+  const [isNotificationsOpen, setIsNotificationsOpen] = useState(false);
+  const [lastClosedShiftReport, setLastClosedShiftReport] = useState(null);
   const [toast, setToast] = useState(null);
 
   const [users, setUsers] = useState([]);
@@ -68,6 +70,7 @@ export function AppProvider({ children }) {
   const [purchases, setPurchases] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [stockLog, setStockLog] = useState([]);
+  const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [apiError, setApiError] = useState(null);
 
@@ -90,7 +93,8 @@ export function AppProvider({ children }) {
         suppliersData,
         purchasesData,
         analyticsData,
-        logData
+        logData,
+        notifsData
       ] = await Promise.all([
         api.getUsers(),
         api.getTables(),
@@ -101,7 +105,8 @@ export function AppProvider({ children }) {
         api.getSuppliers(),
         api.getPurchases(),
         api.getAnalytics(),
-        api.getStockLog()
+        api.getStockLog(),
+        api.getNotifications()
       ]);
 
       setUsers(usersData);
@@ -114,6 +119,12 @@ export function AppProvider({ children }) {
       setPurchases(purchasesData);
       setAnalytics(analyticsData);
       setStockLog(logData);
+      setNotifications(notifsData || []);
+      setCurrentUser(prev => {
+        if (!prev) return null;
+        const updated = (usersData || []).find(u => u.id === prev.id);
+        return updated ? { ...updated } : prev;
+      });
       setApiError(null);
     } catch (err) {
       console.error('Error cargando datos de GastroPOS:', err);
@@ -143,7 +154,7 @@ export function AppProvider({ children }) {
     } catch (e) {}
 
     const onStorage = (e) => {
-      if (e.key === 'gastro_pos_db_v2') {
+      if (e.key === 'gastro_pos_db_v3' || e.key === 'gastro_pos_db_v2') {
         api.reloadFromLocalStorage();
         refreshData();
       }
@@ -209,6 +220,18 @@ export function AppProvider({ children }) {
     }
   };
 
+  const markNotificationRead = useCallback(async (id) => {
+    await api.markNotificationRead(id);
+    await refreshData();
+  }, [refreshData]);
+
+  const markAllNotificationsRead = useCallback(async () => {
+    await api.markAllNotificationsRead();
+    await refreshData();
+  }, [refreshData]);
+
+  const unreadNotificationsCount = (notifications || []).filter(n => !n.read).length;
+
   return (
     <AppContext.Provider
       value={{
@@ -224,6 +247,10 @@ export function AppProvider({ children }) {
         setIsPinModalOpen,
         isQrModalOpen,
         setIsQrModalOpen,
+        isNotificationsOpen,
+        setIsNotificationsOpen,
+        lastClosedShiftReport,
+        setLastClosedShiftReport,
         activeTab,
         setActiveTab,
         isSidebarOpen,
@@ -241,6 +268,10 @@ export function AppProvider({ children }) {
         purchases,
         analytics,
         stockLog,
+        notifications,
+        unreadNotificationsCount,
+        markNotificationRead,
+        markAllNotificationsRead,
         loading,
         apiError,
         refreshData

@@ -107,7 +107,9 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
   });
 
   const openTablesCount = (tables || []).filter(t => t.status !== 'libre').length;
-  const activeOrdersCount = (orders || []).filter(o => o.status === 'abierto' || o.status === 'cuenta_pedida').length;
+  const activeOrdersCount = (orders || []).filter(
+    o => o.status === 'abierto' || o.status === 'cuenta_solicitada' || o.status === 'pendiente_cobro' || o.status === 'cuenta_pedida'
+  ).length;
 
   return (
     <div className="min-h-screen flex flex-col bg-[var(--bg-canvas)] text-[var(--text-primary)]">
@@ -177,7 +179,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                 aria-hidden="true"
               ></span>
               <span className="font-mono">
-                {activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}
+                {activeShift ? 'Caja abierta' : 'Caja cerrada'}
               </span>
             </span>
             <span className="text-[var(--text-secondary)] font-mono">
@@ -426,7 +428,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             <span>Operador: <strong className="text-[var(--text-primary)]">Sin sesión iniciada</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
-            <span>{activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}</span>
+            <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>
             <span>·</span>
             <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
           </div>

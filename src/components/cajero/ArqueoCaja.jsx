@@ -3,9 +3,10 @@ import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 
 export default function ArqueoCaja() {
-  const { activeShift, orders, currentUser, showToast, refreshData } = useApp();
+  const { activeShift, orders, currentUser, showToast, refreshData, logoutUser, setLastClosedShiftReport } = useApp();
 
   const [initialCashInput, setInitialCashInput] = useState('45000');
+  const [shiftHistory, setShiftHistory] = useState([]);
 
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
   const [movementType, setMovementType] = useState('egreso');
@@ -16,6 +17,10 @@ export default function ArqueoCaja() {
   const [actualCashCount, setActualCashCount] = useState('');
   const [closingNotes, setClosingNotes] = useState('');
   const [submitting, setSubmitting] = useState(false);
+
+  useEffect(() => {
+    api.getCashShifts().then(list => setShiftHistory(list || [])).catch(() => {});
+  }, [activeShift]);
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -119,22 +124,29 @@ export default function ArqueoCaja() {
     }
     setSubmitting(true);
     try {
-      await api.closeCashShift(activeShift.id, {
+      const closedReport = await api.closeCashShift(activeShift.id, {
         actualCash: countNum,
         notes: closingNotes,
         closedBy: currentUser.name
       });
-      showToast('Turno arqueado y cerrado');
       setIsClosingModalOpen(false);
       setActualCashCount('');
       setClosingNotes('');
       await refreshData();
+      setLastClosedShiftReport(closedReport);
+      logoutUser();
     } catch (err) {
       showToast(err.message || 'No se pudo cerrar la caja', 'error');
     } finally {
       setSubmitting(false);
     }
   };
+
+  const nowDatePreview = new Date().toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+  const nowTimePreview = new Date().toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+  const activeOpenedDate = activeShift?.openedDate || (activeShift?.openedAt ? new Date(activeShift.openedAt).toLocaleDateString('es-AR') : '');
+  const activeOpenedTime = activeShift?.openedTime || (activeShift?.openedAt ? new Date(activeShift.openedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '');
+  const closedShifts = (shiftHistory || []).filter(s => s.status === 'cerrada');
 
   return (
     <section className="space-y-5" aria-label="Arqueo y control de caja">
@@ -149,20 +161,31 @@ export default function ArqueoCaja() {
               aria-hidden="true"
             ></span>
             <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
-              {activeShift ? `Turno #${activeShift.shiftNumber} en curso` : 'Caja cerrada'}
+              {activeShift ? 'Caja abierta · Turno en curso' : 'Caja cerrada · Iniciar nuevo turno'}
             </h2>
           </div>
           {activeShift ? (
-            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-              Responsable: <strong className="text-[var(--text-primary)]">{activeShift.cashierName}</strong> · Abierto a las{' '}
-              <span className="font-mono">
-                {new Date(activeShift.openedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-[var(--text-secondary)] mt-1">
+              <span>
+                Responsable: <strong className="text-[var(--text-primary)]">{activeShift.cashierName}</strong>
               </span>
-            </p>
+              <span>
+                Fecha apertura: <strong className="font-mono text-[var(--text-primary)]">{activeOpenedDate}</strong>
+              </span>
+              <span>
+                Hora apertura: <strong className="font-mono text-[var(--text-primary)]">{activeOpenedTime} hs</strong>
+              </span>
+            </div>
           ) : (
-            <p className="text-sm text-[var(--text-secondary)] mt-0.5">
-              Definí el fondo inicial en efectivo para habilitar cobros y movimientos del turno.
-            </p>
+            <div className="space-y-1 mt-1">
+              <p className="text-sm text-[var(--text-secondary)]">
+                Definí el fondo inicial en efectivo para habilitar cobros y movimientos del turno.
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[var(--text-secondary)]">
+                <span>Fecha de apertura: <strong className="text-[var(--text-primary)]">{nowDatePreview}</strong></span>
+                <span>Hora de apertura: <strong className="text-[var(--text-primary)]">{nowTimePreview} hs</strong></span>
+              </div>
+            </div>
           )}
         </div>
 
@@ -361,6 +384,57 @@ export default function ArqueoCaja() {
         </div>
       )}
 
+      {/* Closed Shifts History */}
+      {closedShifts.length > 0 && (
+        <div className="pos-panel overflow-hidden">
+          <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+            <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+              Historial de arqueos cerrados ({closedShifts.length})
+            </h3>
+            <span className="text-xs text-[var(--text-secondary)]">
+              Tocá Ver balance para revisar el detalle del turno
+            </span>
+          </div>
+          <div className="divide-y divide-[var(--border-subtle)]">
+            {closedShifts.map(s => {
+              const sOpenDate = s.openedDate || (s.openedAt ? new Date(s.openedAt).toLocaleDateString('es-AR') : '');
+              const sOpenTime = s.openedTime || (s.openedAt ? new Date(s.openedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '');
+              const sCloseDate = s.closedDate || (s.closedAt ? new Date(s.closedAt).toLocaleDateString('es-AR') : '');
+              const sCloseTime = s.closedTime || (s.closedAt ? new Date(s.closedAt).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }) : '');
+              return (
+                <div key={s.id} className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 hover:bg-[var(--bg-hover)]">
+                  <div className="space-y-0.5">
+                    <div className="text-sm font-bold text-[var(--text-primary)]">
+                      Operador: {s.closedBy || s.cashierName}
+                    </div>
+                    <div className="text-xs font-mono text-[var(--text-secondary)] flex flex-wrap items-center gap-3">
+                      <span>Apertura: {sOpenDate} · {sOpenTime} hs</span>
+                      <span>Cierre: {sCloseDate} · {sCloseTime} hs</span>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-3">
+                    <div className="text-right font-mono">
+                      <span className="text-xs text-[var(--text-muted)] block">Efectivo contado</span>
+                      <span className="text-sm font-bold text-[var(--text-primary)]">
+                        ${(s.actualCash || 0).toLocaleString('es-AR')}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setLastClosedShiftReport(s)}
+                      className="pos-btn-secondary text-xs px-3"
+                    >
+                      <i className="fa-solid fa-file-lines text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+                      <span>Ver balance</span>
+                    </button>
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
+
       {/* Register Movement Modal */}
       {isMovementModalOpen && (
         <div
@@ -543,7 +617,7 @@ export default function ArqueoCaja() {
                 className="pos-btn-danger flex-1"
               >
                 <i className="fa-solid fa-lock text-xs" aria-hidden="true"></i>
-                <span>Cerrar turno</span>
+                <span>Cerrar turno y finalizar sesión</span>
               </button>
             </div>
           </div>

@@ -3,7 +3,7 @@ export const initialData = {
   users: [
     {
       id: "u_admin",
-      name: "Rodrigo (Encargado / Admin)",
+      name: "Admin",
       role: "admin",
       pin: "9999",
       email: "admin@gastrogestion.com",
@@ -11,7 +11,7 @@ export const initialData = {
     },
     {
       id: "u_cajero",
-      name: "Martín (Cajero Principal)",
+      name: "Cajero",
       role: "cajero",
       pin: "2222",
       email: "caja@gastrogestion.com",
@@ -19,18 +19,18 @@ export const initialData = {
     },
     {
       id: "u_mozo1",
-      name: "Lucas (Mozo Salón)",
+      name: "Mozo 1",
       role: "mozo",
       pin: "1111",
-      email: "lucas@gastrogestion.com",
+      email: "mozo1@gastrogestion.com",
       avatar: "fa-solid fa-user-tie"
     },
     {
       id: "u_mozo2",
-      name: "Sofía (Moza Terraza)",
+      name: "Mozo 2",
       role: "mozo",
       pin: "1112",
-      email: "sofia@gastrogestion.com",
+      email: "mozo2@gastrogestion.com",
       avatar: "fa-solid fa-user-tie"
     }
   ],
@@ -336,9 +336,9 @@ export const initialData = {
   tables: [
     { id: "m1", number: 1, sector: "Salón Principal", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
     { id: "m2", number: 2, sector: "Salón Principal", capacity: 4, status: "ocupada", activeOrderId: "ord_demo_1", diners: 3, waiterId: "u_mozo1", openedAt: new Date(Date.now() - 45 * 60000).toISOString() },
-    { id: "m3", number: 3, sector: "Salón Principal", capacity: 4, status: "cuenta_pedida", activeOrderId: "ord_demo_2", diners: 2, waiterId: "u_mozo1", openedAt: new Date(Date.now() - 70 * 60000).toISOString() },
+    { id: "m3", number: 3, sector: "Salón Principal", capacity: 4, status: "pendiente_cobro", activeOrderId: "ord_demo_2", diners: 2, waiterId: "u_mozo1", openedAt: new Date(Date.now() - 70 * 60000).toISOString() },
     { id: "m4", number: 4, sector: "Salón Principal", capacity: 6, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
-    { id: "m5", number: 5, sector: "Terraza", capacity: 4, status: "ocupada", activeOrderId: "ord_demo_3", diners: 4, waiterId: "u_mozo2", openedAt: new Date(Date.now() - 25 * 60000).toISOString() },
+    { id: "m5", number: 5, sector: "Terraza", capacity: 4, status: "cuenta_solicitada", activeOrderId: "ord_demo_3", diners: 4, waiterId: "u_mozo2", openedAt: new Date(Date.now() - 25 * 60000).toISOString() },
     { id: "m6", number: 6, sector: "Terraza", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
     { id: "m7", number: 7, sector: "Terraza", capacity: 4, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
     { id: "m8", number: 8, sector: "Vereda", capacity: 2, status: "libre", activeOrderId: null, diners: 0, waiterId: null, openedAt: null },
@@ -360,7 +360,7 @@ export const initialData = {
       deliveryFee: 0,
       driverName: null,
       waiterId: "u_mozo1",
-      waiterName: "Lucas",
+      waiterName: "Mozo 1",
       status: "abierto",
       kitchenStatus: "en_preparacion",
       diners: 3,
@@ -414,8 +414,8 @@ export const initialData = {
       deliveryFee: 0,
       driverName: null,
       waiterId: "u_mozo1",
-      waiterName: "Lucas",
-      status: "cuenta_pedida", // Cuenta ya pedida por el mozo!
+      waiterName: "Mozo 1",
+      status: "pendiente_cobro",
       kitchenStatus: "entregado",
       diners: 2,
       items: [
@@ -449,7 +449,7 @@ export const initialData = {
       ],
       subtotal: 36700,
       discount: 0,
-      tip: 3670, // 10% propina sugerida
+      tip: 3670,
       total: 40370,
       paymentMethod: null,
       createdAt: new Date(Date.now() - 70 * 60000).toISOString(),
@@ -468,9 +468,9 @@ export const initialData = {
       deliveryFee: 0,
       driverName: null,
       waiterId: "u_mozo2",
-      waiterName: "Sofía",
-      status: "abierto",
-      kitchenStatus: "en_preparacion",
+      waiterName: "Mozo 2",
+      status: "cuenta_solicitada",
+      kitchenStatus: "entregado",
       diners: 4,
       items: [
         {
@@ -522,7 +522,7 @@ export const initialData = {
       deliveryFee: 0,
       driverName: null,
       waiterId: "u_cajero",
-      waiterName: "Martín",
+      waiterName: "Cajero",
       status: "abierto",
       kitchenStatus: "listo",
       diners: 1,
@@ -556,9 +556,9 @@ export const initialData = {
       customerPhone: "11-9876-5432",
       deliveryAddress: "Av. Corrientes 3450, Piso 4 B (Timbre Rossi)",
       deliveryFee: 1800,
-      driverName: "Gastón (Moto 1)",
+      driverName: "Repartidor 1",
       waiterId: "u_cajero",
-      waiterName: "Martín",
+      waiterName: "Cajero",
       status: "abierto",
       kitchenStatus: "en_camino",
       diners: 1,
@@ -585,7 +585,7 @@ export const initialData = {
       subtotal: 14400,
       discount: 0,
       tip: 0,
-      total: 16200, // 14400 + 1800 envío
+      total: 16200,
       paymentMethod: "mercadopago",
       createdAt: new Date(Date.now() - 35 * 60000).toISOString(),
       closedAt: null,
@@ -660,7 +660,7 @@ export const initialData = {
       paymentMethod: "transferencia",
       paymentStatus: "pagado",
       notes: "Entrega en cámara frigorífica 1",
-      registeredBy: "Martín (Cajero)"
+      registeredBy: "Cajero"
     },
     {
       id: "pur_102",
@@ -691,7 +691,7 @@ export const initialData = {
       paymentMethod: "efectivo",
       paymentStatus: "pagado",
       notes: "Ingreso directo a heladera de producción",
-      registeredBy: "Rodrigo (Admin)"
+      registeredBy: "Admin"
     }
   ],
 
@@ -701,9 +701,11 @@ export const initialData = {
       id: "shift_current",
       shiftNumber: 42,
       cashierId: "u_cajero",
-      cashierName: "Martín",
+      cashierName: "Cajero",
       openedAt: new Date(Date.now() - 5 * 3600000).toISOString(),
-      initialCash: 45000, // $45.000 cambio inicial
+      openedDate: new Date(Date.now() - 5 * 3600000).toLocaleDateString('es-AR'),
+      openedTime: new Date(Date.now() - 5 * 3600000).toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false }),
+      initialCash: 45000,
       status: "abierta",
       movements: [
         {
@@ -712,7 +714,7 @@ export const initialData = {
           amount: 3500,
           reason: "Compra urgente 2 bolsas de hielo rolo",
           createdAt: new Date(Date.now() - 3 * 3600000).toISOString(),
-          user: "Martín (Cajero)"
+          user: "Cajero"
         },
         {
           id: "mov_2",
@@ -720,13 +722,39 @@ export const initialData = {
           amount: 15000,
           reason: "Refuerzo cambio de billetes chicos",
           createdAt: new Date(Date.now() - 2 * 3600000).toISOString(),
-          user: "Rodrigo (Admin)"
+          user: "Admin"
         }
       ],
       actualCash: null,
       difference: null,
       closedAt: null,
+      closedDate: null,
+      closedTime: null,
       notes: ""
+    }
+  ],
+
+  // Notificaciones en tiempo real (Comandas a cocina y Solicitudes de cuenta)
+  notifications: [
+    {
+      id: "notif_demo_1",
+      type: "cuenta",
+      title: "Cuenta solicitada · Mesa T5",
+      message: "Mozo 2 solicitó la cuenta de Mesa T5 (Comanda #103 · Total $37.900).",
+      orderId: "ord_demo_3",
+      orderNumber: 103,
+      tableId: "m5",
+      tableCode: "T5",
+      channel: "mesa",
+      waiterName: "Mozo 2",
+      total: 37900,
+      items: [
+        { productName: "Pizza Especial con Jamón y Morrones Grande", quantity: 1, notes: "" },
+        { productName: "Empanada de Carne a Cuchillo", quantity: 4, notes: "" },
+        { productName: "Cerveza Artesanal IPA (Pinta 500ml)", quantity: 3, notes: "" }
+      ],
+      createdAt: new Date(Date.now() - 10 * 60000).toISOString(),
+      read: true
     }
   ],
 
@@ -740,7 +768,7 @@ export const initialData = {
       total: 31200,
       paymentMethod: "efectivo",
       closedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-      waiterName: "Lucas"
+      waiterName: "Mozo 1"
     },
     {
       id: "sale_prev_2",
@@ -750,7 +778,7 @@ export const initialData = {
       total: 16000,
       paymentMethod: "mercadopago",
       closedAt: new Date(Date.now() - 3 * 3600000).toISOString(),
-      waiterName: "Martín"
+      waiterName: "Cajero"
     },
     {
       id: "sale_prev_3",
@@ -760,7 +788,7 @@ export const initialData = {
       total: 28500,
       paymentMethod: "debito",
       closedAt: new Date(Date.now() - 1 * 3600000).toISOString(),
-      waiterName: "Martín"
+      waiterName: "Cajero"
     }
   ],
 
@@ -775,7 +803,7 @@ export const initialData = {
       change: "+20 kg",
       resultingStock: 19.5,
       reason: "Factura A 0003-00012489",
-      user: "Martín"
+      user: "Cajero"
     },
     {
       id: "log_2",
@@ -786,7 +814,7 @@ export const initialData = {
       change: "-1 kg",
       resultingStock: 18.5,
       reason: "Recorte de horma en cámara",
-      user: "Rodrigo (Encargado / Admin)"
+      user: "Admin"
     },
     {
       id: "log_3",
@@ -797,7 +825,7 @@ export const initialData = {
       change: "+5 u",
       resultingStock: 45,
       reason: "Recuento manual de batea",
-      user: "Rodrigo (Encargado / Admin)"
+      user: "Admin"
     }
   ]
 };

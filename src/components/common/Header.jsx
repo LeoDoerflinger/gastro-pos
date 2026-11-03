@@ -8,8 +8,9 @@ export default function Header() {
     setIsSidebarOpen,
     setIsPinModalOpen,
     setIsQrModalOpen,
+    setIsNotificationsOpen,
+    unreadNotificationsCount,
     logoutUser,
-    activeShift,
     theme,
     toggleTheme
   } = useApp();
@@ -73,25 +74,30 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Right: Operational Status + Theme Toggle + Simulator + Staff Session */}
+        {/* Right: Notifications + Theme Toggle + QR + Staff Session */}
         <div className="flex items-center gap-2 shrink-0">
-          {!isMozo && (
-            <div
-              className={`hidden lg:inline-flex pos-badge ${
-                activeShift ? 'pos-badge-open' : 'pos-badge-danger'
-              } px-2.5 py-1.5`}
-            >
-              <span
-                className={`w-2 h-2 rounded-full ${
-                  activeShift ? 'bg-[var(--status-open-bar)]' : 'bg-[var(--status-danger-bar)]'
-                }`}
-                aria-hidden="true"
-              ></span>
-              <span className="font-mono">
-                {activeShift ? `Caja #${activeShift.shiftNumber}` : 'Caja cerrada'}
+          <button
+            type="button"
+            onClick={() => setIsNotificationsOpen(true)}
+            aria-label={`Centro de comandas y cuentas (${unreadNotificationsCount} sin leer)`}
+            title="Ver comandas y solicitudes de cuenta"
+            className="pos-btn-secondary px-3 relative"
+          >
+            <i
+              className={`fa-solid fa-bell text-sm ${
+                unreadNotificationsCount > 0 ? 'text-[var(--accent-brand)]' : 'text-[var(--text-secondary)]'
+              }`}
+              aria-hidden="true"
+            ></i>
+            <span className="hidden md:inline text-xs font-semibold">
+              Avisos
+            </span>
+            {unreadNotificationsCount > 0 && (
+              <span className="pos-badge pos-badge-brand font-mono text-[11px] px-1.5 py-0">
+                {unreadNotificationsCount}
               </span>
-            </div>
-          )}
+            )}
+          </button>
 
           <button
             type="button"
@@ -136,7 +142,7 @@ export default function Header() {
             </span>
             <div className="text-left leading-tight">
               <div className="text-xs sm:text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                <span className="truncate max-w-[76px] sm:max-w-[120px]">{currentUser.name.split(' ')[0]}</span>
+                <span className="truncate max-w-[96px] sm:max-w-[140px]">{currentUser.name}</span>
                 <i className="fa-solid fa-key text-[11px] text-[var(--text-muted)]" aria-hidden="true"></i>
               </div>
               <div className="text-[11px] text-[var(--text-secondary)] font-medium">

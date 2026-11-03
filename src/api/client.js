@@ -1,6 +1,103 @@
 const API_BASE = '/api';
-const LOCAL_DB_KEY = 'gastro_pos_db_v2';
+const LOCAL_DB_KEY = 'gastro_pos_db_v3';
 export const SYNC_CHANNEL_NAME = 'gastro_pos_sync';
+
+const ROLE_LABELS = {
+  admin: 'Admin',
+  cajero: 'Cajero',
+  mozo: 'Mozo'
+};
+
+export function normalizeUsersRoleNames(users = []) {
+  const counts = {};
+  for (const u of users) {
+    const r = u.role || 'mozo';
+    counts[r] = (counts[r] || 0) + 1;
+  }
+  const indices = {};
+  for (const u of users) {
+    const r = u.role || 'mozo';
+    const base = ROLE_LABELS[r] || 'Operador';
+    if (counts[r] > 1) {
+      indices[r] = (indices[r] || 0) + 1;
+      u.name = `${base} ${indices[r]}`;
+    } else {
+      u.name = base;
+    }
+  }
+  return users;
+}
+
+function getTableCodeForClient(table) {
+  if (!table) return 'Mostrador';
+  const sector = (table.sector || 'Salón').trim();
+  return `${sector.charAt(0).toUpperCase()}${table.number}`;
+}
+
+function formatDateAr(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  return d.toLocaleDateString('es-AR', { day: '2-digit', month: '2-digit', year: 'numeric' });
+}
+
+function formatTimeAr(iso) {
+  const d = iso ? new Date(iso) : new Date();
+  return d.toLocaleTimeString('es-AR', { hour: '2-digit', minute: '2-digit', hour12: false });
+}
+
+function normalizeClientDb(db) {
+  if (!db) return db;
+  if (!Array.isArray(db.users)) db.users = [];
+  normalizeUsersRoleNames(db.users);
+  if (!Array.isArray(db.notifications)) db.notifications = [];
+  if (Array.isArray(db.tables)) {
+    db.tables.forEach(t => {
+      if (t.status === 'cuenta_pedida') t.status = 'pendiente_cobro';
+    });
+  }
+  if (Array.isArray(db.orders)) {
+    db.orders.forEach(o => {
+      if (o.status === 'cuenta_pedida') o.status = 'pendiente_cobro';
+      const waiter = db.users.find(u => u.id === o.waiterId);
+      if (waiter) o.waiterName = waiter.name;
+    });
+  }
+  if (Array.isArray(db.cashShifts)) {
+    db.cashShifts.forEach(s => {
+      if (!s.openedDate && s.openedAt) s.openedDate = formatDateAr(s.openedAt);
+      if (!s.openedTime && s.openedAt) s.openedTime = formatTimeAr(s.openedAt);
+      if (!s.closedDate && s.closedAt) s.closedDate = formatDateAr(s.closedAt);
+      if (!s.closedTime && s.closedAt) s.closedTime = formatTimeAr(s.closedAt);
+      const cashier = db.users.find(u => u.id === s.cashierId);
+      if (cashier) s.cashierName = cashier.name;
+    });
+  }
+  return db;
+}
+
+function pushClientNotification(db, notifData) {
+  if (!Array.isArray(db.notifications)) db.notifications = [];
+  const notif = {
+    id: notifData.id || ('notif_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6)),
+    type: notifData.type || 'comanda',
+    title: notifData.title || 'Nuevo aviso',
+    message: notifData.message || '',
+    orderId: notifData.orderId || null,
+    orderNumber: notifData.orderNumber || null,
+    tableId: notifData.tableId || null,
+    tableCode: notifData.tableCode || null,
+    channel: notifData.channel || 'mesa',
+    waiterName: notifData.waiterName || 'Mozo',
+    total: Number(notifData.total) || 0,
+    items: Array.isArray(notifData.items) ? notifData.items : [],
+    createdAt: notifData.createdAt || new Date().toISOString(),
+    read: false
+  };
+  db.notifications.unshift(notif);
+  if (db.notifications.length > 50) {
+    db.notifications = db.notifications.slice(0, 50);
+  }
+  return notif;
+}
 
 let memoryDb = null;
 let initPromise = null;
@@ -19,7 +116,7 @@ function loadLocalDb(forceFromStorage = false) {
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.tables)) {
-        memoryDb = parsed;
+        memoryDb = normalizeClientDb(parsed);
         return memoryDb;
       }
     }
@@ -29,6 +126,7 @@ function loadLocalDb(forceFromStorage = false) {
 
 function saveLocalDb(db, options = {}) {
   const { touch = true, broadcast = true } = options;
+  normalizeClientDb(db);
   if (touch) {
     db.lastUpdated = Date.now();
   } else if (db.lastUpdated === undefined) {
@@ -116,6 +214,7 @@ async function ensureDbInitialized() {
         suppliers: suppliers || [],
         purchases: purchases || [],
         stockLog: stockLog || [],
+        notifications: [],
         lastUpdated: Date.now(),
         historicalSales: [
           {
@@ -126,7 +225,7 @@ async function ensureDbInitialized() {
             total: 31200,
             paymentMethod: 'efectivo',
             closedAt: new Date(Date.now() - 4 * 3600000).toISOString(),
-            waiterName: 'Lucas'
+            waiterName: 'Mozo 1'
           },
           {
             id: 'sale_prev_2',
@@ -136,7 +235,7 @@ async function ensureDbInitialized() {
             total: 16000,
             paymentMethod: 'mercadopago',
             closedAt: new Date(Date.now() - 3 * 3600000).toISOString(),
-            waiterName: 'Martín'
+            waiterName: 'Cajero'
           },
           {
             id: 'sale_prev_3',
@@ -146,7 +245,7 @@ async function ensureDbInitialized() {
             total: 28500,
             paymentMethod: 'debito',
             closedAt: new Date(Date.now() - 1 * 3600000).toISOString(),
-            waiterName: 'Martín'
+            waiterName: 'Cajero'
           }
         ]
       };
@@ -205,8 +304,8 @@ function computeAnalyticsFromDb(db) {
     byPaymentMethod,
     topProducts,
     lowStockIngredients,
-    activeOrdersCount: orders.filter(o => o.status === 'abierto' || o.status === 'cuenta_pedida').length,
-    openTablesCount: (db.tables || []).filter(t => t.status === 'ocupada' || t.status === 'cuenta_pedida').length
+    activeOrdersCount: orders.filter(o => o.status === 'abierto' || o.status === 'cuenta_solicitada' || o.status === 'pendiente_cobro' || o.status === 'cuenta_pedida').length,
+    openTablesCount: (db.tables || []).filter(t => t.status !== 'libre').length
   };
 }
 
@@ -254,33 +353,62 @@ export const api = {
       throw new Error(`El PIN ${cleanPin} ya está asignado a ${duplicate.name}`);
     }
 
+    const role = userData.role || 'mozo';
     const newUser = {
       id: 'u_' + Date.now(),
-      name: String(userData.name || '').trim(),
-      role: userData.role || 'mozo',
+      name: ROLE_LABELS[role] || 'Operador',
+      role,
       pin: cleanPin,
       email: userData.email || '',
       avatar:
         userData.avatar ||
-        (userData.role === 'admin'
+        (role === 'admin'
           ? 'fa-solid fa-user-shield'
-          : userData.role === 'cajero'
+          : role === 'cajero'
           ? 'fa-solid fa-cash-register'
           : 'fa-solid fa-user-tie')
     };
 
     rawFetchJson('/users', { method: 'POST', body: JSON.stringify(newUser) }).catch(() => {});
     db.users.push(newUser);
+    normalizeUsersRoleNames(db.users);
     saveLocalDb(db);
-    return newUser;
+    return db.users.find(u => u.id === newUser.id) || newUser;
   },
 
   deleteUser: async (id) => {
     const db = await ensureDbInitialized();
     rawFetchJson(`/users/${id}`, { method: 'DELETE' }).catch(() => {});
     db.users = (db.users || []).filter(u => u.id !== id);
+    normalizeUsersRoleNames(db.users);
     saveLocalDb(db);
     return { success: true };
+  },
+
+  getNotifications: async () => {
+    const db = await ensureDbInitialized();
+    return [...(db.notifications || [])];
+  },
+
+  markNotificationRead: async (id) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/notifications/${id}/read`, { method: 'POST' }).catch(() => {});
+    const notif = (db.notifications || []).find(n => n.id === id);
+    if (notif) {
+      notif.read = true;
+      saveLocalDb(db);
+    }
+    return notif;
+  },
+
+  markAllNotificationsRead: async () => {
+    const db = await ensureDbInitialized();
+    rawFetchJson('/notifications/read-all', { method: 'POST' }).catch(() => {});
+    (db.notifications || []).forEach(n => {
+      n.read = true;
+    });
+    saveLocalDb(db);
+    return { ok: true };
   },
 
   getTables: async () => {
@@ -499,6 +627,7 @@ export const api = {
     // Stock is intentionally NOT deducted on order creation (only via manual adjustment or supplier purchase)
     db.orders.unshift(newOrder);
 
+    let tableCode = 'Mostrador';
     if (newOrder.channel === 'mesa' && newOrder.tableId) {
       const table = (db.tables || []).find(t => t.id === newOrder.tableId);
       if (table) {
@@ -507,8 +636,31 @@ export const api = {
         table.diners = newOrder.diners;
         table.waiterId = newOrder.waiterId;
         table.openedAt = new Date().toISOString();
+        tableCode = getTableCodeForClient(table);
       }
+    } else if (newOrder.channel === 'delivery') {
+      tableCode = 'Delivery';
+    } else if (newOrder.channel === 'take_away') {
+      tableCode = 'Take Away';
     }
+
+    pushClientNotification(db, {
+      type: 'comanda',
+      title: `Nueva comanda · ${tableCode}`,
+      message: `${newOrder.waiterName} envió ${newOrder.items.reduce((s, i) => s + i.quantity, 0)} platos a cocina (Comanda #${newOrder.orderNumber}).`,
+      orderId: newOrder.id,
+      orderNumber: newOrder.orderNumber,
+      tableId: newOrder.tableId,
+      tableCode,
+      channel: newOrder.channel,
+      waiterName: newOrder.waiterName,
+      total: newOrder.total,
+      items: newOrder.items.map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
 
     saveLocalDb(db);
     return newOrder;
@@ -538,6 +690,28 @@ export const api = {
     order.subtotal = order.items.reduce((acc, it) => acc + it.subtotal, 0);
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + (order.tip || 0);
 
+    const table = order.tableId ? (db.tables || []).find(t => t.id === order.tableId) : null;
+    const tableCode = table ? getTableCodeForClient(table) : `Comanda #${order.orderNumber}`;
+    const waiterName = user?.name || order.waiterName || 'Mozo';
+
+    pushClientNotification(db, {
+      type: 'comanda',
+      title: `Adición a cocina · ${tableCode}`,
+      message: `${waiterName} sumó ${formattedItems.reduce((s, i) => s + i.quantity, 0)} platos a ${tableCode} (Comanda #${order.orderNumber}).`,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      tableCode,
+      channel: order.channel,
+      waiterName,
+      total: order.total,
+      items: formattedItems.map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
+
     saveLocalDb(db);
     return { ...order };
   },
@@ -552,13 +726,54 @@ export const api = {
     const order = (db.orders || []).find(o => o.id === orderId);
     if (!order) throw new Error('Comanda no encontrada');
 
-    order.status = 'cuenta_pedida';
+    order.status = 'cuenta_solicitada';
     order.tip = Number(tipAmount) || 0;
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + order.tip;
 
+    let tableCode = `Comanda #${order.orderNumber}`;
     if (order.tableId) {
       const table = (db.tables || []).find(t => t.id === order.tableId);
-      if (table) table.status = 'cuenta_pedida';
+      if (table) {
+        table.status = 'cuenta_solicitada';
+        tableCode = getTableCodeForClient(table);
+      }
+    }
+
+    pushClientNotification(db, {
+      type: 'cuenta',
+      title: `Cuenta solicitada · ${tableCode}`,
+      message: `${order.waiterName || 'Mozo'} solicitó la cuenta de ${tableCode} (Total $${order.total.toLocaleString('es-AR')}).`,
+      orderId: order.id,
+      orderNumber: order.orderNumber,
+      tableId: order.tableId,
+      tableCode,
+      channel: order.channel,
+      waiterName: order.waiterName || 'Mozo',
+      total: order.total,
+      items: (order.items || []).map(it => ({
+        productName: it.productName,
+        quantity: it.quantity,
+        notes: it.notes || ''
+      }))
+    });
+
+    saveLocalDb(db);
+    return { ...order };
+  },
+
+  markPendingPayment: async (orderId) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/orders/${orderId}/pending-payment`, {
+      method: 'POST'
+    }).catch(() => {});
+
+    const order = (db.orders || []).find(o => o.id === orderId);
+    if (!order) throw new Error('Comanda no encontrada');
+
+    order.status = 'pendiente_cobro';
+    if (order.tableId) {
+      const table = (db.tables || []).find(t => t.id === order.tableId);
+      if (table) table.status = 'pendiente_cobro';
     }
 
     saveLocalDb(db);
@@ -744,19 +959,24 @@ export const api = {
 
     rawFetchJson('/cash-shifts/open', { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
 
+    const nowIso = new Date().toISOString();
     const nextShiftNumber = Math.max(0, ...(db.cashShifts || []).map(s => s.shiftNumber || 0)) + 1;
     const newShift = {
       id: 'shift_' + Date.now(),
       shiftNumber: nextShiftNumber,
       cashierId: data.cashierId || 'u_cajero',
       cashierName: data.cashierName || 'Cajero',
-      openedAt: new Date().toISOString(),
+      openedAt: nowIso,
+      openedDate: formatDateAr(nowIso),
+      openedTime: formatTimeAr(nowIso),
       initialCash: Number(data.initialCash) || 0,
       status: 'abierta',
       movements: [],
       actualCash: null,
       difference: null,
       closedAt: null,
+      closedDate: null,
+      closedTime: null,
       notes: ''
     };
     if (!db.cashShifts) db.cashShifts = [];
@@ -793,9 +1013,24 @@ export const api = {
     if (!shift) throw new Error('Turno no encontrado');
 
     const shiftStart = new Date(shift.openedAt).getTime();
-    const cashSales = (db.orders || [])
-      .filter(o => o.status === 'cobrado' && o.paymentMethod === 'efectivo' && new Date(o.closedAt).getTime() >= shiftStart)
-      .reduce((acc, o) => acc + (o.total || 0), 0);
+    const shiftOrders = (db.orders || []).filter(
+      o => o.status === 'cobrado' && new Date(o.closedAt).getTime() >= shiftStart
+    );
+
+    const salesByMethod = {
+      efectivo: 0,
+      debito: 0,
+      credito: 0,
+      mercadopago: 0,
+      transferencia: 0
+    };
+    shiftOrders.forEach(o => {
+      const pm = o.paymentMethod || 'efectivo';
+      salesByMethod[pm] = (salesByMethod[pm] || 0) + (o.total || 0);
+    });
+
+    const cashSales = salesByMethod.efectivo || 0;
+    const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
 
     const totalIngresos = (shift.movements || [])
       .filter(m => m.type === 'ingreso')
@@ -807,13 +1042,21 @@ export const api = {
 
     const expectedCash = (shift.initialCash || 0) + cashSales + totalIngresos - totalEgresos;
     const diff = Number(data.actualCash) - expectedCash;
+    const closedIso = new Date().toISOString();
 
     shift.status = 'cerrada';
     shift.actualCash = Number(data.actualCash);
     shift.expectedCash = expectedCash;
+    shift.cashSales = cashSales;
+    shift.totalSales = totalSales;
+    shift.salesByMethod = salesByMethod;
+    shift.totalIngresos = totalIngresos;
+    shift.totalEgresos = totalEgresos;
     shift.difference = diff;
     shift.notes = data.notes || '';
-    shift.closedAt = new Date().toISOString();
+    shift.closedAt = closedIso;
+    shift.closedDate = formatDateAr(closedIso);
+    shift.closedTime = formatTimeAr(closedIso);
     shift.closedBy = data.closedBy || 'Cajero';
 
     saveLocalDb(db);

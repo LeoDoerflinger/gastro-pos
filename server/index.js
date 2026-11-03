@@ -148,10 +148,17 @@ app.post('/api/orders/:id/items', (req, res) => {
   res.json(updated);
 });
 
-// Mozo pide cuenta ("Sacar cuenta")
+// Mozo pide cuenta ("Sacar cuenta" -> estado Cuenta celeste)
 app.post('/api/orders/:id/request-bill', (req, res) => {
   const { tipAmount } = req.body || {};
   const updated = store.requestBill(req.params.id, tipAmount);
+  if (!updated) return res.status(404).json({ error: 'Comanda no encontrada' });
+  res.json(updated);
+});
+
+// Pasar pedido a Pendiente de cobro (estado Rojo)
+app.post('/api/orders/:id/pending-payment', (req, res) => {
+  const updated = store.markPendingPayment(req.params.id);
   if (!updated) return res.status(404).json({ error: 'Comanda no encontrada' });
   res.json(updated);
 });
@@ -161,6 +168,21 @@ app.post('/api/orders/:id/revert-bill', (req, res) => {
   const updated = store.revertBillRequest(req.params.id);
   if (!updated) return res.status(404).json({ error: 'Comanda no encontrada' });
   res.json(updated);
+});
+
+// --- Notificaciones Digitales (Comandas y Cuentas) ---
+app.get('/api/notifications', (req, res) => {
+  res.json(store.getNotifications());
+});
+
+app.post('/api/notifications/:id/read', (req, res) => {
+  const updated = store.markNotificationRead(req.params.id);
+  res.json({ ok: true, notification: updated });
+});
+
+app.post('/api/notifications/read-all', (req, res) => {
+  store.markAllNotificationsRead();
+  res.json({ ok: true });
 });
 
 // Actualizar estado de cocina / tracking de pedido (delivery, take away o salón)

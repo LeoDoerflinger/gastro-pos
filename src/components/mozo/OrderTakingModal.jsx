@@ -196,11 +196,25 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
     if (!activeOrder) return;
     try {
       await api.requestBill(activeOrder.id, 0);
-      showToast(`Mesa ${tableCode} marcada como pendiente de cobro.`);
+      showToast(`Mesa ${tableCode} en estado Cuenta (aviso enviado a caja).`);
       await refreshData();
+      onOrderSubmitted?.();
       onClose();
     } catch (err) {
-      showToast(err.message || 'No se pudo solicitar el cierre', 'error');
+      showToast(err.message || 'No se pudo solicitar la cuenta', 'error');
+    }
+  };
+
+  const handlePasarAPendienteCobro = async () => {
+    if (!activeOrder) return;
+    try {
+      await api.markPendingPayment(activeOrder.id);
+      showToast(`Mesa ${tableCode} marcada como Pendiente de cobro.`);
+      await refreshData();
+      onOrderSubmitted?.();
+      onClose();
+    } catch (err) {
+      showToast(err.message || 'No se pudo actualizar el estado de cobro', 'error');
     }
   };
 
@@ -586,14 +600,25 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
                 <span>{submitting ? 'Enviando a cocina...' : 'Marchar a cocina'}</span>
               </button>
 
-              {activeOrder && (
+              {activeOrder && activeOrder.status === 'abierto' && (
                 <button
                   type="button"
                   onClick={handleSolicitarCierre}
                   className="pos-btn-secondary w-full"
                 >
-                  <i className="fa-solid fa-bell text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
-                  <span>Solicitar cierre y cobro en caja</span>
+                  <i className="fa-solid fa-bell-concierge text-xs text-[var(--status-account-fg)]" aria-hidden="true"></i>
+                  <span>Solicitar cuenta</span>
+                </button>
+              )}
+
+              {activeOrder && activeOrder.status === 'cuenta_solicitada' && (
+                <button
+                  type="button"
+                  onClick={handlePasarAPendienteCobro}
+                  className="pos-btn-secondary w-full"
+                >
+                  <i className="fa-solid fa-receipt text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+                  <span>Pasar a Pendiente de cobro</span>
                 </button>
               )}
             </div>
