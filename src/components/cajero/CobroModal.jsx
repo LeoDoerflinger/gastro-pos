@@ -3,9 +3,10 @@ import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import ReceiptModal from '../common/ReceiptModal';
 import { getTableCode } from '../mozo/MozoSalonView';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
-  const { currentUser, tables, showToast, refreshData } = useApp();
+  const { currentUser, tables, users, showToast, refreshData } = useApp();
 
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashTendered, setCashTendered] = useState('');
@@ -112,7 +113,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                   )}
                 </div>
                 <p className="text-xs text-[var(--text-secondary)]">
-                  Atendió: {order.waiterName || 'Personal'} · {order.items?.length || 0} platos
+                  Atendió: {formatUserRoleDisplay(order.waiterName || 'Personal', 'mozo', users)} · {order.items?.length || 0} platos
                 </p>
               </div>
             </div>

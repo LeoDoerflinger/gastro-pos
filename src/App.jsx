@@ -19,9 +19,10 @@ import RecipeManager from './components/admin/RecipeManager';
 import StockControl from './components/admin/StockControl';
 import AdminDashboard from './components/admin/AdminDashboard';
 import Configuration from './components/admin/Configuration';
+import { formatUserRoleDisplay } from './utils/userRoleHelper';
 
 export default function App() {
-  const { activeTab, currentUser, loading, apiError, tables, refreshData, theme, activeShift } = useApp();
+  const { activeTab, currentUser, users, loading, apiError, tables, refreshData, theme, activeShift } = useApp();
 
   const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
   const isStandaloneMobile =
@@ -151,7 +152,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
             <span>·</span>
-            <span>Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+            <span>Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
             <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>

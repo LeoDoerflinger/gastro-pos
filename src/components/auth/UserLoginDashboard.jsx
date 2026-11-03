@@ -1,6 +1,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function UserLoginDashboard({ isMobileComandera = false }) {
   const {
@@ -252,7 +253,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                         </span>
                         <div className="min-w-0">
                           <div className="font-bold text-sm text-[var(--text-primary)] truncate">
-                            {u.name}
+                            {formatUserRoleDisplay(u.name, u.role, users)}
                           </div>
                           <div className="text-xs text-[var(--text-secondary)] flex items-center gap-2">
                             <span>{roleLabels[u.role] || u.role}</span>

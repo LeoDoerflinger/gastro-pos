@@ -1,6 +1,8 @@
 const API_BASE = '/api';
 const LOCAL_DB_KEY = 'gastro_pos_db_v3';
 export const SYNC_CHANNEL_NAME = 'gastro_pos_sync';
+export { isShiftActive, formatUserRoleDisplay } from '../utils/userRoleHelper';
+import { isShiftActive, formatUserRoleDisplay } from '../utils/userRoleHelper';
 
 const ROLE_LABELS = {
   admin: 'Admin',
@@ -63,6 +65,7 @@ function normalizeClientDb(db) {
   }
   if (Array.isArray(db.cashShifts)) {
     db.cashShifts.forEach(s => {
+      if (s.status === 'abierto') s.status = 'abierta';
       if (!s.openedDate && s.openedAt) s.openedDate = formatDateAr(s.openedAt);
       if (!s.openedTime && s.openedAt) s.openedTime = formatTimeAr(s.openedAt);
       if (!s.closedDate && s.closedAt) s.closedDate = formatDateAr(s.closedAt);
@@ -576,7 +579,7 @@ export const api = {
 
   createOrder: async (orderData, user) => {
     const db = await ensureDbInitialized();
-    const activeShift = (db.cashShifts || []).find(s => s.status === 'abierto');
+    const activeShift = (db.cashShifts || []).find(isShiftActive);
     if (!activeShift) {
       throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
     }
@@ -586,6 +589,7 @@ export const api = {
     const discount = Number(orderData.discount) || 0;
     const tip = Number(orderData.tip) || 0;
     const total = subtotal + deliveryFee - discount + tip;
+    const assignedWaiterName = formatUserRoleDisplay(user?.name || orderData.waiterName, user?.role, db.users);
 
     const newOrder = {
       id: 'ord_' + Date.now(),
@@ -600,7 +604,7 @@ export const api = {
       deliveryFee,
       driverName: orderData.driverName || null,
       waiterId: user?.id || orderData.waiterId || null,
-      waiterName: user?.name || orderData.waiterName || 'Usuario',
+      waiterName: assignedWaiterName,
       status: 'abierto',
       kitchenStatus: orderData.kitchenStatus || 'en_preparacion',
       diners: Number(orderData.diners) || 1,
@@ -672,7 +676,7 @@ export const api = {
 
   addItemsToOrder: async (orderId, items, user) => {
     const db = await ensureDbInitialized();
-    const activeShift = (db.cashShifts || []).find(s => s.status === 'abierto');
+    const activeShift = (db.cashShifts || []).find(isShiftActive);
     if (!activeShift) {
       throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
     }
@@ -961,7 +965,7 @@ export const api = {
 
   getActiveShift: async () => {
     const db = await ensureDbInitialized();
-    const active = (db.cashShifts || []).find(s => s.status === 'abierta') || null;
+    const active = (db.cashShifts || []).find(isShiftActive) || null;
     return { active };
   },
 
@@ -971,8 +975,14 @@ export const api = {
 
   openCashShift: async (data) => {
     const db = await ensureDbInitialized();
-    const existing = (db.cashShifts || []).find(s => s.status === 'abierta');
-    if (existing) throw new Error('Ya existe una caja abierta en el sistema.');
+    if (!db.cashShifts) db.cashShifts = [];
+    // Archivar de forma segura cualquier turno previo abierto para evitar bloqueos
+    db.cashShifts.forEach(s => {
+      if (isShiftActive(s)) {
+        s.status = 'cerrada';
+        s.closedAt = s.closedAt || new Date().toISOString();
+      }
+    });
 
     rawFetchJson('/cash-shifts/open', { method: 'POST', body: JSON.stringify(data) }).catch(() => {});
 
@@ -982,7 +992,7 @@ export const api = {
       id: 'shift_' + Date.now(),
       shiftNumber: nextShiftNumber,
       cashierId: data.cashierId || 'u_cajero',
-      cashierName: data.cashierName || 'Cajero',
+      cashierName: formatUserRoleDisplay(data.cashierName || 'Cajero', 'cajero', db.users),
       openedAt: nowIso,
       openedDate: formatDateAr(nowIso),
       openedTime: formatTimeAr(nowIso),
@@ -996,7 +1006,6 @@ export const api = {
       closedTime: null,
       notes: ''
     };
-    if (!db.cashShifts) db.cashShifts = [];
     db.cashShifts.unshift(newShift);
     saveLocalDb(db);
     return newShift;

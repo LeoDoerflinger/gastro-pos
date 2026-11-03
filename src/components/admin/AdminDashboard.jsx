@@ -1,8 +1,9 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function AdminDashboard() {
-  const { analytics, orders } = useApp();
+  const { analytics, orders, users } = useApp();
 
   if (!analytics) return null;
 
@@ -235,7 +236,7 @@ export default function AdminDashboard() {
                       {ord.channel?.replace('_', ' ')}
                     </td>
                     <td className="py-3 px-4 text-[var(--text-primary)]">
-                      {ord.waiterName || 'Personal'}
+                      {formatUserRoleDisplay(ord.waiterName || 'Personal', 'mozo', users)}
                     </td>
                     <td className="py-3 px-4 capitalize text-xs font-mono text-[var(--text-secondary)]">
                       {ord.paymentMethod || 'Efectivo'}

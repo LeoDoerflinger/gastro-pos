@@ -1,9 +1,11 @@
 import React from 'react';
 import { useApp } from '../../context/AppContext';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function Header() {
   const {
     currentUser,
+    users,
     activeTab,
     setIsSidebarOpen,
     setIsPinModalOpen,
@@ -142,7 +144,7 @@ export default function Header() {
             </span>
             <div className="text-left leading-tight">
               <div className="text-xs sm:text-sm font-bold text-[var(--text-primary)] flex items-center gap-1.5">
-                <span className="truncate max-w-[96px] sm:max-w-[140px]">{currentUser.name}</span>
+                <span className="truncate max-w-[96px] sm:max-w-[140px]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</span>
                 <i className="fa-solid fa-key text-[11px] text-[var(--text-muted)]" aria-hidden="true"></i>
               </div>
               <div className="text-[11px] text-[var(--text-secondary)] font-medium">

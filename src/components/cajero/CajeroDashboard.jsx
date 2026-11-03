@@ -5,9 +5,10 @@ import ReceiptModal from '../common/ReceiptModal';
 import OrderTakingModal from '../mozo/OrderTakingModal';
 import { getTableCode } from '../mozo/MozoSalonView';
 import { api } from '../../api/client';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function CajeroDashboard() {
-  const { orders, tables, refreshData, showToast } = useApp();
+  const { orders, tables, users, refreshData, showToast } = useApp();
   const [channelFilter, setChannelFilter] = useState('todos');
   const [selectedOrderForCobro, setSelectedOrderForCobro] = useState(null);
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
@@ -229,7 +230,7 @@ export default function CajeroDashboard() {
                     </span>
                     <div>
                       <div className="text-sm font-medium text-[var(--text-primary)] flex items-center gap-2">
-                        <span>Atendió: <strong>{order.waiterName || 'Personal'}</strong></span>
+                        <span>Atendió: <strong>{formatUserRoleDisplay(order.waiterName || 'Personal', 'mozo', users)}</strong></span>
                         <span className={`pos-badge ${isCuentaStep ? 'pos-badge-account' : 'pos-badge-bill'}`}>
                           {isCuentaStep ? 'Cuenta' : 'Pendiente cobro'}
                         </span>
@@ -351,23 +352,23 @@ export default function CajeroDashboard() {
                     </div>
 
                     <div className="text-sm text-[var(--text-secondary)] flex items-center gap-1.5 min-w-0">
-                      <span className="text-xs text-[var(--text-muted)]">Mozo:</span>
+                      <span className="text-xs text-[var(--text-muted)]">Atendió:</span>
                       <span className="font-medium text-[var(--text-primary)] truncate">
-                        {order.waiterName || order.driverName || 'Cajero'}
+                        {formatUserRoleDisplay(order.waiterName || order.driverName || 'Cajero', 'mozo', users)}
                       </span>
                     </div>
                   </div>
 
                   {/* Right Side: Price (with guaranteed spacing) + Action Buttons */}
-                  <div className="flex flex-wrap items-center justify-between lg:justify-end gap-3 sm:gap-4 pt-2.5 lg:pt-0 border-t border-[var(--border-subtle)] lg:border-t-0 shrink-0">
-                    <div className="text-left lg:text-right pr-1 shrink-0">
-                      <span className="lg:hidden text-xs text-[var(--text-muted)] mr-2">Saldo:</span>
+                  <div className="flex items-center justify-between sm:justify-end gap-3 sm:gap-4 pt-2.5 lg:pt-0 border-t border-[var(--border-subtle)] lg:border-t-0 shrink-0">
+                    <div className="text-left sm:text-right shrink-0 min-w-[95px]">
+                      <span className="sm:hidden text-xs text-[var(--text-muted)] mr-2">Saldo:</span>
                       <span className="font-mono font-bold text-base sm:text-lg text-[var(--text-primary)] whitespace-nowrap">
                         ${(order.total || order.subtotal).toLocaleString('es-AR')}
                       </span>
                     </div>
 
-                    <div className="flex flex-wrap items-center justify-end gap-2 shrink-0">
+                    <div className="flex items-center gap-2 shrink-0 flex-wrap">
                       {(kStatus === 'en_preparacion' || kStatus === 'pendiente') && (
                         <button
                           type="button"

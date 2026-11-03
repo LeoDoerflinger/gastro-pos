@@ -2,6 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import { getTableCode } from './MozoSalonView';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 const AVAILABLE_EXTRAS = [
   { id: 'ext_muzza', name: 'Extra Muzzarella', price: 1800 },
@@ -29,7 +30,7 @@ const QUICK_NOTES = [
 ];
 
 export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, onOrderSubmitted, channel = 'mesa' }) {
-  const { products, currentUser, showToast, refreshData, activeShift } = useApp();
+  const { products, currentUser, users, showToast, refreshData, activeShift } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
@@ -244,7 +245,7 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
                 )}
               </div>
               <p className="text-xs text-[var(--text-secondary)] truncate">
-                Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
+                Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong>
               </p>
             </div>
           </div>

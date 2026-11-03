@@ -1,9 +1,10 @@
 import React, { useRef, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { getTableCode } from '../mozo/MozoSalonView';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta' }) {
-  const { tables } = useApp();
+  const { tables, users } = useApp();
   const printRef = useRef(null);
 
   useEffect(() => {
@@ -82,7 +83,7 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
                 </div>
               )}
               <div className="flex justify-between text-[#43464c] text-[11px]">
-                <span>Atendió: {order.waiterName || 'Personal'}</span>
+                <span>Atendió: {formatUserRoleDisplay(order.waiterName || 'Personal', 'mozo', users)}</span>
                 <span>{new Date(order.createdAt || Date.now()).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
               </div>
             </div>

@@ -834,14 +834,17 @@ class Store {
   }
 
   getActiveShift() {
-    return (this.data.cashShifts || []).find(s => s.status === 'abierta') || null;
+    return (this.data.cashShifts || []).find(s => s && (s.status === 'abierta' || s.status === 'abierto')) || null;
   }
 
   openCashShift({ cashierId, cashierName, initialCash }) {
-    const active = this.getActiveShift();
-    if (active) {
-      throw new Error('Ya existe una caja abierta en el sistema.');
-    }
+    if (!this.data.cashShifts) this.data.cashShifts = [];
+    this.data.cashShifts.forEach(s => {
+      if (s && (s.status === 'abierta' || s.status === 'abierto')) {
+        s.status = 'cerrada';
+        s.closedAt = s.closedAt || new Date().toISOString();
+      }
+    });
 
     const nowIso = new Date().toISOString();
     const nextShiftNumber = Math.max(0, ...(this.data.cashShifts || []).map(s => s.shiftNumber || 0)) + 1;

@@ -114,7 +114,8 @@ export function AppProvider({ children }) {
       setProducts(productsData);
       setIngredients(ingredientsData);
       setOrders(ordersData);
-      setActiveShift(shiftRes.active);
+      const activeShiftObj = shiftRes && typeof shiftRes === 'object' && 'active' in shiftRes ? shiftRes.active : shiftRes;
+      setActiveShift(activeShiftObj || null);
       setSuppliers(suppliersData);
       setPurchases(purchasesData);
       setAnalytics(analyticsData);

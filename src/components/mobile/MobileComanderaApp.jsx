@@ -5,10 +5,12 @@ import { getTableCode } from '../mozo/MozoSalonView';
 import UserLoginDashboard from '../auth/UserLoginDashboard';
 import PinModal from '../common/PinModal';
 import Toast from '../common/Toast';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function MobileComanderaApp() {
   const {
     currentUser,
+    users,
     logoutUser,
     tables,
     orders,
@@ -94,7 +96,7 @@ export default function MobileComanderaApp() {
                 </span>
               </div>
               <div className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
-                Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
+                Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong>
               </div>
             </div>
           </div>
@@ -292,7 +294,7 @@ export default function MobileComanderaApp() {
                     </div>
 
                     <div className="text-[11px] text-[var(--text-secondary)] truncate">
-                      {order ? `${(order.items || []).length} platos · ${order.waiterName || 'Salón'}` : table.sector}
+                      {order ? `${(order.items || []).length} platos · ${formatUserRoleDisplay(order.waiterName || 'Salón', 'mozo', users)}` : table.sector}
                     </div>
                   </div>
                 </button>
@@ -308,7 +310,7 @@ export default function MobileComanderaApp() {
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
             <span>·</span>
-            <span>Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+            <span>Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
             <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>

@@ -1,6 +1,7 @@
 import React, { useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function SidebarDrawer() {
   const {
@@ -9,6 +10,7 @@ export default function SidebarDrawer() {
     activeTab,
     setActiveTab,
     currentUser,
+    users,
     logoutUser,
     setIsPinModalOpen,
     setIsQrModalOpen,
@@ -121,7 +123,7 @@ export default function SidebarDrawer() {
                 <i className={userIcon} aria-hidden="true"></i>
               </span>
               <div className="overflow-hidden">
-                <div className="font-bold text-sm text-[var(--text-primary)] truncate">{currentUser.name}</div>
+                <div className="font-bold text-sm text-[var(--text-primary)] truncate">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</div>
                 <div className="text-xs text-[var(--text-secondary)]">
                   {roleLabels[currentUser.role]} · <span className="font-mono">PIN {currentUser.pin}</span>
                 </div>
