@@ -17,7 +17,9 @@ export default function SidebarDrawer() {
     theme,
     toggleTheme,
     refreshData,
-    showToast
+    showToast,
+    businessConfig,
+    activeTenant
   } = useApp();
 
   useEffect(() => {
@@ -96,15 +98,17 @@ export default function SidebarDrawer() {
       <div className="relative w-full max-w-xs bg-[var(--bg-surface)] border-r border-[var(--border-subtle)] h-full flex flex-col z-10 shadow-2xl">
         {/* Drawer Header */}
         <div className="px-4 py-3.5 border-b border-[var(--border-subtle)] flex items-center justify-between bg-[var(--bg-subtle)]">
-          <div className="flex items-center gap-2.5">
-            <div className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] flex items-center justify-center text-[var(--accent-brand)] font-display font-extrabold text-sm">
-              GP
+          <div className="flex items-center gap-2.5 min-w-0">
+            <div className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] flex items-center justify-center text-[var(--accent-brand)] font-display font-extrabold text-xs shrink-0">
+              {businessConfig?.name ? businessConfig.name.slice(0, 2).toUpperCase() : 'GP'}
             </div>
-            <div>
-              <span className="font-display font-bold text-base text-[var(--text-primary)] block leading-none">
-                GastroPOS
+            <div className="min-w-0">
+              <span className="font-display font-bold text-sm text-[var(--text-primary)] block leading-tight truncate">
+                {businessConfig?.name || activeTenant?.name || 'GastroPOS'}
               </span>
-              <span className="text-xs text-[var(--text-muted)] font-mono">Comandera Web</span>
+              <span className="text-[11px] text-[var(--text-muted)] font-mono block truncate">
+                @{businessConfig?.domain || activeTenant?.domain || 'quepibar.gp.com'}
+              </span>
             </div>
           </div>
 

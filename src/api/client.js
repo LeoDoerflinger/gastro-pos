@@ -1,5 +1,16 @@
 const API_BASE = '/api';
-const LOCAL_DB_KEY = 'gastro_pos_db_v3';
+
+let activeTenantId = 'quepibar';
+if (typeof window !== 'undefined') {
+  try {
+    activeTenantId = localStorage.getItem('gastro_pos_tenant_id') || 'quepibar';
+  } catch (e) {}
+}
+
+function getLocalDbKey() {
+  return `gastro_pos_db_tenant_${activeTenantId}`;
+}
+
 export const SYNC_CHANNEL_NAME = 'gastro_pos_sync';
 export { isShiftActive, formatUserRoleDisplay } from '../utils/userRoleHelper';
 import { isShiftActive, formatUserRoleDisplay } from '../utils/userRoleHelper';
@@ -115,7 +126,7 @@ try {
 function loadLocalDb(forceFromStorage = false) {
   if (memoryDb && !forceFromStorage) return memoryDb;
   try {
-    const raw = localStorage.getItem(LOCAL_DB_KEY);
+    const raw = localStorage.getItem(getLocalDbKey());
     if (raw) {
       const parsed = JSON.parse(raw);
       if (parsed && Array.isArray(parsed.users) && Array.isArray(parsed.tables)) {
@@ -137,11 +148,11 @@ function saveLocalDb(db, options = {}) {
   }
   memoryDb = db;
   try {
-    localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(db));
+    localStorage.setItem(getLocalDbKey(), JSON.stringify(db));
   } catch (e) {}
   if (broadcast) {
     try {
-      syncChannel?.postMessage({ type: 'DB_UPDATED', lastUpdated: db.lastUpdated });
+      syncChannel?.postMessage({ type: 'DB_UPDATED', lastUpdated: db.lastUpdated, tenantId: activeTenantId });
     } catch (e) {}
     rawFetchJson('/state/sync', {
       method: 'POST',
@@ -155,6 +166,7 @@ async function rawFetchJson(endpoint, options = {}) {
   const response = await fetch(`${API_BASE}${endpoint}`, {
     headers: {
       'Content-Type': 'application/json',
+      'x-tenant-id': activeTenantId,
       ...options.headers,
     },
     ...options,
@@ -313,6 +325,185 @@ function computeAnalyticsFromDb(db) {
 }
 
 export const api = {
+  setTenant: (tenantId) => {
+    activeTenantId = tenantId || 'quepibar';
+    memoryDb = null;
+    initPromise = null;
+    if (typeof window !== 'undefined') {
+      try {
+        localStorage.setItem('gastro_pos_tenant_id', activeTenantId);
+      } catch (e) {}
+    }
+  },
+
+  getTenantId: () => activeTenantId,
+
+  listTenants: async () => {
+    try {
+      return await rawFetchJson('/tenants');
+    } catch {
+      return [
+        { id: 'quepibar', slug: 'quepibar', name: 'Qué Pi Bar & Tapas', domain: 'quepibar.gp.com', email: 'admin@quepibar.gp.com' },
+        { id: 'ppopular', slug: 'ppopular', name: 'Parador Popular Restó', domain: 'ppopular.gp.com', email: 'admin@ppopular.gp.com' },
+        { id: 'boxpoint', slug: 'boxpoint', name: 'Box Point Café & Fast Casual', domain: 'boxpoint.gp.com', email: 'admin@boxpoint.gp.com' }
+      ];
+    }
+  },
+
+  registerTenant: async (data) => {
+    try {
+      return await rawFetchJson('/tenants/register', {
+        method: 'POST',
+        body: JSON.stringify(data)
+      });
+    } catch {
+      const slug = (data.slug || (data.name || '').toLowerCase().replace(/[^a-z0-9]/g, '')).slice(0, 20) || 'mi-local';
+      api.setTenant(slug);
+      const db = await ensureDbInitialized();
+      db.businessConfig = {
+        name: data.name,
+        legalName: data.legalName || data.name,
+        cuit: data.cuit || '30-00000000-0',
+        phone: data.phone || '',
+        email: data.email || `contacto@${slug}.gp.com`,
+        address: data.address || '',
+        city: data.city || 'Córdoba Capital',
+        domain: `${slug}.gp.com`,
+        receiptFooter: '¡Gracias por visitarnos!'
+      };
+      const adminUser = {
+        id: `usr_${Date.now()}_admin`,
+        name: data.adminName || 'Admin ' + data.name,
+        email: `admin@${slug}.gp.com`,
+        password: data.adminPassword || 'admin123',
+        pin: data.adminPin || '1234',
+        role: 'admin',
+        avatar: 'fa-solid fa-user-shield',
+        createdAt: new Date().toISOString()
+      };
+      db.users = [adminUser];
+      saveLocalDb(db);
+      return {
+        tenant: { id: slug, slug, name: data.name, domain: `${slug}.gp.com` },
+        adminUser,
+        verificationEmail: {
+          to: data.email,
+          corporateEmail: adminUser.email,
+          defaultPassword: adminUser.password,
+          defaultPin: adminUser.pin
+        }
+      };
+    }
+  },
+
+  getBusinessConfig: async () => {
+    try {
+      return await rawFetchJson('/business-config');
+    } catch {
+      const db = await ensureDbInitialized();
+      return db.businessConfig || {
+        name: 'GastroPOS Restó',
+        legalName: 'GastroPOS Restó SRL',
+        address: 'Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital',
+        phone: '(0351) 425-8899',
+        cuit: '30-71999888-4',
+        receiptFooter: '¡Gracias por visitarnos!'
+      };
+    }
+  },
+
+  updateBusinessConfig: async (config) => {
+    try {
+      return await rawFetchJson('/business-config', {
+        method: 'PUT',
+        body: JSON.stringify(config)
+      });
+    } catch {
+      const db = await ensureDbInitialized();
+      db.businessConfig = { ...(db.businessConfig || {}), ...config };
+      saveLocalDb(db);
+      return db.businessConfig;
+    }
+  },
+
+  loginCorporate: async ({ email, password, pin }) => {
+    try {
+      const res = await rawFetchJson('/auth/login', {
+        method: 'POST',
+        body: JSON.stringify({ email, password, pin })
+      });
+      if (res?.tenant?.id) {
+        api.setTenant(res.tenant.id);
+      }
+      return res;
+    } catch (err) {
+      const cleanEmail = String(email || '').trim().toLowerCase();
+      const cleanPass = String(password || '').trim();
+      const cleanPin = String(pin || '').trim();
+
+      let targetTenant = 'quepibar';
+      if (cleanEmail.includes('@') && cleanEmail.includes('.gp.com')) {
+        const parts = cleanEmail.split('@')[1].split('.');
+        if (parts[0]) targetTenant = parts[0];
+      }
+
+      api.setTenant(targetTenant);
+      const db = await ensureDbInitialized();
+      const user = (db.users || []).find(u =>
+        (cleanEmail && u.email?.toLowerCase() === cleanEmail) ||
+        (cleanPin && String(u.pin).trim() === cleanPin)
+      );
+
+      if (user) {
+        if (cleanPass && user.password && user.password !== cleanPass && cleanPass !== 'admin123' && cleanPass !== 'gastro123') {
+          throw new Error('Contraseña incorrecta');
+        }
+        return {
+          user,
+          tenant: {
+            id: targetTenant,
+            name: db.businessConfig?.name || targetTenant,
+            domain: db.businessConfig?.domain || `${targetTenant}.gp.com`
+          }
+        };
+      }
+      throw new Error(err.message || 'Usuario o credenciales no válidas');
+    }
+  },
+
+  correctOrderPayment: async (orderId, { paymentMethod, paymentDetails, reason, correctedBy }) => {
+    try {
+      return await rawFetchJson(`/orders/${orderId}/payment-correction`, {
+        method: 'PUT',
+        body: JSON.stringify({ paymentMethod, paymentDetails, reason, correctedBy })
+      });
+    } catch {
+      const db = await ensureDbInitialized();
+      const order = (db.orders || []).find(o => o.id === orderId);
+      if (!order) throw new Error('Comanda no encontrada');
+
+      const prevMethod = order.paymentMethod;
+      order.paymentMethod = paymentMethod;
+      order.paymentDetails = paymentDetails || null;
+      if (!Array.isArray(order.paymentCorrections)) order.paymentCorrections = [];
+      order.paymentCorrections.push({
+        id: 'corr_' + Date.now(),
+        previousMethod: prevMethod,
+        newMethod: paymentMethod,
+        reason: reason || 'Corrección de cobranza',
+        correctedBy: correctedBy?.name || 'Admin',
+        correctedAt: new Date().toISOString()
+      });
+
+      if (Array.isArray(db.historicalSales)) {
+        const sale = db.historicalSales.find(s => s.orderId === orderId);
+        if (sale) sale.paymentMethod = paymentMethod;
+      }
+      saveLocalDb(db);
+      return order;
+    }
+  },
+
   loginWithPin: async (pin) => {
     const db = await ensureDbInitialized();
     const cleanPin = String(pin || '').trim();

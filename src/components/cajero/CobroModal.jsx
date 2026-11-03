@@ -44,6 +44,13 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const tenderedNum = cashTendered === '' ? totalToPay : (Number(cashTendered) || 0);
   const changeDue = tenderedNum >= totalToPay ? tenderedNum - totalToPay : 0;
 
+  const splitCashNum = Number(splitCash) || 0;
+  const splitDigitalNum = Number(splitDigital) || 0;
+  const splitSum = splitCashNum + splitDigitalNum;
+  const isSplitValid = paymentMethod === 'mixto'
+    ? (splitSum === totalToPay && totalToPay > 0 && (splitCashNum > 0 || splitDigitalNum > 0))
+    : true;
+
   const presetBills = [
     totalToPay,
     Math.ceil(totalToPay / 1000) * 1000,
@@ -83,6 +90,17 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
     if (paymentMethod === 'efectivo' && tenderedNum < totalToPay) {
       showToast('El efectivo recibido es menor al total a cobrar', 'error');
       return;
+    }
+
+    if (paymentMethod === 'mixto') {
+      if (splitCashNum === 0 && splitDigitalNum === 0) {
+        showToast('Ingresá los montos de efectivo y digital para el pago mixto', 'error');
+        return;
+      }
+      if (splitSum !== totalToPay) {
+        showToast(`La suma del pago mixto ($${splitSum.toLocaleString('es-AR')}) debe ser igual al total a cobrar ($${totalToPay.toLocaleString('es-AR')})`, 'error');
+        return;
+      }
     }
 
     if (paymentMethod === 'cuenta_corriente' && !selectedCustomerId) {
@@ -257,6 +275,10 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                         setPaymentMethod(method.id);
                         if (method.id === 'efectivo' && cashTendered === '') {
                           setCashTendered(String(totalToPay));
+                        } else if (method.id === 'mixto' && (!splitCash && !splitDigital)) {
+                          const half = Math.round(totalToPay / 2);
+                          setSplitCash(String(half));
+                          setSplitDigital(String(totalToPay - half));
                         }
                       }}
                       className={`min-h-[56px] p-2 rounded border text-center transition-colors flex flex-col items-center justify-center gap-1 ${
@@ -344,37 +366,96 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
             )}
 
             {paymentMethod === 'mixto' && (
-              <div className="pos-subpanel p-3.5 space-y-2.5">
-                <p className="text-xs font-semibold text-[var(--text-secondary)]">
-                  Dividí el cobro entre efectivo y medio digital:
-                </p>
+              <div className="pos-subpanel p-3.5 space-y-3">
+                <div className="flex items-center justify-between gap-2">
+                  <p className="text-xs font-semibold text-[var(--text-secondary)]">
+                    Dividí el cobro entre efectivo y medio digital:
+                  </p>
+                  <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
+                    splitSum === totalToPay
+                      ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30'
+                      : 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border-rose-500/30'
+                  }`}>
+                    {splitSum === totalToPay
+                      ? 'Total exacto cubierto'
+                      : splitSum < totalToPay
+                      ? `Faltan $${(totalToPay - splitSum).toLocaleString('es-AR')}`
+                      : `Excede por $${(splitSum - totalToPay).toLocaleString('es-AR')}`}
+                  </span>
+                </div>
+
                 <div className="grid grid-cols-2 gap-3">
                   <div>
                     <label htmlFor="split-cash-input" className="pos-label">Efectivo ($):</label>
                     <input
                       id="split-cash-input"
                       type="number"
+                      min="0"
+                      max={totalToPay}
                       placeholder="0"
                       value={splitCash}
                       onChange={(e) => {
-                        const val = Number(e.target.value) || 0;
+                        const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
                         setSplitCash(val);
-                        setSplitDigital(Math.max(0, totalToPay - val));
+                        if (val !== '') {
+                          setSplitDigital(String(Math.max(0, totalToPay - Number(val))));
+                        }
                       }}
-                      className="pos-input font-mono"
+                      className="pos-input font-mono font-bold"
                     />
                   </div>
                   <div>
-                    <label htmlFor="split-digital-input" className="pos-label">Tarjeta / QR ($):</label>
+                    <label htmlFor="split-digital-input" className="pos-label">Tarjeta / QR / Digital ($):</label>
                     <input
                       id="split-digital-input"
                       type="number"
+                      min="0"
+                      max={totalToPay}
                       placeholder="0"
                       value={splitDigital}
-                      onChange={(e) => setSplitDigital(Number(e.target.value) || 0)}
-                      className="pos-input font-mono"
+                      onChange={(e) => {
+                        const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
+                        setSplitDigital(val);
+                      }}
+                      className="pos-input font-mono font-bold"
                     />
                   </div>
+                </div>
+
+                {/* Quick Split Buttons */}
+                <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-[var(--border-subtle)]">
+                  <span className="text-[11px] text-[var(--text-muted)] mr-1">División rápida:</span>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const half = Math.round(totalToPay / 2);
+                      setSplitCash(String(half));
+                      setSplitDigital(String(totalToPay - half));
+                    }}
+                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
+                  >
+                    50% / 50%
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSplitCash(String(totalToPay));
+                      setSplitDigital('0');
+                    }}
+                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
+                  >
+                    Todo efectivo
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSplitCash('0');
+                      setSplitDigital(String(totalToPay));
+                    }}
+                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
+                  >
+                    Todo digital
+                  </button>
                 </div>
               </div>
             )}
@@ -521,7 +602,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
             <button
               type="button"
-              disabled={submitting || (paymentMethod === 'efectivo' && tenderedNum < totalToPay)}
+              disabled={submitting || (paymentMethod === 'efectivo' && tenderedNum < totalToPay) || (paymentMethod === 'mixto' && !isSplitValid)}
               onClick={handleConfirmPayment}
               className="pos-btn-primary flex-1"
             >

@@ -14,7 +14,9 @@ export default function Header() {
     unreadNotificationsCount,
     logoutUser,
     theme,
-    toggleTheme
+    toggleTheme,
+    businessConfig,
+    activeTenant
   } = useApp();
 
   const isMozo = currentUser.role === 'mozo';
@@ -63,12 +65,17 @@ export default function Header() {
 
           <div className="flex items-center gap-2.5 min-w-0">
             <div className="hidden md:flex items-center gap-2 pr-3 border-r border-[var(--border-subtle)]">
-              <span className="w-6 h-6 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] text-[var(--accent-brand)] font-display font-extrabold text-xs flex items-center justify-center">
-                GP
+              <span className="w-6 h-6 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] text-[var(--accent-brand)] font-display font-extrabold text-[11px] flex items-center justify-center shrink-0">
+                {businessConfig?.name ? businessConfig.name.slice(0, 2).toUpperCase() : 'GP'}
               </span>
-              <span className="font-display font-bold text-sm tracking-tight text-[var(--text-primary)]">
-                GastroPOS
-              </span>
+              <div className="flex flex-col leading-tight min-w-0">
+                <span className="font-display font-bold text-sm tracking-tight text-[var(--text-primary)] truncate max-w-[130px]">
+                  {businessConfig?.name || activeTenant?.name || 'GastroPOS'}
+                </span>
+                <span className="text-[10px] font-mono text-[var(--text-muted)] truncate max-w-[130px]">
+                  @{businessConfig?.domain || activeTenant?.domain || 'quepibar.gp.com'}
+                </span>
+              </div>
             </div>
 
             <h1 className="font-display font-bold text-base sm:text-lg text-[var(--text-primary)] truncate">

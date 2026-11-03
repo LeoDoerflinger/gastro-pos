@@ -4,7 +4,7 @@ import { getTableCode } from '../mozo/MozoSalonView';
 import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta' }) {
-  const { tables, users } = useApp();
+  const { tables, users, businessConfig, activeTenant } = useApp();
   const printRef = useRef(null);
 
   useEffect(() => {
@@ -61,9 +61,13 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
             className="printable-ticket w-full bg-[#faf8f2] text-[#18191b] p-5 rounded border border-[#cfc9be] font-mono text-xs shadow-sm select-all tabular-nums space-y-3"
           >
             <div className="text-center pb-3 border-b border-dashed border-[#8c867a]">
-              <div className="font-bold text-sm tracking-tight">GASTROPOS RESTÓ</div>
-              <p className="text-[11px] text-[#43464c]">Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital · Tel: (0351) 425-8899</p>
-              <p className="text-[11px] text-[#43464c]">CUIT 30-71999888-4 · IVA Resp. Inscripto</p>
+              <div className="font-bold text-sm tracking-tight">{(businessConfig?.name || activeTenant?.name || 'GastroPOS Restó').toUpperCase()}</div>
+              <p className="text-[11px] text-[#43464c]">
+                {businessConfig?.address || 'Av. Hipólito Yrigoyen 450, Nueva Córdoba'}, {businessConfig?.city || 'Córdoba Capital'} · Tel: {businessConfig?.phone || '(0351) 425-8899'}
+              </p>
+              <p className="text-[11px] text-[#43464c]">
+                CUIT {businessConfig?.cuit || '30-71999888-4'} · IVA Resp. Inscripto
+              </p>
             </div>
 
             <div className="pb-3 border-b border-dashed border-[#8c867a] space-y-1 text-xs">
@@ -161,10 +165,12 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
               {isPrecuenta ? (
                 <>
                   <p className="font-bold text-[#18191b]">NO VÁLIDO COMO FACTURA</p>
-                  <p>Pedí tu comprobante fiscal en caja.</p>
+                  <p>{businessConfig?.receiptFooter || 'Pedí tu comprobante fiscal en caja.'}</p>
                 </>
               ) : (
-                <p className="font-bold text-[#18191b]">GRACIAS POR VENIR</p>
+                <p className="font-bold text-[#18191b]">
+                  {businessConfig?.receiptFooter || 'GRACIAS POR SU VISITA'}
+                </p>
               )}
             </div>
           </div>

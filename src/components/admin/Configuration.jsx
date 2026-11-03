@@ -4,24 +4,60 @@ import { api } from '../../api/client';
 import { getTableCode } from '../mozo/MozoSalonView';
 
 export default function Configuration() {
-  const { tables, users: userList, currentUser, showToast, refreshData } = useApp();
+  const {
+    tables,
+    users: userList,
+    currentUser,
+    showToast,
+    refreshData,
+    businessConfig,
+    updateBusinessConfig,
+    activeTenant
+  } = useApp();
 
-  const [configSubtab, setConfigSubtab] = useState('tables');
+  const [configSubtab, setConfigSubtab] = useState('business');
   const [submitting, setSubmitting] = useState(false);
 
+  // Datos del Local
+  const [bizName, setBizName] = useState(businessConfig?.name || '');
+  const [bizLegal, setBizLegal] = useState(businessConfig?.legalName || '');
+  const [bizCuit, setBizCuit] = useState(businessConfig?.cuit || '');
+  const [bizPhone, setBizPhone] = useState(businessConfig?.phone || '');
+  const [bizEmail, setBizEmail] = useState(businessConfig?.email || '');
+  const [bizAddress, setBizAddress] = useState(businessConfig?.address || '');
+  const [bizCity, setBizCity] = useState(businessConfig?.city || 'Córdoba Capital');
+  const [bizFooter, setBizFooter] = useState(businessConfig?.receiptFooter || '');
+
+  useEffect(() => {
+    if (businessConfig) {
+      setBizName(businessConfig.name || '');
+      setBizLegal(businessConfig.legalName || '');
+      setBizCuit(businessConfig.cuit || '');
+      setBizPhone(businessConfig.phone || '');
+      setBizEmail(businessConfig.email || '');
+      setBizAddress(businessConfig.address || '');
+      setBizCity(businessConfig.city || 'Córdoba Capital');
+      setBizFooter(businessConfig.receiptFooter || '');
+    }
+  }, [businessConfig]);
+
+  // Mesas
   const [tableNumber, setTableNumber] = useState('');
   const [tableSector, setTableSector] = useState('Salón Principal');
   const [tableCapacity, setTableCapacity] = useState('4');
 
+  // Personal / Usuarios
   const [userRole, setUserRole] = useState('mozo');
   const [userPin, setUserPin] = useState('');
   const [userName, setUserName] = useState('');
-  const [userEmail, setUserEmail] = useState('');
+  const [userPassword, setUserPassword] = useState('gastro123');
+  const [userUsername, setUserUsername] = useState('');
 
-  // Estado para edicion de usuario
+  // Edición de usuario
   const [editingUser, setEditingUser] = useState(null);
   const [editName, setEditName] = useState('');
   const [editPin, setEditPin] = useState('');
+  const [editPassword, setEditPassword] = useState('');
   const [editEmail, setEditEmail] = useState('');
   const [editRole, setEditRole] = useState('mozo');
 
@@ -37,10 +73,36 @@ export default function Configuration() {
     }
   }, [editingUser]);
 
+  const handleSaveBusiness = async (e) => {
+    e.preventDefault();
+    if (!bizName.trim()) {
+      showToast('El nombre del local es obligatorio', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await updateBusinessConfig({
+        name: bizName.trim(),
+        legalName: bizLegal.trim() || bizName.trim(),
+        cuit: bizCuit.trim(),
+        phone: bizPhone.trim(),
+        email: bizEmail.trim(),
+        address: bizAddress.trim(),
+        city: bizCity.trim(),
+        receiptFooter: bizFooter.trim()
+      });
+    } catch {
+      // Error toast already displayed by context
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   const handleOpenEditUser = (u) => {
     setEditingUser(u);
     setEditName(u.name || '');
     setEditPin(u.pin || '');
+    setEditPassword(u.password || '');
     setEditEmail(u.email || '');
     setEditRole(u.role || 'mozo');
   };
@@ -56,6 +118,7 @@ export default function Configuration() {
       await api.updateUser(editingUser.id, {
         name: editName.trim(),
         pin: editPin.trim(),
+        password: editPassword.trim() || undefined,
         email: editEmail.trim(),
         role: editRole
       });
@@ -115,18 +178,25 @@ export default function Configuration() {
           ? 'fa-solid fa-cash-register'
           : 'fa-solid fa-user-tie';
 
+      const domain = businessConfig?.domain || activeTenant?.domain || 'local.gp.com';
+      const cleanPrefix = userUsername.trim().toLowerCase().replace(/[^a-z0-9.]/g, '') ||
+                          (userName.trim().toLowerCase().replace(/[^a-z0-9]/g, '') || userRole);
+      const generatedEmail = `${cleanPrefix}@${domain}`;
+
       const created = await api.createUser({
         role: userRole,
         pin: userPin.trim(),
+        password: userPassword.trim() || 'gastro123',
         name: userName.trim() || undefined,
-        email: userEmail.trim() || undefined,
+        email: generatedEmail,
         avatar: avatarIcon
       });
       await refreshData();
-      showToast(`Usuario ${created.name} (PIN ${created.pin}) habilitado`);
+      showToast(`Usuario ${created.name} (${generatedEmail}) habilitado`);
       setUserPin('');
       setUserName('');
-      setUserEmail('');
+      setUserUsername('');
+      setUserPassword('gastro123');
     } catch (err) {
       showToast(err.message || 'No se pudo registrar el usuario', 'error');
     } finally {
@@ -150,20 +220,37 @@ export default function Configuration() {
     }
   };
 
+  const currentDomain = businessConfig?.domain || activeTenant?.domain || 'local.gp.com';
+
   return (
-    <section className="space-y-5" aria-label="Configuración de salón y usuarios">
-      {/* Open Header */}
+    <section className="space-y-5" aria-label="Configuración de negocio, salón y personal">
+      {/* Header */}
       <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
-          <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
-            Configuración de salón y personal
-          </h2>
+          <div className="flex items-center gap-2">
+            <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
+              Configuración del Establecimiento
+            </h2>
+            <span className="pos-badge pos-badge-brand text-xs font-mono">
+              @{currentDomain}
+            </span>
+          </div>
           <p className="text-sm text-[var(--text-secondary)]">
-            Administrá la numeración por sectores y las claves PIN de acceso de cada usuario.
+            Personalizá los datos fiscales de tu negocio, la distribución del salón y el personal con correo corporativo.
           </p>
         </div>
 
         <div className="pos-segment-group self-start sm:self-auto" role="group" aria-label="Secciones de configuración">
+          <button
+            type="button"
+            aria-pressed={configSubtab === 'business'}
+            onClick={() => setConfigSubtab('business')}
+            className="pos-segment-btn"
+          >
+            <i className="fa-solid fa-store text-xs" aria-hidden="true"></i>
+            <span>Datos del Local</span>
+          </button>
+
           <button
             type="button"
             aria-pressed={configSubtab === 'tables'}
@@ -186,7 +273,183 @@ export default function Configuration() {
         </div>
       </div>
 
-      {/* Tables Management */}
+      {/* 1. Datos del Local */}
+      {configSubtab === 'business' && (
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-5">
+          <div className="lg:col-span-8 pos-panel p-5 space-y-4">
+            <div className="flex items-center justify-between pb-3 border-b border-[var(--border-subtle)]">
+              <div>
+                <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Personalización del Nombre y Datos del Local
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Esta información impacta en el encabezado del sistema, comandas, facturas y comprobantes impresos.
+                </p>
+              </div>
+              <span className="pos-badge pos-badge-brand font-mono text-xs">
+                Dominio: {currentDomain}
+              </span>
+            </div>
+
+            <form onSubmit={handleSaveBusiness} className="space-y-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div>
+                  <label htmlFor="biz-name" className="pos-label">Nombre comercial del local:</label>
+                  <input
+                    id="biz-name"
+                    type="text"
+                    required
+                    placeholder="Ej. Qué Pi Bar & Tapas"
+                    value={bizName}
+                    onChange={(e) => setBizName(e.target.value)}
+                    className="pos-input font-bold"
+                  />
+                  <span className="text-[11px] text-[var(--text-muted)] mt-1 block">
+                    Se visualiza en la barra superior y comandera.
+                  </span>
+                </div>
+
+                <div>
+                  <label htmlFor="biz-legal" className="pos-label">Razón social / Titular:</label>
+                  <input
+                    id="biz-legal"
+                    type="text"
+                    placeholder="Ej. Qué Pi Bar Gastronomía SRL"
+                    value={bizLegal}
+                    onChange={(e) => setBizLegal(e.target.value)}
+                    className="pos-input"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div>
+                  <label htmlFor="biz-cuit" className="pos-label">CUIT / DNI:</label>
+                  <input
+                    id="biz-cuit"
+                    type="text"
+                    placeholder="Ej. 30-71458921-3"
+                    value={bizCuit}
+                    onChange={(e) => setBizCuit(e.target.value)}
+                    className="pos-input font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="biz-phone" className="pos-label">Teléfono / WhatsApp:</label>
+                  <input
+                    id="biz-phone"
+                    type="text"
+                    placeholder="Ej. (0351) 460-2211"
+                    value={bizPhone}
+                    onChange={(e) => setBizPhone(e.target.value)}
+                    className="pos-input font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="biz-email" className="pos-label">Email corporativo central:</label>
+                  <input
+                    id="biz-email"
+                    type="email"
+                    placeholder={`admin@${currentDomain}`}
+                    value={bizEmail}
+                    onChange={(e) => setBizEmail(e.target.value)}
+                    className="pos-input font-mono"
+                  />
+                </div>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <div className="sm:col-span-2">
+                  <label htmlFor="biz-address" className="pos-label">Dirección comercial:</label>
+                  <input
+                    id="biz-address"
+                    type="text"
+                    placeholder="Ej. Belgrano 740, Barrio Güemes"
+                    value={bizAddress}
+                    onChange={(e) => setBizAddress(e.target.value)}
+                    className="pos-input"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="biz-city" className="pos-label">Ciudad / Provincia:</label>
+                  <input
+                    id="biz-city"
+                    type="text"
+                    placeholder="Córdoba Capital"
+                    value={bizCity}
+                    onChange={(e) => setBizCity(e.target.value)}
+                    className="pos-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="biz-footer" className="pos-label">Leyenda / Pie de Comprobante:</label>
+                <input
+                  id="biz-footer"
+                  type="text"
+                  placeholder="Ej. ¡Gracias por visitarnos en Barrio Güemes!"
+                  value={bizFooter}
+                  onChange={(e) => setBizFooter(e.target.value)}
+                  className="pos-input"
+                />
+                <span className="text-[11px] text-[var(--text-muted)] mt-1 block">
+                  Aparece al final de los tickets térmicos y precuentas de mesa.
+                </span>
+              </div>
+
+              <div className="pt-2 border-t border-[var(--border-subtle)] flex justify-end">
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary px-6"
+                >
+                  <i className="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+                  <span>{submitting ? 'Guardando...' : 'Guardar datos del local'}</span>
+                </button>
+              </div>
+            </form>
+          </div>
+
+          <div className="lg:col-span-4 pos-panel p-5 space-y-4 bg-[var(--bg-subtle)]">
+            <h4 className="font-display font-bold text-sm text-[var(--text-primary)] pb-2 border-b border-[var(--border-subtle)]">
+              Vista previa del Ticket Fiscal
+            </h4>
+
+            <div className="p-4 bg-[#faf8f2] text-[#18191b] rounded border border-[#cfc9be] font-mono text-xs shadow-sm space-y-2 select-none">
+              <div className="text-center pb-2 border-b border-dashed border-[#8c867a]">
+                <div className="font-bold text-sm">{bizName || 'NOMBRE DEL LOCAL'}</div>
+                <div className="text-[11px] text-[#43464c]">{bizAddress || 'Dirección Comercial'}</div>
+                <div className="text-[11px] text-[#43464c]">{bizCity || 'Córdoba Capital'} · Tel: {bizPhone || '351...'}</div>
+                <div className="text-[11px] text-[#43464c]">CUIT {bizCuit || '30-XXXXXXXX-X'} · IVA Resp. Inscripto</div>
+              </div>
+              <div className="py-2 text-[11px] space-y-1">
+                <div className="flex justify-between font-bold">
+                  <span>TICKET #0001-0105</span>
+                  <span>MESA S2</span>
+                </div>
+                <div className="flex justify-between text-[#43464c]">
+                  <span>1x Lomito Completo</span>
+                  <span>$15.800</span>
+                </div>
+              </div>
+              <div className="text-center pt-2 border-t border-dashed border-[#8c867a] text-[11px] italic text-[#43464c]">
+                {bizFooter || '¡Gracias por visitarnos!'}
+              </div>
+            </div>
+
+            <div className="text-xs text-[var(--text-secondary)] space-y-1 pt-2">
+              <strong className="text-[var(--text-primary)] block">Gestión Multi-Inquilino:</strong>
+              <p>Cada local cuenta con su propia base de datos aislada, cartas, empleados, comanderas y arqueos de caja independientes.</p>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* 2. Tables Management */}
       {configSubtab === 'tables' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5 pos-panel p-5">
@@ -249,7 +512,7 @@ export default function Configuration() {
 
           <div className="lg:col-span-7 pos-panel overflow-hidden flex flex-col">
             <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)]">
-              Mesas activas en el plano
+              Mesas activas en el plano ({tables.length})
             </div>
 
             <div className="divide-y divide-[var(--border-subtle)] max-h-[520px] overflow-y-auto">
@@ -289,13 +552,18 @@ export default function Configuration() {
         </div>
       )}
 
-      {/* Staff & Roles Management */}
+      {/* 3. Staff & Corporate Users Management */}
       {configSubtab === 'users' && (
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5 pos-panel p-5 space-y-4">
-            <h3 className="font-display font-bold text-base text-[var(--text-primary)] pb-3 border-b border-[var(--border-subtle)]">
-              Registrar usuario
-            </h3>
+            <div className="pb-3 border-b border-[var(--border-subtle)]">
+              <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                Crear empleado / usuario
+              </h3>
+              <p className="text-xs text-[var(--text-secondary)]">
+                Exclusivo panel administrador: creá los empleados con rol, PIN y contraseña.
+              </p>
+            </div>
 
             <form onSubmit={handleAddUser} className="space-y-3.5">
               <div>
@@ -306,70 +574,92 @@ export default function Configuration() {
                   onChange={(e) => setUserRole(e.target.value)}
                   className="pos-input"
                 >
-                  <option value="mozo">Mozo (Numeración automática: Mozo 1, Mozo 2...)</option>
-                  <option value="cajero">Cajero (Numeración automática: Cajero 1, Cajero 2...)</option>
-                  <option value="admin">Admin (Numeración automática: Admin 1, Admin 2...)</option>
+                  <option value="mozo">Mozo de salón</option>
+                  <option value="cajero">Cajero</option>
+                  <option value="admin">Encargado / Administrador</option>
                 </select>
               </div>
 
               <div>
-                <label htmlFor="cfg-user-name" className="pos-label">Nombre o alias (opcional):</label>
+                <label htmlFor="cfg-user-name" className="pos-label">Nombre y apellido del empleado:</label>
                 <input
                   id="cfg-user-name"
                   type="text"
-                  placeholder="Ej. Lucas / Mozo 1"
-                  value={userName}
-                  onChange={(e) => setUserName(e.target.value)}
-                  className="pos-input"
-                />
-              </div>
-
-              <div>
-                <label htmlFor="cfg-user-pin" className="pos-label">Clave PIN (4 dígitos):</label>
-                <input
-                  id="cfg-user-pin"
-                  type="text"
-                  inputMode="numeric"
-                  maxLength={4}
-                  placeholder="Ej. 5566"
-                  value={userPin}
-                  onChange={(e) => setUserPin(e.target.value.replace(/\D/g, ''))}
-                  className="pos-input font-mono font-bold text-center tracking-widest text-base"
                   required
-                />
-              </div>
-
-              <div>
-                <label htmlFor="cfg-user-email" className="pos-label">Mail de contacto (opcional):</label>
-                <input
-                  id="cfg-user-email"
-                  type="email"
-                  placeholder="usuario@gastrogestion.com"
-                  value={userEmail}
-                  onChange={(e) => setUserEmail(e.target.value)}
+                  placeholder="Ej. Lucas Álvarez"
+                  value={userName}
+                  onChange={(e) => {
+                    setUserName(e.target.value);
+                    if (!userUsername) {
+                      setUserUsername(e.target.value.toLowerCase().replace(/[^a-z0-9]/g, ''));
+                    }
+                  }}
                   className="pos-input"
                 />
               </div>
 
-              <div className="pos-subpanel p-3 text-xs text-[var(--text-secondary)] space-y-1">
-                <strong className="text-[var(--text-primary)] block">Identificación de personal:</strong>
-                <p>· Podés personalizar el nombre, la clave PIN y el mail de contacto de cada integrante del equipo.</p>
+              <div>
+                <label htmlFor="cfg-user-username" className="pos-label">Casilla corporativa del local:</label>
+                <div className="flex items-center">
+                  <input
+                    id="cfg-user-username"
+                    type="text"
+                    placeholder="lucas"
+                    value={userUsername}
+                    onChange={(e) => setUserUsername(e.target.value)}
+                    className="pos-input rounded-r-none font-mono text-right"
+                  />
+                  <span className="px-3 min-h-[44px] bg-[var(--bg-elevated)] border border-l-0 border-[var(--border-subtle)] rounded-r text-xs text-[var(--text-secondary)] font-mono flex items-center shrink-0">
+                    @{currentDomain}
+                  </span>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="cfg-user-pass" className="pos-label">Contraseña de acceso:</label>
+                  <input
+                    id="cfg-user-pass"
+                    type="text"
+                    required
+                    placeholder="gastro123"
+                    value={userPassword}
+                    onChange={(e) => setUserPassword(e.target.value)}
+                    className="pos-input font-mono text-sm"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="cfg-user-pin" className="pos-label">PIN táctil (4 dígitos):</label>
+                  <input
+                    id="cfg-user-pin"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    placeholder="Ej. 1234"
+                    value={userPin}
+                    onChange={(e) => setUserPin(e.target.value.replace(/\D/g, ''))}
+                    className="pos-input font-mono font-bold text-center tracking-widest text-base"
+                    required
+                  />
+                </div>
               </div>
 
               <button
                 type="submit"
                 disabled={submitting}
-                className="pos-btn-primary w-full"
+                className="pos-btn-primary w-full mt-2"
               >
                 <i className="fa-solid fa-user-plus text-xs" aria-hidden="true"></i>
-                <span>Habilitar usuario</span>
+                <span>Crear usuario en {currentDomain}</span>
               </button>
             </form>
           </div>
 
           <div className="lg:col-span-7 pos-panel overflow-hidden flex flex-col">
-            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)]">
-              Plantel habilitado
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] text-xs font-semibold text-[var(--text-secondary)] flex justify-between items-center">
+              <span>Personal activo de {businessConfig?.name || 'Local'} ({userList.length})</span>
+              <span className="font-mono text-[11px] text-[var(--accent-brand)]">Dominio: @{currentDomain}</span>
             </div>
 
             <div className="divide-y divide-[var(--border-subtle)] max-h-[520px] overflow-y-auto">
@@ -378,19 +668,21 @@ export default function Configuration() {
                 return (
                   <div key={u.id} className="px-4 py-3.5 hover:bg-[var(--bg-hover)] flex items-center justify-between gap-3">
                     <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-brand)]">
+                      <div className="w-10 h-10 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-brand)] shrink-0">
                         <i className={isFaIcon ? u.avatar : 'fa-solid fa-user'} aria-hidden="true"></i>
                       </div>
-                      <div>
-                        <div className="font-bold text-sm text-[var(--text-primary)]">{u.name}</div>
-                        <div className="text-xs text-[var(--text-secondary)] font-mono">
+                      <div className="min-w-0">
+                        <div className="font-bold text-sm text-[var(--text-primary)] truncate">{u.name}</div>
+                        <div className="text-xs text-[var(--text-secondary)] font-mono truncate">
                           <span className="capitalize font-semibold">{u.role}</span> · PIN <strong className="text-[var(--text-primary)]">{u.pin}</strong>
-                          {u.email && <span className="text-[var(--text-muted)] ml-1.5 font-sans">({u.email})</span>}
+                        </div>
+                        <div className="text-[11px] text-[var(--text-muted)] font-mono truncate">
+                          {u.email || `${u.name.toLowerCase()}@${currentDomain}`}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-1.5">
+                    <div className="flex items-center gap-1.5 shrink-0">
                       {u.id === currentUser.id && (
                         <span className="pos-badge pos-badge-open mr-1">En uso</span>
                       )}
@@ -422,7 +714,7 @@ export default function Configuration() {
         </div>
       )}
 
-      {/* Modal para editar datos básicos del usuario */}
+      {/* Modal para editar datos del usuario */}
       {editingUser && (
         <div
           className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
@@ -450,22 +742,36 @@ export default function Configuration() {
 
             <form onSubmit={handleSaveEditUser} className="space-y-3.5">
               <div>
-                <label htmlFor="edit-usr-name" className="pos-label">Nombre o alias:</label>
+                <label htmlFor="edit-user-name" className="pos-label">Nombre y apellido:</label>
                 <input
-                  id="edit-usr-name"
+                  id="edit-user-name"
                   type="text"
+                  required
                   value={editName}
                   onChange={(e) => setEditName(e.target.value)}
                   className="pos-input"
-                  required
                 />
+              </div>
+
+              <div>
+                <label htmlFor="edit-user-role" className="pos-label">Rol en el local:</label>
+                <select
+                  id="edit-user-role"
+                  value={editRole}
+                  onChange={(e) => setEditRole(e.target.value)}
+                  className="pos-input"
+                >
+                  <option value="mozo">Mozo de salón</option>
+                  <option value="cajero">Cajero</option>
+                  <option value="admin">Encargado / Administrador</option>
+                </select>
               </div>
 
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label htmlFor="edit-usr-pin" className="pos-label">Clave PIN (4 dígitos):</label>
+                  <label htmlFor="edit-user-pin" className="pos-label">Clave PIN (4 dígitos):</label>
                   <input
-                    id="edit-usr-pin"
+                    id="edit-user-pin"
                     type="text"
                     inputMode="numeric"
                     maxLength={4}
@@ -475,49 +781,44 @@ export default function Configuration() {
                     required
                   />
                 </div>
-
                 <div>
-                  <label htmlFor="edit-usr-role" className="pos-label">Puesto / Rol:</label>
-                  <select
-                    id="edit-usr-role"
-                    value={editRole}
-                    onChange={(e) => setEditRole(e.target.value)}
-                    className="pos-input"
-                  >
-                    <option value="mozo">Mozo</option>
-                    <option value="cajero">Cajero</option>
-                    <option value="admin">Admin</option>
-                  </select>
+                  <label htmlFor="edit-user-pass" className="pos-label">Nueva contraseña:</label>
+                  <input
+                    id="edit-user-pass"
+                    type="text"
+                    placeholder="Sin cambiar"
+                    value={editPassword}
+                    onChange={(e) => setEditPassword(e.target.value)}
+                    className="pos-input font-mono text-sm"
+                  />
                 </div>
               </div>
 
               <div>
-                <label htmlFor="edit-usr-email" className="pos-label">Mail de contacto:</label>
+                <label htmlFor="edit-user-email" className="pos-label">Correo corporativo:</label>
                 <input
-                  id="edit-usr-email"
+                  id="edit-user-email"
                   type="email"
-                  placeholder="ejemplo@gastrogestion.com"
                   value={editEmail}
                   onChange={(e) => setEditEmail(e.target.value)}
-                  className="pos-input"
+                  className="pos-input font-mono text-xs"
                 />
               </div>
 
-              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
+              <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
                 <button
                   type="button"
                   onClick={() => setEditingUser(null)}
-                  className="pos-btn-secondary"
+                  className="pos-btn-secondary flex-1"
                 >
                   Cancelar
                 </button>
                 <button
                   type="submit"
                   disabled={submitting}
-                  className="pos-btn-primary"
+                  className="pos-btn-primary flex-1"
                 >
-                  <i className="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
-                  <span>{submitting ? 'Guardando...' : 'Guardar cambios'}</span>
+                  {submitting ? 'Guardando...' : 'Aplicar cambios'}
                 </button>
               </div>
             </form>

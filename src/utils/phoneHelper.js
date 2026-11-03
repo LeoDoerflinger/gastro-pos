@@ -111,15 +111,17 @@ export function buildWhatsAppLink(rawPhone, message = '', defaultArea = CORDOBA_
   return `https://wa.me/${norm.waNumber}${encodedMsg ? `?text=${encodedMsg}` : ''}`;
 }
 
-export function getDefaultDeliveryMessage(order) {
+export function getDefaultDeliveryMessage(order, businessConfig = null) {
   const customer = order.customerName || 'Estimado/a cliente';
   const orderNum = order.orderNumber || order.id || '';
   const isTakeAway = order.channel === 'take_away';
   const address = order.deliveryAddress ? ` a ${order.deliveryAddress}` : '';
+  const bizName = businessConfig?.name || 'GastroPOS Córdoba';
+  const bizAddress = businessConfig?.address ? `${businessConfig.address} (${businessConfig.city || 'Córdoba'})` : 'Av. Hipólito Yrigoyen 450 (Nueva Córdoba)';
 
   if (isTakeAway) {
-    return `¡Hola ${customer}! Te avisamos desde GastroPOS Córdoba que tu pedido #${orderNum} ya está listo para retirar por mostrador en Av. Hipólito Yrigoyen 450 (Nueva Córdoba). ¡Te esperamos!`;
+    return `¡Hola ${customer}! Te avisamos desde ${bizName} que tu pedido #${orderNum} ya está listo para retirar por mostrador en ${bizAddress}. ¡Te esperamos!`;
   }
 
-  return `¡Hola ${customer}! Te avisamos desde GastroPOS Córdoba que tu pedido #${orderNum} ya está en camino${address}. ¡Que lo disfrutes mucho!`;
+  return `¡Hola ${customer}! Te avisamos desde ${bizName} que tu pedido #${orderNum} ya está en camino${address}. ¡Que lo disfrutes mucho!`;
 }

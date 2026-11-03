@@ -60,6 +60,27 @@ export function AppProvider({ children }) {
   const [lastClosedShiftReport, setLastClosedShiftReport] = useState(null);
   const [toast, setToast] = useState(null);
 
+  const [activeTenantId, setActiveTenantIdState] = useState(() => {
+    try {
+      return localStorage.getItem('gastro_pos_tenant_id') || 'quepibar';
+    } catch (e) {
+      return 'quepibar';
+    }
+  });
+
+  const [tenantsList, setTenantsList] = useState([]);
+  const [businessConfig, setBusinessConfig] = useState({
+    name: 'Qué Pi Bar & Tapas',
+    legalName: 'Qué Pi Bar Gastronomía SRL',
+    address: 'Belgrano 740, Barrio Güemes, Córdoba Capital',
+    phone: '(0351) 460-2211',
+    cuit: '30-71458921-3',
+    email: 'admin@quepibar.gp.com',
+    city: 'Córdoba Capital',
+    receiptFooter: '¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas',
+    domain: 'quepibar.gp.com'
+  });
+
   const [users, setUsers] = useState([]);
   const [tables, setTables] = useState([]);
   const [products, setProducts] = useState([]);
@@ -100,7 +121,9 @@ export function AppProvider({ children }) {
         supPaymentsData,
         analyticsData,
         logData,
-        notifsData
+        notifsData,
+        bizConfigData,
+        tenantsData
       ] = await Promise.all([
         api.getUsers(),
         api.getTables(),
@@ -115,7 +138,9 @@ export function AppProvider({ children }) {
         api.getSupplierPayments(),
         api.getAnalytics(),
         api.getStockLog(),
-        api.getNotifications()
+        api.getNotifications(),
+        api.getBusinessConfig(),
+        api.listTenants()
       ]);
 
       setUsers(usersData);
@@ -133,6 +158,8 @@ export function AppProvider({ children }) {
       setAnalytics(analyticsData);
       setStockLog(logData);
       setNotifications(notifsData || []);
+      if (bizConfigData) setBusinessConfig(bizConfigData);
+      if (Array.isArray(tenantsData)) setTenantsList(tenantsData);
       setCurrentUser(prev => {
         if (!prev) return null;
         const updated = (usersData || []).find(u => u.id === prev.id);
@@ -233,6 +260,58 @@ export function AppProvider({ children }) {
     }
   };
 
+  const switchTenant = useCallback(async (tenantId, userToLogin = null) => {
+    setLoading(true);
+    api.setTenant(tenantId);
+    setActiveTenantIdState(tenantId);
+    try {
+      localStorage.setItem('gastro_pos_tenant_id', tenantId);
+    } catch (e) {}
+
+    if (userToLogin) {
+      setCurrentUser(userToLogin);
+      try {
+        sessionStorage.setItem('gastro_user_session', JSON.stringify(userToLogin));
+      } catch (e) {}
+    } else {
+      setCurrentUser(null);
+      try {
+        sessionStorage.removeItem('gastro_user_session');
+      } catch (e) {}
+    }
+
+    await refreshData();
+    setLoading(false);
+  }, [refreshData]);
+
+  const updateBusinessConfig = useCallback(async (configUpdates) => {
+    try {
+      const updated = await api.updateBusinessConfig(configUpdates);
+      setBusinessConfig(updated);
+      showToast('Datos del local guardados con éxito');
+      await refreshData();
+      return updated;
+    } catch (err) {
+      showToast(err.message || 'Error al actualizar datos del local', 'error');
+      throw err;
+    }
+  }, [showToast, refreshData]);
+
+  const correctOrderPayment = useCallback(async (orderId, correctionData) => {
+    try {
+      const updated = await api.correctOrderPayment(orderId, {
+        ...correctionData,
+        correctedBy: currentUser
+      });
+      showToast(`Cobro comanda #${updated.orderNumber} corregido a ${updated.paymentMethod}`);
+      await refreshData();
+      return updated;
+    } catch (err) {
+      showToast(err.message || 'Error al rectificar medio de pago', 'error');
+      throw err;
+    }
+  }, [currentUser, showToast, refreshData]);
+
   const markNotificationRead = useCallback(async (id) => {
     await api.markNotificationRead(id);
     await refreshData();
@@ -293,7 +372,14 @@ export function AppProvider({ children }) {
         markAllNotificationsRead,
         loading,
         apiError,
-        refreshData
+        refreshData,
+        activeTenantId,
+        activeTenant: tenantsList.find(t => t.id === activeTenantId) || null,
+        tenantsList,
+        switchTenant,
+        businessConfig,
+        updateBusinessConfig,
+        correctOrderPayment
       }}
     >
       {children}

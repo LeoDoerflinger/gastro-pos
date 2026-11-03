@@ -96,7 +96,7 @@ function calculateDeliveryInfo(distanceKm) {
 }
 
 export default function DeliveryManager() {
-  const { orders, products, currentUser, showToast, refreshData, activeShift } = useApp();
+  const { orders, products, currentUser, showToast, refreshData, activeShift, businessConfig } = useApp();
 
   const [channelType, setChannelType] = useState('delivery');
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
@@ -303,7 +303,7 @@ export default function DeliveryManager() {
   };
 
   const mapQuery = encodeURIComponent(
-    `${deliveryAddress.trim() || RESTAURANT_LOCATION.address}, Córdoba, Argentina`
+    `${deliveryAddress.trim() || businessConfig?.address || RESTAURANT_LOCATION.address}, ${businessConfig?.city || 'Córdoba'}, Argentina`
   );
 
   return (
@@ -400,7 +400,7 @@ export default function DeliveryManager() {
                               orderNumber: order.orderNumber,
                               channel: order.channel,
                               driverName: order.driverName
-                            })
+                            }, businessConfig)
                           );
                           if (!waUrl) return null;
                           return (
@@ -504,7 +504,7 @@ export default function DeliveryManager() {
                           orderNumber: order.orderNumber,
                           channel: order.channel,
                           driverName: order.driverName
-                        })
+                        }, businessConfig)
                       );
                       if (!waUrl) return null;
                       return (
