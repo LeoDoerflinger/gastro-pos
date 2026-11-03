@@ -9,9 +9,9 @@ export default function SidebarDrawer() {
     activeTab,
     setActiveTab,
     currentUser,
+    logoutUser,
     setIsPinModalOpen,
-    isMobileSimulated,
-    setIsMobileSimulated,
+    setIsQrModalOpen,
     theme,
     toggleTheme,
     refreshData,
@@ -269,13 +269,13 @@ export default function SidebarDrawer() {
             <button
               type="button"
               onClick={() => {
-                setIsMobileSimulated(!isMobileSimulated);
                 setIsSidebarOpen(false);
+                setIsQrModalOpen(true);
               }}
               className="pos-btn-secondary text-xs px-2.5"
             >
-              <i className={`fa-solid ${isMobileSimulated ? 'fa-desktop' : 'fa-mobile-screen'} text-xs`} aria-hidden="true"></i>
-              <span>{isMobileSimulated ? 'Escritorio' : 'Vista Móvil'}</span>
+              <i className="fa-solid fa-qrcode text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+              <span>Comandera QR</span>
             </button>
           </div>
 
@@ -290,17 +290,28 @@ export default function SidebarDrawer() {
             </button>
           )}
 
-          <button
-            type="button"
-            onClick={() => {
-              setIsSidebarOpen(false);
-              setIsPinModalOpen(true);
-            }}
-            className="pos-btn-primary w-full"
-          >
-            <i className="fa-solid fa-key text-xs" aria-hidden="true"></i>
-            <span>Cambiar operador (PIN)</span>
-          </button>
+          <div className="grid grid-cols-2 gap-2">
+            <button
+              type="button"
+              onClick={() => {
+                setIsSidebarOpen(false);
+                setIsPinModalOpen(true);
+              }}
+              className="pos-btn-primary text-xs px-2.5"
+            >
+              <i className="fa-solid fa-key text-xs" aria-hidden="true"></i>
+              <span>Cambiar PIN</span>
+            </button>
+
+            <button
+              type="button"
+              onClick={logoutUser}
+              className="pos-btn-secondary text-xs px-2.5 text-[var(--status-danger-fg)]"
+            >
+              <i className="fa-solid fa-right-from-bracket text-xs" aria-hidden="true"></i>
+              <span>Cerrar sesión</span>
+            </button>
+          </div>
         </div>
       </div>
     </div>

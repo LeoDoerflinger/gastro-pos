@@ -29,26 +29,33 @@ class Store {
       if (fs.existsSync(DB_PATH)) {
         const raw = fs.readFileSync(DB_PATH, 'utf-8');
         this.data = JSON.parse(raw);
+        if (!this.data.lastUpdated) this.data.lastUpdated = Date.now();
         console.log('[Store] Base de datos JSON cargada correctamente.');
       } else if (fs.existsSync(DEFAULT_DB_PATH)) {
         const raw = fs.readFileSync(DEFAULT_DB_PATH, 'utf-8');
         this.data = JSON.parse(raw);
+        if (!this.data.lastUpdated) this.data.lastUpdated = Date.now();
         this.save();
         console.log('[Store] Base de datos JSON inicializada.');
       } else {
         this.data = JSON.parse(JSON.stringify(initialData));
+        this.data.lastUpdated = Date.now();
         this.save();
         console.log('[Store] Base de datos JSON inicializada con datos demo.');
       }
     } catch (err) {
       console.error('[Store] Error cargando database.json, restaurando initialData:', err);
       this.data = JSON.parse(JSON.stringify(initialData));
+      this.data.lastUpdated = Date.now();
       this.save();
     }
   }
 
-  save() {
+  save(touchTimestamp = true) {
     try {
+      if (touchTimestamp && this.data) {
+        this.data.lastUpdated = Date.now();
+      }
       const dir = path.dirname(DB_PATH);
       if (!fs.existsSync(dir)) {
         fs.mkdirSync(dir, { recursive: true });
@@ -61,8 +68,43 @@ class Store {
 
   resetDemo() {
     this.data = JSON.parse(JSON.stringify(initialData));
-    this.save();
+    this.data.lastUpdated = Date.now();
+    this.save(false);
     return this.data;
+  }
+
+  getStateSnapshot() {
+    return {
+      ...this.data,
+      lastUpdated: this.data.lastUpdated || Date.now()
+    };
+  }
+
+  syncStateSnapshot(clientState) {
+    if (
+      clientState &&
+      typeof clientState === 'object' &&
+      Array.isArray(clientState.tables) &&
+      Array.isArray(clientState.orders) &&
+      Number(clientState.lastUpdated || 0) > Number(this.data.lastUpdated || 0)
+    ) {
+      this.data = {
+        ...this.data,
+        users: Array.isArray(clientState.users) ? clientState.users : this.data.users,
+        tables: clientState.tables,
+        products: Array.isArray(clientState.products) ? clientState.products : this.data.products,
+        ingredients: Array.isArray(clientState.ingredients) ? clientState.ingredients : this.data.ingredients,
+        orders: clientState.orders,
+        cashShifts: Array.isArray(clientState.cashShifts) ? clientState.cashShifts : this.data.cashShifts,
+        suppliers: Array.isArray(clientState.suppliers) ? clientState.suppliers : this.data.suppliers,
+        purchases: Array.isArray(clientState.purchases) ? clientState.purchases : this.data.purchases,
+        stockLog: Array.isArray(clientState.stockLog) ? clientState.stockLog : this.data.stockLog,
+        historicalSales: Array.isArray(clientState.historicalSales) ? clientState.historicalSales : this.data.historicalSales,
+        lastUpdated: Number(clientState.lastUpdated)
+      };
+      this.save(false);
+    }
+    return this.getStateSnapshot();
   }
 
   // --- Auth & Users ---

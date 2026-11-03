@@ -7,9 +7,9 @@ export default function Header() {
     activeTab,
     setIsSidebarOpen,
     setIsPinModalOpen,
+    setIsQrModalOpen,
+    logoutUser,
     activeShift,
-    isMobileSimulated,
-    setIsMobileSimulated,
     theme,
     toggleTheme
   } = useApp();
@@ -111,15 +111,18 @@ export default function Header() {
 
           <button
             type="button"
-            onClick={() => setIsMobileSimulated(!isMobileSimulated)}
-            aria-label={isMobileSimulated ? 'Volver a vista de escritorio' : 'Probar vista móvil'}
-            title={isMobileSimulated ? 'Volver a vista de escritorio' : 'Simulador móvil'}
-            className="hidden sm:inline-flex pos-btn-secondary px-3"
+            onClick={() => setIsQrModalOpen(true)}
+            aria-label="Vincular comandera móvil por QR"
+            title="Vincular comandera móvil por QR"
+            className="pos-btn-secondary px-3"
           >
             <i
-              className={`fa-solid ${isMobileSimulated ? 'fa-desktop' : 'fa-mobile-screen'} text-sm text-[var(--text-secondary)]`}
+              className="fa-solid fa-qrcode text-sm text-[var(--accent-brand)]"
               aria-hidden="true"
             ></i>
+            <span className="hidden md:inline text-xs font-semibold">
+              Comandera QR
+            </span>
           </button>
 
           <button
@@ -140,6 +143,16 @@ export default function Header() {
                 {roleLabels[currentUser.role] || currentUser.role}
               </div>
             </div>
+          </button>
+
+          <button
+            type="button"
+            onClick={logoutUser}
+            aria-label="Cerrar sesión de operador"
+            title="Volver al panel de usuarios"
+            className="pos-btn-secondary px-2.5 sm:px-3"
+          >
+            <i className="fa-solid fa-right-from-bracket text-sm text-[var(--status-danger-fg)]" aria-hidden="true"></i>
           </button>
         </div>
       </nav>

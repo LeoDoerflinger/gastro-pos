@@ -3,8 +3,10 @@ import { useApp } from './context/AppContext';
 import Header from './components/common/Header';
 import SidebarDrawer from './components/common/SidebarDrawer';
 import PinModal from './components/common/PinModal';
+import MobileQrModal from './components/common/MobileQrModal';
 import Toast from './components/common/Toast';
-import DeviceFrame from './components/common/DeviceFrame';
+import UserLoginDashboard from './components/auth/UserLoginDashboard';
+import MobileComanderaApp from './components/mobile/MobileComanderaApp';
 
 import MozoSalonView from './components/mozo/MozoSalonView';
 import CajeroDashboard from './components/cajero/CajeroDashboard';
@@ -18,6 +20,25 @@ import Configuration from './components/admin/Configuration';
 
 export default function App() {
   const { activeTab, currentUser, loading, apiError, tables, refreshData, theme, activeShift } = useApp();
+
+  const searchParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : null;
+  const isStandaloneMobile =
+    searchParams?.get('mode') === 'comandera' ||
+    (typeof window !== 'undefined' && window.location.pathname === '/comandera');
+
+  if (isStandaloneMobile) {
+    return <MobileComanderaApp />;
+  }
+
+  if (!currentUser) {
+    return (
+      <>
+        <UserLoginDashboard />
+        <MobileQrModal />
+        <Toast />
+      </>
+    );
+  }
 
   const isMozo = currentUser.role === 'mozo';
   const isAdmin = currentUser.role === 'admin';
@@ -94,52 +115,51 @@ export default function App() {
   };
 
   return (
-    <DeviceFrame>
-      <div className="min-h-screen flex flex-col text-[var(--text-primary)]">
-        <a
-          href="#main-workspace"
-          className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 pos-btn-primary"
-        >
-          Saltar al área de trabajo
-        </a>
+    <div className="min-h-screen flex flex-col text-[var(--text-primary)]">
+      <a
+        href="#main-workspace"
+        className="sr-only focus:not-sr-only focus:fixed focus:top-2 focus:left-2 focus:z-50 pos-btn-primary"
+      >
+        Saltar al área de trabajo
+      </a>
 
-        <Header />
-        <SidebarDrawer />
+      <Header />
+      <SidebarDrawer />
 
-        <main id="main-workspace" className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
-          {apiError && tables.length > 0 && (
-            <div className="mb-4 pos-panel px-4 py-3 border-l-4 border-l-[var(--status-bill-bar)] flex flex-wrap items-center justify-between gap-3" role="alert">
-              <div className="flex items-center gap-2.5 text-sm text-[var(--text-primary)]">
-                <i className="fa-solid fa-triangle-exclamation text-[var(--status-bill-fg)]" aria-hidden="true"></i>
-                <span>La última sincronización falló. Mostrando el último estado guardado.</span>
-              </div>
-              <button type="button" onClick={refreshData} className="pos-btn-secondary">
-                <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i>
-                <span>Sincronizar ahora</span>
-              </button>
+      <main id="main-workspace" className="flex-1 max-w-7xl w-full mx-auto px-3 sm:px-6 py-4 sm:py-6">
+        {apiError && tables.length > 0 && (
+          <div className="mb-4 pos-panel px-4 py-3 border-l-4 border-l-[var(--status-bill-bar)] flex flex-wrap items-center justify-between gap-3" role="alert">
+            <div className="flex items-center gap-2.5 text-sm text-[var(--text-primary)]">
+              <i className="fa-solid fa-triangle-exclamation text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+              <span>La última sincronización falló. Mostrando el último estado guardado.</span>
             </div>
-          )}
-          {renderContent()}
-        </main>
-
-        <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 sm:px-6 py-2.5 text-xs text-[var(--text-secondary)]">
-          <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-            <div className="flex items-center gap-2">
-              <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
-              <span>·</span>
-              <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
-            </div>
-            <div className="flex items-center gap-3 font-mono">
-              <span>{activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}</span>
-              <span>·</span>
-              <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
-            </div>
+            <button type="button" onClick={refreshData} className="pos-btn-secondary">
+              <i className="fa-solid fa-rotate-right text-xs" aria-hidden="true"></i>
+              <span>Sincronizar ahora</span>
+            </button>
           </div>
-        </footer>
+        )}
+        {renderContent()}
+      </main>
 
-        <PinModal />
-        <Toast />
-      </div>
-    </DeviceFrame>
+      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 sm:px-6 py-2.5 text-xs text-[var(--text-secondary)]">
+        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
+            <span>·</span>
+            <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+          </div>
+          <div className="flex items-center gap-3 font-mono">
+            <span>{activeShift ? `Turno #${activeShift.shiftNumber} abierto` : 'Caja cerrada'}</span>
+            <span>·</span>
+            <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
+          </div>
+        </div>
+      </footer>
+
+      <PinModal />
+      <MobileQrModal />
+      <Toast />
+    </div>
   );
 }

@@ -1,24 +1,18 @@
 import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
-import { api } from '../api/client';
+import { api, SYNC_CHANNEL_NAME } from '../api/client';
 
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // User session persists in localStorage so completing an order never resets the active role
+  // Session starts unauthenticated (null) so the operator logs in from the User Access Dashboard
   const [currentUser, setCurrentUser] = useState(() => {
     try {
-      const stored = localStorage.getItem('gastro_user_session');
+      const stored = sessionStorage.getItem('gastro_user_session');
       if (stored) return JSON.parse(stored);
     } catch (e) {
       console.error('Error loading stored user session:', e);
     }
-    return {
-      id: 'u_admin',
-      name: 'Rodrigo (Encargado / Admin)',
-      role: 'admin',
-      pin: '9999',
-      avatar: 'fa-solid fa-user-shield'
-    };
+    return null;
   });
 
   const [theme, setThemeState] = useState(() => {
@@ -60,7 +54,7 @@ export function AppProvider({ children }) {
   }, []);
 
   const [isSidebarOpen, setIsSidebarOpen] = useState(false);
-  const [isMobileSimulated, setIsMobileSimulated] = useState(false);
+  const [isQrModalOpen, setIsQrModalOpen] = useState(false);
   const [isPinModalOpen, setIsPinModalOpen] = useState(false);
   const [toast, setToast] = useState(null);
 
@@ -133,6 +127,44 @@ export function AppProvider({ children }) {
     refreshData();
   }, [refreshData]);
 
+  // Cross-tab & cross-device synchronization (Mobile Comandera <-> Desktop POS)
+  useEffect(() => {
+    let channel = null;
+    try {
+      if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+        channel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+        channel.onmessage = (ev) => {
+          if (ev.data?.type === 'DB_UPDATED') {
+            api.reloadFromLocalStorage();
+            refreshData();
+          }
+        };
+      }
+    } catch (e) {}
+
+    const onStorage = (e) => {
+      if (e.key === 'gastro_pos_db_v2') {
+        api.reloadFromLocalStorage();
+        refreshData();
+      }
+    };
+    window.addEventListener('storage', onStorage);
+
+    const syncInterval = setInterval(async () => {
+      if (typeof document !== 'undefined' && document.visibilityState !== 'visible') return;
+      const res = await api.syncWithServer();
+      if (res?.changed) {
+        refreshData();
+      }
+    }, 3500);
+
+    return () => {
+      try { channel?.close(); } catch (e) {}
+      window.removeEventListener('storage', onStorage);
+      clearInterval(syncInterval);
+    };
+  }, [refreshData]);
+
   // Enforce domain rule: mozos can only access Salón / Mesas
   useEffect(() => {
     if (currentUser?.role === 'mozo' && activeTab !== 'mesas') {
@@ -140,10 +172,10 @@ export function AppProvider({ children }) {
     }
   }, [currentUser, activeTab, setActiveTab]);
 
-  const switchUser = (user) => {
+  const switchUser = useCallback((user) => {
     setCurrentUser(user);
     try {
-      localStorage.setItem('gastro_user_session', JSON.stringify(user));
+      sessionStorage.setItem('gastro_user_session', JSON.stringify(user));
     } catch (e) {
       console.error('Error saving user session:', e);
     }
@@ -151,7 +183,17 @@ export function AppProvider({ children }) {
       setActiveTab('mesas');
     }
     showToast(`Sesión activa: ${user.name}`, 'info');
-  };
+  }, [setActiveTab, showToast]);
+
+  const logoutUser = useCallback(() => {
+    setCurrentUser(null);
+    setIsSidebarOpen(false);
+    setIsPinModalOpen(false);
+    try {
+      sessionStorage.removeItem('gastro_user_session');
+    } catch (e) {}
+    showToast('Sesión finalizada', 'info');
+  }, [showToast]);
 
   const loginWithPin = async (pin) => {
     try {
@@ -173,18 +215,19 @@ export function AppProvider({ children }) {
         currentUser,
         setCurrentUser,
         switchUser,
+        logoutUser,
         loginWithPin,
         theme,
         setTheme: setThemeState,
         toggleTheme,
         isPinModalOpen,
         setIsPinModalOpen,
+        isQrModalOpen,
+        setIsQrModalOpen,
         activeTab,
         setActiveTab,
         isSidebarOpen,
         setIsSidebarOpen,
-        isMobileSimulated,
-        setIsMobileSimulated,
         toast,
         showToast,
         users,

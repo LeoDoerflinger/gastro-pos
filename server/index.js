@@ -1,12 +1,13 @@
 import express from 'express';
 import cors from 'cors';
+import os from 'os';
 import { store } from './store.js';
 
 const app = express();
 const PORT = process.env.PORT || 3001;
 
 app.use(cors());
-app.use(express.json());
+app.use(express.json({ limit: '2mb' }));
 
 // Logging middleware
 app.use((req, res, next) => {
@@ -236,10 +237,35 @@ app.get('/api/analytics', (req, res) => {
   res.json(store.getAnalytics());
 });
 
+// --- Sincronización de estado entre Escritorio y Comandera Móvil ---
+app.get('/api/state', (req, res) => {
+  res.json(store.getStateSnapshot());
+});
+
+app.post('/api/state/sync', (req, res) => {
+  const { clientState } = req.body || {};
+  const snapshot = store.syncStateSnapshot(clientState);
+  res.json(snapshot);
+});
+
+// --- Información de red local para QR en LAN ---
+app.get('/api/network-info', (req, res) => {
+  const interfaces = os.networkInterfaces();
+  const lanIps = [];
+  for (const name of Object.keys(interfaces)) {
+    for (const net of interfaces[name] || []) {
+      if (net.family === 'IPv4' && !net.internal) {
+        lanIps.push(net.address);
+      }
+    }
+  }
+  res.json({ lanIps });
+});
+
 // --- Reset Demo ---
 app.post('/api/system/reset-demo', (req, res) => {
   const data = store.resetDemo();
-  res.json({ message: 'Datos demo restaurados con éxito', ok: true });
+  res.json({ message: 'Datos demo restaurados con éxito', ok: true, state: data });
 });
 
 if (!process.env.VERCEL) {

@@ -168,7 +168,7 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
 
       if (activeOrder) {
         await api.addItemsToOrder(activeOrder.id, formattedItems, currentUser);
-        showToast(`Platos agregados a ${tableCode}. Stock actualizado.`);
+        showToast(`Platos agregados a ${tableCode}.`);
       } else {
         const orderData = {
           channel: channel || 'mesa',

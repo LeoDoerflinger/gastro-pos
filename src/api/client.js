@@ -1,11 +1,19 @@
 const API_BASE = '/api';
 const LOCAL_DB_KEY = 'gastro_pos_db_v2';
+export const SYNC_CHANNEL_NAME = 'gastro_pos_sync';
 
 let memoryDb = null;
 let initPromise = null;
+let syncChannel = null;
 
-function loadLocalDb() {
-  if (memoryDb) return memoryDb;
+try {
+  if (typeof window !== 'undefined' && 'BroadcastChannel' in window) {
+    syncChannel = new BroadcastChannel(SYNC_CHANNEL_NAME);
+  }
+} catch (e) {}
+
+function loadLocalDb(forceFromStorage = false) {
+  if (memoryDb && !forceFromStorage) return memoryDb;
   try {
     const raw = localStorage.getItem(LOCAL_DB_KEY);
     if (raw) {
@@ -19,11 +27,26 @@ function loadLocalDb() {
   return null;
 }
 
-function saveLocalDb(db) {
+function saveLocalDb(db, options = {}) {
+  const { touch = true, broadcast = true } = options;
+  if (touch) {
+    db.lastUpdated = Date.now();
+  } else if (db.lastUpdated === undefined) {
+    db.lastUpdated = 0;
+  }
   memoryDb = db;
   try {
     localStorage.setItem(LOCAL_DB_KEY, JSON.stringify(db));
   } catch (e) {}
+  if (broadcast) {
+    try {
+      syncChannel?.postMessage({ type: 'DB_UPDATED', lastUpdated: db.lastUpdated });
+    } catch (e) {}
+    rawFetchJson('/state/sync', {
+      method: 'POST',
+      body: JSON.stringify({ clientState: db })
+    }).catch(() => {});
+  }
   return db;
 }
 
@@ -54,6 +77,13 @@ async function ensureDbInitialized() {
 
   if (!initPromise) {
     initPromise = (async () => {
+      try {
+        const snapshot = await rawFetchJson('/state');
+        if (snapshot && Array.isArray(snapshot.users) && Array.isArray(snapshot.tables)) {
+          return saveLocalDb(snapshot, { touch: false, broadcast: false });
+        }
+      } catch (e) {}
+
       const [
         users,
         tables,
@@ -86,6 +116,7 @@ async function ensureDbInitialized() {
         suppliers: suppliers || [],
         purchases: purchases || [],
         stockLog: stockLog || [],
+        lastUpdated: Date.now(),
         historicalSales: [
           {
             id: 'sale_prev_1',
@@ -119,7 +150,7 @@ async function ensureDbInitialized() {
           }
         ]
       };
-      return saveLocalDb(db);
+      return saveLocalDb(db, { touch: false, broadcast: false });
     })().finally(() => {
       initPromise = null;
     });
@@ -794,13 +825,46 @@ export const api = {
     return computeAnalyticsFromDb(db);
   },
 
+  reloadFromLocalStorage: () => {
+    return loadLocalDb(true);
+  },
+
+  syncWithServer: async () => {
+    const db = await ensureDbInitialized();
+    try {
+      const remote = await rawFetchJson('/state');
+      if (
+        remote &&
+        Array.isArray(remote.tables) &&
+        Number(remote.lastUpdated || 0) > Number(db.lastUpdated || 0)
+      ) {
+        saveLocalDb(remote, { touch: false, broadcast: false });
+        return { changed: true, lastUpdated: remote.lastUpdated };
+      }
+    } catch (e) {}
+    return { changed: false, lastUpdated: db.lastUpdated };
+  },
+
+  getNetworkInfo: async () => {
+    try {
+      return await rawFetchJson('/network-info');
+    } catch (e) {
+      return { lanIps: [] };
+    }
+  },
+
   resetDemo: async () => {
-    await rawFetchJson('/system/reset-demo', { method: 'POST' }).catch(() => {});
+    const res = await rawFetchJson('/system/reset-demo', { method: 'POST' }).catch(() => null);
     memoryDb = null;
     try {
       localStorage.removeItem(LOCAL_DB_KEY);
     } catch (e) {}
-    await ensureDbInitialized();
+    if (res?.state && Array.isArray(res.state.tables)) {
+      saveLocalDb(res.state, { touch: true, broadcast: true });
+    } else {
+      const fresh = await ensureDbInitialized();
+      saveLocalDb(fresh, { touch: true, broadcast: true });
+    }
     return { ok: true };
   }
 };
