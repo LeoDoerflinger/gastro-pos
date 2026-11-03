@@ -74,7 +74,7 @@ export default function ShiftBalanceModal() {
                 Balance detallado de arqueo y cierre de turno
               </h2>
               <p className="text-xs text-[var(--text-secondary)]">
-                Sesión finalizada · Operador: <strong>{s.closedBy || s.cashierName || 'Cajero'}</strong>
+                Sesión finalizada · Usuario: <strong>{s.closedBy || s.cashierName || 'Cajero'}</strong>
               </p>
             </div>
           </div>
@@ -125,12 +125,12 @@ export default function ShiftBalanceModal() {
           {/* Physical Cash Reconciliation */}
           <div className="pos-panel p-4 space-y-2.5">
             <h3 className="font-display font-bold text-sm text-[var(--text-primary)] pb-2 border-b border-[var(--border-subtle)]">
-              Conciliación de efectivo en gaveta
+              Conciliación de efectivo en caja
             </h3>
 
             <div className="space-y-1.5 text-sm">
               <div className="flex justify-between text-[var(--text-secondary)]">
-                <span>Fondo inicial de apertura</span>
+                <span>Efectivo inicial de apertura</span>
                 <span className="font-mono font-semibold text-[var(--text-primary)]">
                   ${(s.initialCash || 0).toLocaleString('es-AR')}
                 </span>

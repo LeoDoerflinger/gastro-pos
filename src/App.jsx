@@ -151,7 +151,7 @@ export default function App() {
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
             <span>·</span>
-            <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+            <span>Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
             <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>

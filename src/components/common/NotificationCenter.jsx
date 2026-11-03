@@ -1,7 +1,51 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import ReceiptModal from './ReceiptModal';
+
+function playNotificationSound(type = 'appear') {
+  try {
+    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+    if (!AudioCtx) return;
+    const ctx = new AudioCtx();
+    if (ctx.state === 'suspended') {
+      ctx.resume().catch(() => {});
+    }
+    const now = ctx.currentTime;
+    const osc = ctx.createOscillator();
+    const gain = ctx.createGain();
+    osc.connect(gain);
+    gain.connect(ctx.destination);
+
+    if (type === 'appear') {
+      // Gentle 2-tone pleasant ascending chime (523Hz C5 -> 659Hz E5)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(523.25, now);
+      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.12, now + 0.03);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+      osc.start(now);
+      osc.stop(now + 0.36);
+    } else {
+      // Soft descending chime when leaving screen (440Hz -> 349Hz)
+      osc.type = 'sine';
+      osc.frequency.setValueAtTime(440, now);
+      osc.frequency.exponentialRampToValueAtTime(349.23, now + 0.10);
+      gain.gain.setValueAtTime(0.001, now);
+      gain.gain.linearRampToValueAtTime(0.06, now + 0.02);
+      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
+      osc.start(now);
+      osc.stop(now + 0.23);
+    }
+
+    setTimeout(() => {
+      ctx.close().catch(() => {});
+    }, 500);
+  } catch {
+    // Browser may restrict audio before user gesture
+  }
+}
 
 export default function NotificationCenter() {
   const {
@@ -20,6 +64,11 @@ export default function NotificationCenter() {
   const [receiptType, setReceiptType] = useState('comanda');
   const [filterType, setFilterType] = useState('todas');
 
+  // Track popups that have already completed their 6s screen time
+  const [dismissedFromScreen, setDismissedFromScreen] = useState(() => new Set());
+  const [exitingIds, setExitingIds] = useState(() => new Set());
+  const seenIdsRef = useRef(new Set());
+
   useEffect(() => {
     if (!isNotificationsOpen) return;
     const onKeyDown = (e) => {
@@ -31,12 +80,65 @@ export default function NotificationCenter() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isNotificationsOpen, setIsNotificationsOpen]);
 
-  const unreadList = (notifications || []).filter(n => !n.read).slice(0, 3);
+  // Handle auto-dismiss and sounds for new unread notifications
+  useEffect(() => {
+    const unread = (notifications || []).filter(n => !n.read);
+    const brandNew = unread.filter(n => !seenIdsRef.current.has(n.id));
+
+    if (brandNew.length > 0) {
+      brandNew.forEach(n => seenIdsRef.current.add(n.id));
+      playNotificationSound('appear');
+    }
+
+    // Schedule 6s auto-dismiss for active unread notifications that are not yet dismissed from screen
+    unread.forEach(n => {
+      if (!dismissedFromScreen.has(n.id) && !exitingIds.has(n.id)) {
+        const timer = setTimeout(() => {
+          // Trigger exit animation
+          setExitingIds(prev => new Set([...prev, n.id]));
+          playNotificationSound('disappear');
+
+          // After 350ms animation, remove from screen without marking as read
+          setTimeout(() => {
+            setDismissedFromScreen(prev => new Set([...prev, n.id]));
+            setExitingIds(prev => {
+              const next = new Set(prev);
+              next.delete(n.id);
+              return next;
+            });
+          }, 350);
+        }, 6000);
+
+        return () => clearTimeout(timer);
+      }
+    });
+  }, [notifications, dismissedFromScreen, exitingIds]);
+
+  // Active floating popups: unread and not dismissed from screen (max 3 at a time)
+  const floatingPopups = (notifications || [])
+    .filter(n => !n.read && !dismissedFromScreen.has(n.id))
+    .slice(0, 3);
 
   const filteredList = (notifications || []).filter(n => {
     if (filterType === 'todas') return true;
     return n.type === filterType;
   });
+
+  const handleManualDismissPopup = (notifId, markRead = false) => {
+    setExitingIds(prev => new Set([...prev, notifId]));
+    playNotificationSound('disappear');
+    setTimeout(() => {
+      setDismissedFromScreen(prev => new Set([...prev, notifId]));
+      setExitingIds(prev => {
+        const next = new Set(prev);
+        next.delete(notifId);
+        return next;
+      });
+      if (markRead) {
+        markNotificationRead(notifId);
+      }
+    }, 350);
+  };
 
   const handleOpenTicket = async (notif) => {
     const order = (orders || []).find(o => o.id === notif.orderId);
@@ -73,20 +175,26 @@ export default function NotificationCenter() {
 
   return (
     <>
-      {/* Floating Digital Comandas & Bill Requests on PC */}
-      {unreadList.length > 0 && !isNotificationsOpen && (
+      {/* Floating Comandas & Bill Requests on PC: positioned top-16 to avoid toast clash at bottom-4 */}
+      {floatingPopups.length > 0 && !isNotificationsOpen && (
         <aside
           aria-label="Avisos de comandas y cuentas en tiempo real"
-          className="fixed bottom-4 right-4 z-40 w-[calc(100vw-2rem)] sm:w-96 space-y-2.5 pointer-events-none"
+          className="fixed top-16 right-4 sm:right-6 z-40 w-[calc(100vw-2rem)] sm:w-96 space-y-2.5 pointer-events-none"
         >
-          {unreadList.map(notif => {
+          {floatingPopups.map(notif => {
             const isCuenta = notif.type === 'cuenta';
+            const isExiting = exitingIds.has(notif.id);
+
             return (
               <div
                 key={notif.id}
                 role="status"
                 aria-live="polite"
-                className={`pos-panel p-3.5 shadow-2xl pointer-events-auto border-l-4 ${
+                className={`pos-panel p-3.5 shadow-2xl pointer-events-auto border-l-4 transform transition-all duration-300 ease-out ${
+                  isExiting
+                    ? 'translate-x-12 opacity-0 pointer-events-none'
+                    : 'translate-x-0 opacity-100'
+                } ${
                   isCuenta
                     ? 'border-l-[var(--status-account-bar)] bg-[var(--bg-surface)]'
                     : 'border-l-[var(--accent-brand)] bg-[var(--bg-surface)]'
@@ -112,7 +220,7 @@ export default function NotificationCenter() {
 
                   <button
                     type="button"
-                    onClick={() => markNotificationRead(notif.id)}
+                    onClick={() => handleManualDismissPopup(notif.id, true)}
                     aria-label="Marcar aviso como recibido"
                     className="pos-btn-ghost min-h-[44px] min-w-[44px] -mt-1 -mr-1"
                   >
@@ -146,37 +254,43 @@ export default function NotificationCenter() {
                   </div>
                 )}
 
-                <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-end gap-2">
-                  {isCuenta && notif.orderId && (
+                <div className="mt-3 pt-2.5 border-t border-[var(--border-subtle)] flex flex-wrap items-center justify-between gap-2">
+                  <span className="text-[11px] text-[var(--text-muted)]">
+                    Pasa a avisos tras 6s
+                  </span>
+
+                  <div className="flex flex-wrap items-center gap-2">
+                    {isCuenta && notif.orderId && (
+                      <button
+                        type="button"
+                        onClick={() => handlePassToPendingPayment(notif)}
+                        className="pos-btn-secondary text-xs px-2.5"
+                      >
+                        <i className="fa-solid fa-file-invoice-dollar text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
+                        <span>Cobro</span>
+                      </button>
+                    )}
+
+                    {notif.orderId && (
+                      <button
+                        type="button"
+                        onClick={() => handleOpenTicket(notif)}
+                        className="pos-btn-secondary text-xs px-2.5"
+                      >
+                        <i className="fa-solid fa-eye text-xs" aria-hidden="true"></i>
+                        <span>Ticket</span>
+                      </button>
+                    )}
+
                     <button
                       type="button"
-                      onClick={() => handlePassToPendingPayment(notif)}
-                      className="pos-btn-secondary text-xs px-3"
+                      onClick={() => handleManualDismissPopup(notif.id, true)}
+                      className="pos-btn-primary text-xs px-2.5"
                     >
-                      <i className="fa-solid fa-file-invoice-dollar text-xs text-[var(--status-bill-fg)]" aria-hidden="true"></i>
-                      <span>Pasar a Pendiente cobro</span>
+                      <i className="fa-solid fa-check text-xs" aria-hidden="true"></i>
+                      <span>Recibido</span>
                     </button>
-                  )}
-
-                  {notif.orderId && (
-                    <button
-                      type="button"
-                      onClick={() => handleOpenTicket(notif)}
-                      className="pos-btn-secondary text-xs px-3"
-                    >
-                      <i className="fa-solid fa-eye text-xs" aria-hidden="true"></i>
-                      <span>Ver ticket</span>
-                    </button>
-                  )}
-
-                  <button
-                    type="button"
-                    onClick={() => markNotificationRead(notif.id)}
-                    className="pos-btn-primary text-xs px-3"
-                  >
-                    <i className="fa-solid fa-check text-xs" aria-hidden="true"></i>
-                    <span>Recibido</span>
-                  </button>
+                  </div>
                 </div>
               </div>
             );
@@ -289,8 +403,7 @@ export default function NotificationCenter() {
                           >
                             <i
                               className={`fa-solid ${isCuenta ? 'fa-receipt' : 'fa-kitchen-set'} text-[11px]`}
-                              aria-hidden="true"
-                            ></i>
+                              aria-hidden="true"></i>
                             <span>{isCuenta ? 'Cuenta' : 'Comanda'}</span>
                           </span>
                           {!notif.read && (

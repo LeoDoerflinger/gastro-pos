@@ -249,13 +249,26 @@ export default function CajeroDashboard() {
                     </div>
 
                     <div className="flex flex-wrap items-center gap-2 shrink-0">
+                      {isCuentaStep && (
+                        <button
+                          type="button"
+                          onClick={() => handleRevertBill(order)}
+                          className="pos-btn-secondary text-xs"
+                          title="Revertir a Abierta"
+                        >
+                          <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
+                          <span>Revertir</span>
+                        </button>
+                      )}
+
                       <button
                         type="button"
-                        onClick={() => handleRevertBill(order)}
+                        onClick={() => handleOpenReceipt(order, 'precuenta')}
                         className="pos-btn-secondary text-xs"
+                        title="Imprimir cuenta"
                       >
-                        <i className="fa-solid fa-rotate-left text-xs" aria-hidden="true"></i>
-                        <span>Revertir</span>
+                        <i className="fa-solid fa-print text-xs" aria-hidden="true"></i>
+                        <span>Imprimir cuenta</span>
                       </button>
 
                       {isCuentaStep && (
@@ -377,7 +390,7 @@ export default function CajeroDashboard() {
                         </button>
                       )}
 
-                      {(isCuenta || isPendiente) && (
+                      {isCuenta && (
                         <button
                           type="button"
                           onClick={() => handleRevertBill(order)}
@@ -405,9 +418,10 @@ export default function CajeroDashboard() {
                         type="button"
                         onClick={() => handleOpenReceipt(order, 'precuenta')}
                         className="pos-btn-secondary text-xs px-3"
+                        title="Imprimir cuenta"
                       >
-                        <i className="fa-solid fa-receipt text-xs" aria-hidden="true"></i>
-                        <span>Cuenta</span>
+                        <i className="fa-solid fa-print text-xs" aria-hidden="true"></i>
+                        <span>Imprimir cuenta</span>
                       </button>
 
                       <button

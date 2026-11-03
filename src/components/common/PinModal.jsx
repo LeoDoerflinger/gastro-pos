@@ -24,7 +24,7 @@ export default function PinModal() {
         setIsPinModalOpen(false);
       }
     } catch (err) {
-      setError('Ese PIN no coincide con ningún operador registrado.');
+      setError('Ese PIN no coincide con ningún usuario registrado.');
       setPin('');
     }
   }, [users, switchUser, setIsPinModalOpen]);
@@ -89,13 +89,13 @@ export default function PinModal() {
           <div className="flex items-center gap-2.5">
             <i className="fa-solid fa-key text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
             <h2 id="pin-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
-              Cambiar operador
+              Cambiar usuario
             </h2>
           </div>
           <button
             type="button"
             onClick={() => setIsPinModalOpen(false)}
-            aria-label="Cerrar ventana de cambio de operador"
+            aria-label="Cerrar ventana de cambio de usuario"
             className="pos-btn-ghost"
           >
             <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>

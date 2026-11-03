@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
+import { getTableCode } from '../mozo/MozoSalonView';
 
 export default function ArqueoCaja() {
-  const { activeShift, orders, currentUser, showToast, refreshData, logoutUser, setLastClosedShiftReport } = useApp();
+  const { activeShift, orders, currentUser, showToast, refreshData, logoutUser, setLastClosedShiftReport, tables } = useApp();
 
-  const [initialCashInput, setInitialCashInput] = useState('45000');
+  const [initialCashInput, setInitialCashInput] = useState('0');
   const [shiftHistory, setShiftHistory] = useState([]);
 
   const [isMovementModalOpen, setIsMovementModalOpen] = useState(false);
@@ -72,8 +73,8 @@ export default function ArqueoCaja() {
   const cashDifference = actualCashCount !== '' ? countNum - expectedCash : 0;
 
   const handleOpenShift = async () => {
-    if (!initialCashInput || Number(initialCashInput) < 0) {
-      showToast('Ingresá un fondo inicial válido', 'error');
+    if (initialCashInput === '' || Number(initialCashInput) < 0) {
+      showToast('Ingresá un efectivo inicial válido (0 o mayor)', 'error');
       return;
     }
     setSubmitting(true);
@@ -119,7 +120,7 @@ export default function ArqueoCaja() {
 
   const handleCloseShift = async () => {
     if (actualCashCount === '') {
-      showToast('Ingresá el efectivo físico contado en la gaveta', 'error');
+      showToast('Ingresá el efectivo físico contado en la caja', 'error');
       return;
     }
     setSubmitting(true);
@@ -179,7 +180,7 @@ export default function ArqueoCaja() {
           ) : (
             <div className="space-y-1 mt-1">
               <p className="text-sm text-[var(--text-secondary)]">
-                Definí el fondo inicial en efectivo para habilitar cobros y movimientos del turno.
+                Definí el efectivo inicial para habilitar cobros y movimientos del turno.
               </p>
               <div className="flex flex-wrap items-center gap-4 text-xs font-mono text-[var(--text-secondary)]">
                 <span>Fecha de apertura: <strong className="text-[var(--text-primary)]">{nowDatePreview}</strong></span>
@@ -213,12 +214,12 @@ export default function ArqueoCaja() {
           <div className="flex flex-wrap items-end gap-2.5">
             <div className="w-44">
               <label htmlFor="initial-cash-input" className="pos-label">
-                Fondo inicial ($):
+                Efectivo inicial ($):
               </label>
               <input
                 id="initial-cash-input"
                 type="number"
-                placeholder="45000"
+                placeholder="0"
                 value={initialCashInput}
                 onChange={(e) => setInitialCashInput(e.target.value)}
                 className="pos-input font-mono font-bold"
@@ -246,13 +247,13 @@ export default function ArqueoCaja() {
               <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center gap-2">
                 <i className="fa-solid fa-money-bill-wave text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
                 <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
-                  Efectivo en gaveta
+                  Efectivo en caja
                 </h3>
               </div>
 
               <div className="divide-y divide-[var(--border-subtle)] px-4 text-sm">
                 <div className="py-3 flex justify-between text-[var(--text-secondary)]">
-                  <span>Fondo inicial</span>
+                  <span>Efectivo inicial</span>
                   <span className="font-mono font-semibold text-[var(--text-primary)]">
                     ${(activeShift.initialCash || 0).toLocaleString('es-AR')}
                   </span>
@@ -405,7 +406,7 @@ export default function ArqueoCaja() {
                 <div key={s.id} className="px-4 py-3 flex flex-wrap items-center justify-between gap-3 hover:bg-[var(--bg-hover)]">
                   <div className="space-y-0.5">
                     <div className="text-sm font-bold text-[var(--text-primary)]">
-                      Operador: {s.closedBy || s.cashierName}
+                      Usuario: {s.closedBy || s.cashierName}
                     </div>
                     <div className="text-xs font-mono text-[var(--text-secondary)] flex flex-wrap items-center gap-3">
                       <span>Apertura: {sOpenDate} · {sOpenTime} hs</span>
@@ -546,8 +547,24 @@ export default function ArqueoCaja() {
             </div>
 
             <p className="text-sm text-[var(--text-secondary)]">
-              Contá los billetes físicos en la gaveta e ingresá el total para compararlo contra el saldo esperado.
+              Contá los billetes físicos en la caja e ingresá el total para compararlo contra el saldo esperado.
             </p>
+
+            {(() => {
+              const openTables = (tables || []).filter(t => t.status !== 'libre');
+              if (openTables.length === 0) return null;
+              return (
+                <div className="p-3 bg-[var(--status-bill-bg)] border border-[var(--status-bill-border)] rounded text-xs text-[var(--status-bill-fg)] space-y-1">
+                  <div className="font-bold flex items-center gap-1.5">
+                    <i className="fa-solid fa-triangle-exclamation text-xs" aria-hidden="true"></i>
+                    <span>Aviso: Hay {openTables.length} mesa(s) con comanda abierta en el salón</span>
+                  </div>
+                  <p className="text-[var(--text-secondary)]">
+                    Mesas: {openTables.map(t => getTableCode(t)).join(', ')}. Podés cerrar el turno de caja de todos modos.
+                  </p>
+                </div>
+              );
+            })()}
 
             <div>
               <label htmlFor="actual-cash-input" className="pos-label">

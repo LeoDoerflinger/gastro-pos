@@ -134,8 +134,8 @@ export default function SidebarDrawer() {
                 setIsSidebarOpen(false);
                 setIsPinModalOpen(true);
               }}
-              aria-label="Cambiar operador con PIN"
-              title="Cambiar operador con PIN"
+              aria-label="Cambiar usuario con PIN"
+              title="Cambiar usuario con PIN"
               className="pos-btn-secondary px-3 shrink-0"
             >
               <i className="fa-solid fa-key text-xs" aria-hidden="true"></i>

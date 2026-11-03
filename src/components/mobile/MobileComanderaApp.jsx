@@ -94,7 +94,7 @@ export default function MobileComanderaApp() {
                 </span>
               </div>
               <div className="text-xs text-[var(--text-secondary)] truncate mt-0.5">
-                Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
+                Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
               </div>
             </div>
           </div>
@@ -127,7 +127,7 @@ export default function MobileComanderaApp() {
             <button
               type="button"
               onClick={() => setIsPinModalOpen(true)}
-              aria-label="Cambiar operador con PIN"
+              aria-label="Cambiar usuario con PIN"
               className="pos-btn-secondary px-2.5"
             >
               <i className="fa-solid fa-key text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
@@ -308,7 +308,7 @@ export default function MobileComanderaApp() {
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
             <span>·</span>
-            <span>Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
+            <span>Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
             <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>

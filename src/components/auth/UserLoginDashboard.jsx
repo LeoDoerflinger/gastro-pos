@@ -60,7 +60,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
         switchUser(res.user);
       }
     } catch {
-      setError('Ese PIN no coincide con ningún operador registrado.');
+      setError('Ese PIN no coincide con ningún usuario registrado.');
       setPin('');
     }
   }, [users, selectedUser, switchUser]);
@@ -125,7 +125,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             </span>
             <div className="min-w-0">
               <h1 className="font-display font-bold text-base sm:text-lg text-[var(--text-primary)] truncate leading-tight">
-                {isMobileComandera ? 'Comandera Móvil · Acceso' : 'Acceso de operadores'}
+                {isMobileComandera ? 'Comandera Móvil · Acceso' : 'Acceso de usuarios'}
               </h1>
               <p className="text-xs text-[var(--text-secondary)] hidden sm:block">
                 {isMobileComandera
@@ -425,7 +425,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
           <div className="flex items-center gap-2">
             <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
             <span>·</span>
-            <span>Operador: <strong className="text-[var(--text-primary)]">Sin sesión iniciada</strong></span>
+            <span>Usuario: <strong className="text-[var(--text-primary)]">Sin sesión iniciada</strong></span>
           </div>
           <div className="flex items-center gap-3 font-mono">
             <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>

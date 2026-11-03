@@ -154,7 +154,7 @@ export default function Header() {
           <button
             type="button"
             onClick={logoutUser}
-            aria-label="Cerrar sesión de operador"
+            aria-label="Cerrar sesión de usuario"
             title="Volver al panel de usuarios"
             className="pos-btn-secondary px-2.5 sm:px-3"
           >

@@ -3,6 +3,31 @@ import { useApp } from '../../context/AppContext';
 import CobroModal from '../cajero/CobroModal';
 import { api } from '../../api/client';
 
+const AVAILABLE_EXTRAS = [
+  { id: 'ext_muzza', name: 'Extra Muzzarella', price: 1800 },
+  { id: 'ext_carne', name: 'Extra Medallón Carne', price: 2500 },
+  { id: 'ext_cheddar', name: 'Extra Queso Cheddar', price: 1200 },
+  { id: 'ext_panceta', name: 'Extra Panceta Ahumada', price: 1400 },
+  { id: 'ext_jamon', name: 'Extra Jamón Cocido', price: 1500 },
+  { id: 'ext_morron', name: 'Extra Morrones Asados', price: 1200 },
+  { id: 'ext_huevo', name: 'Huevo Frito', price: 900 },
+  { id: 'ext_papas', name: 'Porción Papas Chicas', price: 2200 },
+  { id: 'ext_sintacc', name: 'Apto Celíaco / Sin TACC', price: 1500 },
+  { id: 'ext_borde', name: 'Borde Relleno de Queso', price: 2400 }
+];
+
+const QUICK_NOTES = [
+  'Sin cebolla',
+  'Bien cocido',
+  'Punto jugoso',
+  'Sin sal',
+  'Poco hielo',
+  'Aderezos aparte',
+  'Para compartir',
+  'Sin orégano',
+  'Timbre roto / llamar al llegar'
+];
+
 const MAX_DELIVERY_RADIUS_KM = 5.0;
 
 const RESTAURANT_LOCATION = {
@@ -70,7 +95,7 @@ function calculateDeliveryInfo(distanceKm) {
 }
 
 export default function DeliveryManager() {
-  const { orders, products, currentUser, showToast, refreshData } = useApp();
+  const { orders, products, currentUser, showToast, refreshData, activeShift } = useApp();
 
   const [channelType, setChannelType] = useState('delivery');
   const [isNewOrderModalOpen, setIsNewOrderModalOpen] = useState(false);
@@ -84,14 +109,25 @@ export default function DeliveryManager() {
   const [cartItems, setCartItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // Modal for dish extras & kitchen clarifications
+  const [editingItemIndex, setEditingItemIndex] = useState(null);
+  const [tempNotes, setTempNotes] = useState('');
+  const [tempExtras, setTempExtras] = useState([]);
+
   useEffect(() => {
     if (!isNewOrderModalOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setIsNewOrderModalOpen(false);
+      if (e.key === 'Escape') {
+        if (editingItemIndex !== null) {
+          setEditingItemIndex(null);
+        } else {
+          setIsNewOrderModalOpen(false);
+        }
+      }
     };
     window.addEventListener('keydown', onKeyDown);
     return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isNewOrderModalOpen]);
+  }, [isNewOrderModalOpen, editingItemIndex]);
 
   const deliveryOrders = orders.filter(
     o => (o.channel === 'delivery' || o.channel === 'take_away') && o.status !== 'cobrado'
@@ -105,34 +141,27 @@ export default function DeliveryManager() {
   };
 
   const handleAddToCart = (product) => {
-    setCartItems(prev => {
-      const existing = prev.find(it => it.productId === product.id);
-      if (existing) {
-        return prev.map(it =>
-          it.productId === product.id
-            ? { ...it, quantity: it.quantity + 1, subtotal: (it.quantity + 1) * it.unitPrice }
-            : it
-        );
+    setCartItems(prev => [
+      ...prev,
+      {
+        cartItemId: 'del_citem_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+        productId: product.id,
+        productName: product.name,
+        basePrice: product.price,
+        unitPrice: product.price,
+        quantity: 1,
+        subtotal: product.price,
+        notes: '',
+        extras: []
       }
-      return [
-        ...prev,
-        {
-          productId: product.id,
-          productName: product.name,
-          quantity: 1,
-          unitPrice: product.price,
-          subtotal: product.price,
-          notes: ''
-        }
-      ];
-    });
+    ]);
   };
 
-  const handleUpdateQty = (productId, delta) => {
+  const handleUpdateQty = (cartItemId, delta) => {
     setCartItems(prev =>
       prev
         .map(it => {
-          if (it.productId === productId) {
+          if (it.cartItemId === cartItemId) {
             const next = it.quantity + delta;
             return next > 0 ? { ...it, quantity: next, subtotal: next * it.unitPrice } : null;
           }
@@ -142,11 +171,55 @@ export default function DeliveryManager() {
     );
   };
 
+  const handleRemoveItem = (cartItemId) => {
+    setCartItems(prev => prev.filter(it => it.cartItemId !== cartItemId));
+  };
+
+  const handleOpenItemConfig = (idx) => {
+    const item = cartItems[idx];
+    if (!item) return;
+    setEditingItemIndex(idx);
+    setTempNotes(item.notes || '');
+    setTempExtras(item.extras || []);
+  };
+
+  const handleToggleExtra = (extra) => {
+    setTempExtras(prev => {
+      const exists = prev.some(e => e.id === extra.id);
+      return exists ? prev.filter(e => e.id !== extra.id) : [...prev, extra];
+    });
+  };
+
+  const handleSaveItemConfig = () => {
+    if (editingItemIndex === null) return;
+    setCartItems(prev =>
+      prev.map((item, idx) => {
+        if (idx === editingItemIndex) {
+          const extrasCost = tempExtras.reduce((sum, e) => sum + e.price, 0);
+          const newUnitPrice = item.basePrice + extrasCost;
+          return {
+            ...item,
+            notes: tempNotes,
+            extras: tempExtras,
+            unitPrice: newUnitPrice,
+            subtotal: item.quantity * newUnitPrice
+          };
+        }
+        return item;
+      })
+    );
+    setEditingItemIndex(null);
+  };
+
   const cartSubtotal = cartItems.reduce((acc, it) => acc + it.subtotal, 0);
   const totalWithFee = cartSubtotal + (channelType === 'delivery' ? (deliveryInfo.isValid ? deliveryInfo.fee : 0) : 0);
 
   const handleCreateDeliveryOrder = async (e) => {
     e.preventDefault();
+    if (!activeShift) {
+      showToast('Caja cerrada: Iniciá el turno de caja antes de cargar pedidos', 'error');
+      return;
+    }
     if (!customerName.trim()) {
       showToast('Ingresá el nombre del cliente', 'error');
       return;
@@ -168,6 +241,22 @@ export default function DeliveryManager() {
 
     setSubmitting(true);
     try {
+      const formattedItems = cartItems.map(it => {
+        let noteString = it.notes || '';
+        if (it.extras && it.extras.length > 0) {
+          const extrasStr = it.extras.map(e => `+${e.name}`).join(', ');
+          noteString = noteString ? `${noteString} | Extras: ${extrasStr}` : `Extras: ${extrasStr}`;
+        }
+        return {
+          productId: it.productId,
+          productName: it.productName,
+          quantity: it.quantity,
+          unitPrice: it.unitPrice,
+          subtotal: it.subtotal,
+          notes: noteString
+        };
+      });
+
       const orderData = {
         channel: channelType,
         customerName,
@@ -177,7 +266,7 @@ export default function DeliveryManager() {
         deliveryFee: channelType === 'delivery' ? deliveryInfo.fee : 0,
         driverName: channelType === 'delivery' ? driverName : null,
         kitchenStatus: 'en_preparacion',
-        items: cartItems
+        items: formattedItems
       };
 
       await api.createOrder(orderData, currentUser);
@@ -280,155 +369,110 @@ export default function DeliveryManager() {
                 className="pos-panel p-4 flex flex-col justify-between space-y-4"
               >
                 <div className="space-y-3">
-                  {/* Top Header */}
-                  <div className="flex items-start justify-between gap-2 pb-3 border-b border-[var(--border-subtle)]">
-                    <div className="flex items-center gap-2.5 min-w-0">
-                      <span className="w-9 h-9 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent-brand)] flex items-center justify-center text-sm shrink-0">
-                        <i className={`fa-solid ${isDelivery ? 'fa-motorcycle' : 'fa-bag-shopping'}`} aria-hidden="true"></i>
+                  <div className="flex items-center justify-between gap-2 pb-2.5 border-b border-[var(--border-subtle)]">
+                    <div className="flex items-center gap-2">
+                      <span className="font-mono font-bold text-sm text-[var(--text-primary)]">
+                        #{order.orderNumber}
                       </span>
-                      <div className="min-w-0">
-                        <div className="text-xs font-mono text-[var(--text-secondary)]">
-                          #{order.orderNumber} · {isDelivery ? 'Delivery' : 'Take Away'}
-                        </div>
-                        <h3 className="font-display font-bold text-base text-[var(--text-primary)] truncate">
-                          {order.customerName}
-                        </h3>
-                      </div>
+                      <span className="pos-badge pos-badge-brand text-xs">
+                        <i className={`fa-solid ${isDelivery ? 'fa-motorcycle' : 'fa-bag-shopping'} text-[11px]`} aria-hidden="true"></i>
+                        <span>{isDelivery ? 'Delivery' : 'Take Away'}</span>
+                      </span>
                     </div>
-
-                    <span className={`pos-badge ${statusText.cls} shrink-0`}>
-                      {statusText.label}
-                    </span>
+                    <span className={`pos-badge ${statusText.cls}`}>{statusText.label}</span>
                   </div>
 
-                  {/* Customer & Route Details */}
-                  <div className="pos-subpanel p-3 space-y-1.5 text-xs">
+                  <div className="space-y-1">
+                    <div className="font-display font-bold text-base text-[var(--text-primary)]">
+                      {order.customerName || 'Cliente mostrador'}
+                    </div>
                     {order.customerPhone && (
-                      <p className="text-[var(--text-primary)] font-mono flex items-center gap-2">
-                        <i className="fa-solid fa-phone text-[var(--text-muted)] w-3.5 text-center" aria-hidden="true"></i>
-                        <span>{order.customerPhone}</span>
+                      <p className="text-xs text-[var(--text-secondary)] font-mono">
+                        Tel: {order.customerPhone}
                       </p>
                     )}
-                    {order.deliveryAddress && (
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="text-[var(--text-primary)] flex items-start gap-2 leading-snug">
-                          <i className="fa-solid fa-location-dot text-[var(--accent-brand)] shrink-0 mt-0.5 w-3.5 text-center" aria-hidden="true"></i>
-                          <span>{order.deliveryAddress}</span>
-                        </p>
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(order.deliveryAddress + ', CABA')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          title="Abrir en Google Maps"
-                          aria-label={`Ver ${order.deliveryAddress} en Google Maps`}
-                          className="pos-btn-secondary px-2.5 shrink-0"
-                        >
-                          <i className="fa-solid fa-map-location-dot text-xs" aria-hidden="true"></i>
-                        </a>
+                    {isDelivery && order.deliveryAddress && (
+                      <div className="text-xs text-[var(--text-secondary)] flex items-start gap-1.5 pt-1">
+                        <i className="fa-solid fa-location-dot text-[var(--accent-brand)] shrink-0 mt-0.5" aria-hidden="true"></i>
+                        <span className="font-medium text-[var(--text-primary)]">{order.deliveryAddress}</span>
                       </div>
                     )}
-                    {order.deliveryDistanceKm && (
-                      <p className="text-[var(--text-secondary)] flex items-center gap-2">
-                        <i className="fa-solid fa-route text-[var(--text-muted)] w-3.5 text-center" aria-hidden="true"></i>
-                        <span>
-                          Distancia: <strong className="font-mono text-[var(--text-primary)]">{order.deliveryDistanceKm} km</strong>
-                        </span>
-                      </p>
-                    )}
-                    {order.driverName && (
-                      <p className="text-[var(--text-secondary)] flex items-center gap-2 pt-1.5 border-t border-[var(--border-subtle)]">
-                        <i className="fa-solid fa-helmet-safety text-[var(--text-muted)] w-3.5 text-center" aria-hidden="true"></i>
-                        <span>Repartidor: <strong className="text-[var(--text-primary)]">{order.driverName}</strong></span>
+                    {isDelivery && order.deliveryDistanceKm && (
+                      <p className="text-[11px] text-[var(--text-muted)] font-mono">
+                        Distancia: {order.deliveryDistanceKm} km · Envío: ${order.deliveryFee?.toLocaleString('es-AR') || 0}
                       </p>
                     )}
                   </div>
 
-                  {/* Items */}
-                  <div className="space-y-1 text-xs">
+                  <div className="p-2.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] space-y-1 text-xs">
                     {(order.items || []).map((it, idx) => (
-                      <div key={idx} className="flex justify-between gap-2 text-[var(--text-secondary)]">
-                        <span className="truncate">
-                          <strong className="font-mono text-[var(--text-primary)]">{it.quantity}x</strong> {it.productName}
+                      <div key={idx} className="flex justify-between items-start gap-2">
+                        <span className="text-[var(--text-primary)] truncate">
+                          <strong className="font-mono">{it.quantity}x</strong> {it.productName}
                         </span>
-                        <span className="font-mono text-[var(--text-primary)] shrink-0">
+                        <span className="font-mono font-bold shrink-0 text-[var(--text-secondary)]">
                           ${it.subtotal?.toLocaleString('es-AR')}
                         </span>
                       </div>
                     ))}
-                    {order.deliveryFee > 0 && (
-                      <div className="flex justify-between text-xs text-[var(--text-muted)] pt-1 border-t border-[var(--border-subtle)]">
-                        <span>Envío</span>
-                        <span className="font-mono">${order.deliveryFee.toLocaleString('es-AR')}</span>
+                    {(order.items || []).some(it => it.notes) && (
+                      <div className="pt-1.5 border-t border-[var(--border-subtle)] space-y-0.5">
+                        {(order.items || []).filter(it => it.notes).map((it, idx) => (
+                          <div key={idx} className="text-[11px] text-[var(--accent-brand)]">
+                            {it.productName}: {it.notes}
+                          </div>
+                        ))}
                       </div>
                     )}
                   </div>
                 </div>
 
-                {/* Footer & Stage Controls */}
-                <div className="pt-3 border-t border-[var(--border-subtle)] space-y-2.5">
-                  <div className="flex justify-between items-center">
-                    <span className="text-xs font-semibold text-[var(--text-secondary)]">Total pedido</span>
-                    <span className="font-mono font-bold text-lg text-[var(--text-primary)]">
+                <div className="pt-3 border-t border-[var(--border-subtle)] space-y-3">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-xs text-[var(--text-secondary)]">Total a cobrar</span>
+                    <span className="font-mono font-bold text-base text-[var(--text-primary)]">
                       ${(order.total || order.subtotal).toLocaleString('es-AR')}
                     </span>
                   </div>
 
-                  <div className="grid grid-cols-2 gap-2">
-                    {(kStatus === 'en_preparacion' || kStatus === 'pendiente') && (
+                  <div className="flex flex-wrap items-center gap-2">
+                    {kStatus === 'en_preparacion' && (
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(order, 'listo')}
-                        className="pos-btn-secondary text-xs"
+                        className="pos-btn-secondary text-xs flex-1"
                       >
-                        <i className="fa-solid fa-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
-                        <span>Listo</span>
+                        <i className="fa-solid fa-box text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+                        <span>Listo despacho</span>
                       </button>
                     )}
+
                     {kStatus === 'listo' && isDelivery && (
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(order, 'en_camino')}
-                        className="pos-btn-secondary text-xs"
+                        className="pos-btn-secondary text-xs flex-1"
                       >
-                        <i className="fa-solid fa-motorcycle text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+                        <i className="fa-solid fa-motorcycle text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
                         <span>En camino</span>
                       </button>
                     )}
-                    {kStatus === 'listo' && !isDelivery && (
+
+                    {(kStatus === 'listo' || kStatus === 'en_camino') && (
                       <button
                         type="button"
                         onClick={() => handleUpdateStatus(order, 'entregado')}
-                        className="pos-btn-secondary text-xs"
+                        className="pos-btn-secondary text-xs flex-1"
                       >
-                        <i className="fa-solid fa-bag-shopping text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
-                        <span>Entregar</span>
-                      </button>
-                    )}
-                    {kStatus === 'en_camino' && (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(order, 'entregado')}
-                        className="pos-btn-secondary text-xs"
-                      >
-                        <i className="fa-solid fa-circle-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
-                        <span>Entregar</span>
-                      </button>
-                    )}
-                    {kStatus === 'entregado' && (
-                      <button
-                        type="button"
-                        onClick={() => handleUpdateStatus(order, 'en_preparacion')}
-                        className="pos-btn-secondary text-xs"
-                      >
-                        <i className="fa-solid fa-rotate-left text-xs text-[var(--text-muted)]" aria-hidden="true"></i>
-                        <span>Reabrir</span>
+                        <i className="fa-solid fa-check text-xs text-[var(--status-open-fg)]" aria-hidden="true"></i>
+                        <span>Entregado</span>
                       </button>
                     )}
 
                     <button
                       type="button"
                       onClick={() => setSelectedOrderForCobro(order)}
-                      className="pos-btn-primary text-xs"
+                      className="pos-btn-primary text-xs flex-1"
                     >
                       <i className="fa-solid fa-dollar-sign text-xs" aria-hidden="true"></i>
                       <span>Cobrar</span>
@@ -441,21 +485,29 @@ export default function DeliveryManager() {
         </div>
       )}
 
-      {/* New Order Modal with Live Maps & Dynamic Zone Validator */}
+      {/* New Delivery / Take Away Modal */}
       {isNewOrderModalOpen && (
         <div
-          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3"
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3 sm:p-4"
           role="dialog"
           aria-modal="true"
-          aria-labelledby="new-delivery-modal-title"
+          aria-labelledby="delivery-modal-title"
         >
-          <div className="pos-panel w-full max-w-4xl max-h-[94vh] flex flex-col overflow-hidden shadow-2xl">
+          <div className="pos-panel w-full max-w-2xl max-h-[92vh] flex flex-col overflow-hidden shadow-2xl">
             {/* Modal Header */}
-            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
-              <h3 id="new-delivery-modal-title" className="font-display font-bold text-base text-[var(--text-primary)] flex items-center gap-2">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-3 shrink-0">
+              <div className="flex items-center gap-2.5">
                 <i className="fa-solid fa-motorcycle text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
-                <span>Nuevo pedido · Delivery o Take Away</span>
-              </h3>
+                <div>
+                  <h3 id="delivery-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                    Nuevo pedido de reparto o retiro
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Despacho a domicilio o take away con adicionales y notas a cocina
+                  </p>
+                </div>
+              </div>
+
               <button
                 type="button"
                 onClick={() => setIsNewOrderModalOpen(false)}
@@ -466,41 +518,61 @@ export default function DeliveryManager() {
               </button>
             </div>
 
+            {/* Modal Body */}
             <form onSubmit={handleCreateDeliveryOrder} className="flex-1 overflow-y-auto p-4 sm:p-5 space-y-4">
-              {/* Channel Segmented Selector */}
-              <div className="grid grid-cols-2 gap-2">
-                <button
-                  type="button"
-                  aria-pressed={channelType === 'delivery'}
-                  onClick={() => setChannelType('delivery')}
-                  className={channelType === 'delivery' ? 'pos-btn-primary' : 'pos-btn-secondary'}
-                >
-                  <i className="fa-solid fa-motorcycle text-xs" aria-hidden="true"></i>
-                  <span>Envío a domicilio</span>
-                </button>
-                <button
-                  type="button"
-                  aria-pressed={channelType === 'take_away'}
-                  onClick={() => setChannelType('take_away')}
-                  className={channelType === 'take_away' ? 'pos-btn-primary' : 'pos-btn-secondary'}
-                >
-                  <i className="fa-solid fa-bag-shopping text-xs" aria-hidden="true"></i>
-                  <span>Retira en local (Take Away)</span>
-                </button>
+              {!activeShift && (
+                <div className="p-3 bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] text-xs text-[var(--status-danger-fg)] rounded flex items-center gap-2">
+                  <i className="fa-solid fa-lock text-sm" aria-hidden="true"></i>
+                  <span>Caja cerrada: Iniciá o abrí un turno de caja para poder despachar pedidos de delivery o take away.</span>
+                </div>
+              )}
+
+              {/* Channel Selector */}
+              <div>
+                <label className="pos-label">Tipo de despacho:</label>
+                <div className="grid grid-cols-2 gap-2" role="group" aria-label="Canal de entrega">
+                  <button
+                    type="button"
+                    aria-pressed={channelType === 'delivery'}
+                    onClick={() => setChannelType('delivery')}
+                    className={`min-h-[44px] px-4 rounded border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
+                      channelType === 'delivery'
+                        ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] border-[var(--btn-primary-border)]'
+                        : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
+                    }`}
+                  >
+                    <i className="fa-solid fa-motorcycle text-xs" aria-hidden="true"></i>
+                    <span>Envío a domicilio</span>
+                  </button>
+
+                  <button
+                    type="button"
+                    aria-pressed={channelType === 'take_away'}
+                    onClick={() => setChannelType('take_away')}
+                    className={`min-h-[44px] px-4 rounded border text-sm font-semibold flex items-center justify-center gap-2 transition-colors ${
+                      channelType === 'take_away'
+                        ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] border-[var(--btn-primary-border)]'
+                        : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] border-[var(--border-subtle)]'
+                    }`}
+                  >
+                    <i className="fa-solid fa-bag-shopping text-xs" aria-hidden="true"></i>
+                    <span>Retiro por local (Take Away)</span>
+                  </button>
+                </div>
               </div>
 
-              {/* Customer Inputs */}
+              {/* Customer Contact Details */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 <div>
                   <label htmlFor="del-customer-name" className="pos-label">Nombre del cliente:</label>
                   <input
                     id="del-customer-name"
                     type="text"
-                    placeholder="Ej. Marcelo Fernández"
+                    required
+                    placeholder="Ej. Paula Gómez"
                     value={customerName}
                     onChange={(e) => setCustomerName(e.target.value)}
                     className="pos-input"
-                    required
                   />
                 </div>
                 <div>
@@ -508,7 +580,7 @@ export default function DeliveryManager() {
                   <input
                     id="del-customer-phone"
                     type="tel"
-                    placeholder="Ej. 11-4455-6677"
+                    placeholder="Ej. 11 4455-8899"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     className="pos-input font-mono"
@@ -516,161 +588,104 @@ export default function DeliveryManager() {
                 </div>
               </div>
 
-              {/* Delivery Specific: Address, Live Maps & 5km Radius Validator */}
+              {/* Delivery Address & Distance */}
               {channelType === 'delivery' && (
-                <div className="pos-subpanel p-4 space-y-4">
+                <div className="pos-panel p-4 space-y-3.5 bg-[var(--bg-subtle)] border-l-4 border-l-[var(--accent-brand)]">
                   <div>
-                    <div className="flex items-center justify-between gap-2 mb-1.5">
-                      <label htmlFor="del-address-input" className="text-xs font-bold text-[var(--text-primary)]">
-                        Dirección exacta de entrega:
-                      </label>
-                      {deliveryAddress && (
-                        <a
-                          href={`https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(deliveryAddress + ', CABA')}`}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-xs font-semibold text-[var(--accent-brand)] hover:underline inline-flex items-center gap-1"
-                        >
-                          <span>Abrir en Google Maps</span>
-                          <i className="fa-solid fa-arrow-up-right-from-square text-[10px]" aria-hidden="true"></i>
-                        </a>
-                      )}
-                    </div>
+                    <label htmlFor="del-address-input" className="pos-label">Dirección exacta de entrega:</label>
                     <input
                       id="del-address-input"
                       type="text"
-                      placeholder="Ej. Av. Santa Fe 2340, Piso 3 A"
+                      required
+                      placeholder="Calle y altura (ej. Av. Callao 1120)"
                       value={deliveryAddress}
                       onChange={(e) => setDeliveryAddress(e.target.value)}
-                      className="pos-input bg-[var(--bg-surface)]"
-                      required
+                      className="pos-input"
                     />
                   </div>
 
-                  {/* Quick Preset Reference Zones */}
+                  {/* Preset Addresses Chips */}
                   <div>
-                    <span className="text-xs font-semibold text-[var(--text-secondary)] block mb-1.5">
-                      Probar direcciones de referencia:
+                    <span className="text-[11px] font-semibold text-[var(--text-secondary)] block mb-1.5">
+                      Direcciones frecuentes para pruebas rápidas:
                     </span>
                     <div className="flex flex-wrap gap-1.5">
-                      {PRESET_ADDRESSES.map((preset, idx) => (
+                      {PRESET_ADDRESSES.map((p, idx) => (
                         <button
                           key={idx}
                           type="button"
-                          onClick={() => handleSelectPresetAddress(preset)}
-                          className="min-h-[44px] px-3 rounded bg-[var(--bg-surface)] hover:bg-[var(--bg-hover)] border border-[var(--border-subtle)] text-xs text-[var(--text-primary)] transition-colors inline-flex items-center gap-1.5"
+                          onClick={() => handleSelectPresetAddress(p)}
+                          className="text-xs px-2.5 py-1 rounded bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors font-mono"
                         >
-                          <span>{preset.address}</span>
-                          <span className={`font-mono font-bold ${preset.distanceKm > MAX_DELIVERY_RADIUS_KM ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'}`}>
-                            ({preset.distanceKm} km)
-                          </span>
+                          {p.address} ({p.distanceKm} km)
                         </button>
                       ))}
                     </div>
                   </div>
 
-                  {/* Split Map Preview + Distance Gauge */}
-                  <div className="grid grid-cols-1 lg:grid-cols-2 gap-3">
-                    {/* Live Google Maps Embed with reserved height (R-40) */}
-                    <div className="rounded border border-[var(--border-subtle)] overflow-hidden bg-[var(--bg-surface)] flex flex-col">
-                      <div className="px-3 py-2 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] flex items-center justify-between text-xs">
-                        <span className="font-semibold text-[var(--text-primary)] flex items-center gap-1.5">
-                          <i className="fa-solid fa-map-location-dot text-[var(--accent-brand)]" aria-hidden="true"></i>
-                          <span>Vista en Maps</span>
-                        </span>
-                        <span className="text-[var(--text-muted)] truncate max-w-[180px]">
-                          {deliveryAddress || RESTAURANT_LOCATION.address}
+                  {/* Distance Slider & Fee Calculation */}
+                  <div className="pos-subpanel p-3 space-y-2.5">
+                    <div>
+                      <div className="flex items-center justify-between text-xs font-semibold mb-1">
+                        <label htmlFor="del-distance-range" className="text-[var(--text-secondary)]">
+                          Distancia calculada desde local central:
+                        </label>
+                        <span className="font-mono font-bold text-[var(--text-primary)]">
+                          {distanceKm.toFixed(1)} km
                         </span>
                       </div>
-                      <iframe
-                        title="Mapa de ubicación de entrega"
-                        src={`https://maps.google.com/maps?q=${mapQuery}&t=&z=14&ie=UTF8&iwloc=&output=embed`}
-                        width="400"
-                        height="180"
-                        loading="lazy"
-                        referrerPolicy="no-referrer-when-downgrade"
-                        className="w-full h-[180px] border-0 block"
+                      <input
+                        id="del-distance-range"
+                        type="range"
+                        min="0.3"
+                        max="8.0"
+                        step="0.1"
+                        value={distanceKm}
+                        onChange={(e) => setDistanceKm(parseFloat(e.target.value))}
+                        className="w-full accent-[var(--accent-brand)] min-h-[44px]"
                       />
+
+                      {/* Radial Zone Bar */}
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[11px] font-mono text-[var(--text-muted)]">
+                          <span>0 km</span>
+                          <span>1.5 km</span>
+                          <span>3.0 km</span>
+                          <span>Máx. {MAX_DELIVERY_RADIUS_KM} km</span>
+                        </div>
+                        <div className="w-full h-2.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] overflow-hidden">
+                          <div
+                            className={`h-full transition-all ${
+                              deliveryInfo.isOutOfRange ? 'bg-[var(--status-danger-bar)]' : 'bg-[var(--status-open-bar)]'
+                            }`}
+                            style={{ width: `${Math.min((distanceKm / MAX_DELIVERY_RADIUS_KM) * 100, 100)}%` }}
+                          />
+                        </div>
+                      </div>
                     </div>
 
-                    {/* Dynamic Distance & Radius Validator */}
-                    <div className="pos-elevated p-3.5 flex flex-col justify-between space-y-3">
-                      <div className="space-y-2">
-                        <div className="flex items-center justify-between gap-2">
-                          <label htmlFor="del-distance-number" className="text-xs font-bold text-[var(--text-primary)]">
-                            Distancia desde el local:
-                          </label>
-                          <div className="flex items-center gap-1.5">
-                            <input
-                              id="del-distance-number"
-                              type="number"
-                              step="0.1"
-                              min="0.1"
-                              max="15.0"
-                              value={distanceKm}
-                              onChange={(e) => setDistanceKm(parseFloat(e.target.value) || 0)}
-                              className="pos-input w-20 font-mono text-right font-bold py-1"
-                            />
-                            <span className="text-xs font-mono text-[var(--text-secondary)]">km</span>
-                          </div>
+                    <div className="pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2">
+                      {deliveryInfo.isOutOfRange ? (
+                        <div className="text-xs font-bold text-[var(--status-danger-fg)] flex items-center gap-1.5">
+                          <i className="fa-solid fa-ban" aria-hidden="true"></i>
+                          <span>Excede el límite de {MAX_DELIVERY_RADIUS_KM} km</span>
                         </div>
-
-                        <label htmlFor="del-distance-range" className="text-xs font-semibold text-[var(--text-secondary)] block">
-                          Deslizar radio de entrega:
-                        </label>
-                        <input
-                          id="del-distance-range"
-                          type="range"
-                          min="0.3"
-                          max="8.0"
-                          step="0.1"
-                          value={distanceKm}
-                          onChange={(e) => setDistanceKm(parseFloat(e.target.value))}
-                          className="w-full accent-[var(--accent-brand)] min-h-[44px]"
-                        />
-
-                        {/* Radial Zone Bar */}
-                        <div className="space-y-1">
-                          <div className="flex justify-between text-[11px] font-mono text-[var(--text-muted)]">
-                            <span>0 km</span>
-                            <span>1.5 km</span>
-                            <span>3.0 km</span>
-                            <span>Máx. {MAX_DELIVERY_RADIUS_KM} km</span>
-                          </div>
-                          <div className="w-full h-2.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] overflow-hidden">
-                            <div
-                              className={`h-full transition-all ${
-                                deliveryInfo.isOutOfRange ? 'bg-[var(--status-danger-bar)]' : 'bg-[var(--status-open-bar)]'
-                              }`}
-                              style={{ width: `${Math.min((distanceKm / MAX_DELIVERY_RADIUS_KM) * 100, 100)}%` }}
-                            />
-                          </div>
+                      ) : (
+                        <div className="text-xs text-[var(--status-open-fg)] font-semibold">
+                          <div>{deliveryInfo.zoneName}</div>
+                          <div className="text-[var(--text-secondary)] font-normal">Demora est.: {deliveryInfo.estimatedTime}</div>
                         </div>
-                      </div>
+                      )}
 
-                      <div className="pt-2.5 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2">
-                        {deliveryInfo.isOutOfRange ? (
-                          <div className="text-xs font-bold text-[var(--status-danger-fg)] flex items-center gap-1.5">
-                            <i className="fa-solid fa-ban" aria-hidden="true"></i>
-                            <span>Excede el límite de {MAX_DELIVERY_RADIUS_KM} km</span>
-                          </div>
-                        ) : (
-                          <div className="text-xs text-[var(--status-open-fg)] font-semibold">
-                            <div>{deliveryInfo.zoneName}</div>
-                            <div className="text-[var(--text-secondary)] font-normal">Demora est.: {deliveryInfo.estimatedTime}</div>
-                          </div>
-                        )}
-
-                        <div className="text-right shrink-0">
-                          <span className="text-[11px] text-[var(--text-muted)] block">Tarifa envío</span>
-                          <span
-                            className={`font-mono font-bold text-base ${
-                              deliveryInfo.isOutOfRange ? 'text-[var(--status-danger-fg)] line-through' : 'text-[var(--text-primary)]'
-                            }`}
-                          >
-                            {deliveryInfo.isOutOfRange ? 'Bloqueado' : `$${deliveryInfo.fee.toLocaleString('es-AR')}`}
-                          </span>
-                        </div>
+                      <div className="text-right shrink-0">
+                        <span className="text-[11px] text-[var(--text-muted)] block">Tarifa envío</span>
+                        <span
+                          className={`font-mono font-bold text-base ${
+                            deliveryInfo.isOutOfRange ? 'text-[var(--status-danger-fg)] line-through' : 'text-[var(--text-primary)]'
+                          }`}
+                        >
+                          {deliveryInfo.isOutOfRange ? 'Bloqueado' : `$${deliveryInfo.fee.toLocaleString('es-AR')}`}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -696,7 +711,7 @@ export default function DeliveryManager() {
               {/* Quick Dish Picker */}
               <div className="space-y-2">
                 <span className="pos-label">Elegí los platos del pedido:</span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 pos-subpanel">
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto p-2 pos-subpanel">
                   {products.map(prod => (
                     <button
                       key={prod.id}
@@ -713,36 +728,100 @@ export default function DeliveryManager() {
                 </div>
               </div>
 
-              {/* Selected Items */}
+              {/* Selected Items with Extras and Kitchen Notes */}
               {cartItems.length > 0 && (
-                <div className="pos-subpanel divide-y divide-[var(--border-subtle)] px-3">
-                  {cartItems.map(item => (
-                    <div key={item.productId} className="flex justify-between items-center py-2 text-sm gap-2">
-                      <span className="font-medium text-[var(--text-primary)] truncate">{item.productName}</span>
-                      <div className="flex items-center gap-2 shrink-0">
-                        <button
-                          type="button"
-                          aria-label={`Restar ${item.productName}`}
-                          onClick={() => handleUpdateQty(item.productId, -1)}
-                          className="pos-btn-secondary min-w-[44px] px-0"
-                        >
-                          -
-                        </button>
-                        <span className="font-bold font-mono w-6 text-center">{item.quantity}</span>
-                        <button
-                          type="button"
-                          aria-label={`Sumar ${item.productName}`}
-                          onClick={() => handleUpdateQty(item.productId, 1)}
-                          className="pos-btn-secondary min-w-[44px] px-0"
-                        >
-                          +
-                        </button>
-                        <span className="font-mono font-bold text-[var(--text-primary)] w-20 text-right">
-                          ${item.subtotal.toLocaleString('es-AR')}
-                        </span>
+                <div className="space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-xs font-bold text-[var(--text-secondary)] uppercase">
+                      Platos seleccionados ({cartItems.reduce((acc, it) => acc + it.quantity, 0)})
+                    </span>
+                    <button
+                      type="button"
+                      onClick={() => setCartItems([])}
+                      className="pos-btn-ghost text-xs px-2"
+                    >
+                      Vaciar
+                    </button>
+                  </div>
+
+                  <div className="pos-subpanel divide-y divide-[var(--border-subtle)] px-3">
+                    {cartItems.map((item, idx) => (
+                      <div key={item.cartItemId} className="py-2.5 space-y-1.5 text-sm">
+                        <div className="flex justify-between items-center gap-2">
+                          <div className="min-w-0">
+                            <span className="font-medium text-[var(--text-primary)] truncate block">
+                              {item.productName}
+                            </span>
+                            <span className="text-xs font-mono text-[var(--text-muted)]">
+                              ${item.unitPrice.toLocaleString('es-AR')} c/u
+                            </span>
+                          </div>
+
+                          <div className="flex items-center gap-2 shrink-0">
+                            <button
+                              type="button"
+                              aria-label={`Restar ${item.productName}`}
+                              onClick={() => handleUpdateQty(item.cartItemId, -1)}
+                              className="pos-btn-secondary min-w-[36px] h-9 px-0"
+                            >
+                              -
+                            </button>
+                            <span className="font-bold font-mono w-6 text-center">{item.quantity}</span>
+                            <button
+                              type="button"
+                              aria-label={`Sumar ${item.productName}`}
+                              onClick={() => handleUpdateQty(item.cartItemId, 1)}
+                              className="pos-btn-secondary min-w-[36px] h-9 px-0"
+                            >
+                              +
+                            </button>
+                            <button
+                              type="button"
+                              aria-label={`Eliminar ${item.productName}`}
+                              onClick={() => handleRemoveItem(item.cartItemId)}
+                              className="pos-btn-ghost min-w-[36px] h-9 px-0 text-[var(--status-danger-fg)]"
+                            >
+                              <i className="fa-solid fa-trash-can text-xs" aria-hidden="true"></i>
+                            </button>
+                            <span className="font-mono font-bold text-[var(--text-primary)] w-20 text-right">
+                              ${item.subtotal.toLocaleString('es-AR')}
+                            </span>
+                          </div>
+                        </div>
+
+                        {/* Extras and Notes tags */}
+                        {(item.extras?.length > 0 || item.notes) && (
+                          <div className="space-y-1 pt-1">
+                            {item.extras?.length > 0 && (
+                              <div className="flex flex-wrap gap-1">
+                                {item.extras.map(ex => (
+                                  <span key={ex.id} className="pos-badge pos-badge-brand font-mono text-[11px]">
+                                    +{ex.name} (${ex.price})
+                                  </span>
+                                ))}
+                              </div>
+                            )}
+                            {item.notes && (
+                              <p className="text-[11px] text-[var(--status-bill-fg)] bg-[var(--status-bill-bg)] border border-[var(--status-bill-border)] px-2 py-0.5 rounded">
+                                Nota cocina: {item.notes}
+                              </p>
+                            )}
+                          </div>
+                        )}
+
+                        <div className="pt-1">
+                          <button
+                            type="button"
+                            onClick={() => handleOpenItemConfig(idx)}
+                            className="pos-btn-secondary text-xs px-2.5 py-1"
+                          >
+                            <i className="fa-solid fa-sliders text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+                            <span>{item.extras?.length || item.notes ? 'Editar nota / extras' : 'Aclaración / Extras'}</span>
+                          </button>
+                        </div>
                       </div>
-                    </div>
-                  ))}
+                    ))}
+                  </div>
                 </div>
               )}
 
@@ -757,7 +836,7 @@ export default function DeliveryManager() {
 
                 <button
                   type="submit"
-                  disabled={submitting || cartItems.length === 0 || (channelType === 'delivery' && deliveryInfo.isOutOfRange)}
+                  disabled={submitting || !activeShift || cartItems.length === 0 || (channelType === 'delivery' && deliveryInfo.isOutOfRange)}
                   className="pos-btn-primary px-6"
                 >
                   <i className="fa-solid fa-paper-plane text-xs" aria-hidden="true"></i>
@@ -765,6 +844,126 @@ export default function DeliveryManager() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Item Extras & Kitchen Notes Modal */}
+      {editingItemIndex !== null && cartItems[editingItemIndex] && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="del-item-config-title"
+        >
+          <div className="pos-panel w-full max-w-lg p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div className="min-w-0">
+                <h3 id="del-item-config-title" className="font-display font-bold text-base text-[var(--text-primary)] truncate">
+                  Extras y nota · {cartItems[editingItemIndex].productName}
+                </h3>
+                <p className="text-xs text-[var(--text-secondary)]">
+                  Personalizá el plato para cocina y despacho
+                </p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingItemIndex(null)}
+                aria-label="Cerrar personalización"
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            {/* Quick Kitchen Notes */}
+            <div className="space-y-2">
+              <span className="pos-label">Aclaraciones frecuentes a cocina:</span>
+              <div className="flex flex-wrap gap-1.5" role="group" aria-label="Notas rápidas">
+                {QUICK_NOTES.map(note => {
+                  const isSelected = tempNotes.includes(note);
+                  return (
+                    <button
+                      key={note}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => {
+                        if (isSelected) {
+                          setTempNotes(tempNotes.replace(note, '').replace(/,\s*,/g, ',').replace(/^,\s*|,\s*$/g, '').trim());
+                        } else {
+                          setTempNotes(tempNotes ? `${tempNotes}, ${note}` : note);
+                        }
+                      }}
+                      className={`min-h-[44px] px-3 rounded text-xs font-semibold border transition-colors ${
+                        isSelected
+                          ? 'bg-[var(--accent-brand)] text-white border-[var(--accent-brand)]'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      {note}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            {/* Free Note Input */}
+            <div>
+              <label htmlFor="del-kitchen-note-input" className="pos-label">Nota personalizada para cocina:</label>
+              <input
+                id="del-kitchen-note-input"
+                type="text"
+                placeholder="Ej. Salsa picante en pote aparte, bien caliente..."
+                value={tempNotes}
+                onChange={(e) => setTempNotes(e.target.value)}
+                className="pos-input"
+              />
+            </div>
+
+            {/* Additional Charged Extras */}
+            <div className="space-y-2">
+              <span className="pos-label">Adicionales con cargo:</span>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 max-h-48 overflow-y-auto p-1">
+                {AVAILABLE_EXTRAS.map(extra => {
+                  const isSelected = tempExtras.some(e => e.id === extra.id);
+                  return (
+                    <button
+                      key={extra.id}
+                      type="button"
+                      aria-pressed={isSelected}
+                      onClick={() => handleToggleExtra(extra)}
+                      className={`min-h-[44px] p-2.5 rounded border text-left transition-colors flex items-center justify-between gap-2 ${
+                        isSelected
+                          ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] border-[var(--btn-primary-border)]'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+                      }`}
+                    >
+                      <span className="text-xs font-medium truncate">{extra.name}</span>
+                      <span className="text-xs font-mono font-bold shrink-0">
+                        +${extra.price.toLocaleString('es-AR')}
+                      </span>
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
+              <button
+                type="button"
+                onClick={() => setEditingItemIndex(null)}
+                className="pos-btn-secondary flex-1"
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleSaveItemConfig}
+                className="pos-btn-primary flex-1"
+              >
+                Aplicar al plato
+              </button>
+            </div>
           </div>
         </div>
       )}

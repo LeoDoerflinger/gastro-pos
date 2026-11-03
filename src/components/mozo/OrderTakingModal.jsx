@@ -29,7 +29,7 @@ const QUICK_NOTES = [
 ];
 
 export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, onOrderSubmitted, channel = 'mesa' }) {
-  const { products, currentUser, showToast, refreshData } = useApp();
+  const { products, currentUser, showToast, refreshData, activeShift } = useApp();
 
   const [selectedCategory, setSelectedCategory] = useState('Todas');
   const [searchQuery, setSearchQuery] = useState('');
@@ -244,7 +244,7 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
                 )}
               </div>
               <p className="text-xs text-[var(--text-secondary)] truncate">
-                Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
+                Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
               </p>
             </div>
           </div>
@@ -583,6 +583,20 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
 
             {/* Cart Footer */}
             <div className="p-4 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] space-y-2.5 shrink-0">
+              {!activeShift && (
+                <div className="p-2.5 bg-[var(--status-danger-bg)] border border-[var(--status-danger-border)] text-xs text-[var(--status-danger-fg)] rounded flex items-center gap-2">
+                  <i className="fa-solid fa-lock text-xs" aria-hidden="true"></i>
+                  <span>Caja cerrada: Iniciá el turno de caja para poder marchar comandas y adicionar a mesas.</span>
+                </div>
+              )}
+
+              {activeOrder && (activeOrder.status === 'cuenta_solicitada' || activeOrder.status === 'pendiente_cobro' || activeOrder.status === 'cuenta_pedida') && (
+                <div className="p-2.5 bg-[var(--status-account-bg)] border border-[var(--status-account-border)] text-xs text-[var(--status-account-fg)] rounded flex items-center gap-2">
+                  <i className="fa-solid fa-bell-concierge text-xs" aria-hidden="true"></i>
+                  <span>Mesa con cuenta pedida / cobro pendiente. Al marchar nuevos platos volverá automáticamente a estado Abierta.</span>
+                </div>
+              )}
+
               <div className="flex items-center justify-between">
                 <span className="text-sm font-semibold text-[var(--text-secondary)]">Total nueva comanda</span>
                 <span className="font-mono font-bold text-lg text-[var(--text-primary)]">
@@ -592,7 +606,7 @@ export default function OrderTakingModal({ isOpen, onClose, table, activeOrder, 
 
               <button
                 type="button"
-                disabled={submitting || cartItems.length === 0}
+                disabled={submitting || cartItems.length === 0 || !activeShift}
                 onClick={handleSubmit}
                 className="pos-btn-primary w-full"
               >

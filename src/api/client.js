@@ -17,7 +17,7 @@ export function normalizeUsersRoleNames(users = []) {
   const indices = {};
   for (const u of users) {
     const r = u.role || 'mozo';
-    const base = ROLE_LABELS[r] || 'Operador';
+    const base = ROLE_LABELS[r] || 'Usuario';
     if (counts[r] > 1) {
       indices[r] = (indices[r] || 0) + 1;
       u.name = `${base} ${indices[r]}`;
@@ -356,7 +356,7 @@ export const api = {
     const role = userData.role || 'mozo';
     const newUser = {
       id: 'u_' + Date.now(),
-      name: ROLE_LABELS[role] || 'Operador',
+      name: ROLE_LABELS[role] || 'Usuario',
       role,
       pin: cleanPin,
       email: userData.email || '',
@@ -551,7 +551,7 @@ export const api = {
       change: `${quantityChange > 0 ? '+' : ''}${quantityChange} ${ing.unit}`,
       resultingStock: ing.stock,
       reason: payload.reason || 'Ajuste manual de inventario',
-      user: payload.user || 'Operador'
+      user: payload.user || 'Usuario'
     };
     if (!db.stockLog) db.stockLog = [];
     db.stockLog.unshift(logEntry);
@@ -576,6 +576,10 @@ export const api = {
 
   createOrder: async (orderData, user) => {
     const db = await ensureDbInitialized();
+    const activeShift = (db.cashShifts || []).find(s => s.status === 'abierto');
+    if (!activeShift) {
+      throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
+    }
     const nextOrderNumber = Math.max(100, ...(db.orders || []).map(o => o.orderNumber || 0)) + 1;
     const subtotal = (orderData.items || []).reduce((acc, it) => acc + (Number(it.unitPrice) || 0) * (Number(it.quantity) || 1), 0);
     const deliveryFee = Number(orderData.deliveryFee) || 0;
@@ -596,7 +600,7 @@ export const api = {
       deliveryFee,
       driverName: orderData.driverName || null,
       waiterId: user?.id || orderData.waiterId || null,
-      waiterName: user?.name || orderData.waiterName || 'Operador',
+      waiterName: user?.name || orderData.waiterName || 'Usuario',
       status: 'abierto',
       kitchenStatus: orderData.kitchenStatus || 'en_preparacion',
       diners: Number(orderData.diners) || 1,
@@ -668,6 +672,11 @@ export const api = {
 
   addItemsToOrder: async (orderId, items, user) => {
     const db = await ensureDbInitialized();
+    const activeShift = (db.cashShifts || []).find(s => s.status === 'abierto');
+    if (!activeShift) {
+      throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
+    }
+
     rawFetchJson(`/orders/${orderId}/items`, {
       method: 'POST',
       body: JSON.stringify({ items, user })
@@ -675,6 +684,11 @@ export const api = {
 
     const order = (db.orders || []).find(o => o.id === orderId);
     if (!order) throw new Error('Comanda no encontrada');
+
+    // Si la mesa estaba en cuenta solicitada o pendiente de cobro, vuelve a abierto
+    if (order.status === 'cuenta_solicitada' || order.status === 'pendiente_cobro' || order.status === 'cuenta_pedida') {
+      order.status = 'abierto';
+    }
 
     const formattedItems = (items || []).map((it, idx) => ({
       id: 'item_' + Date.now() + '_' + idx,
@@ -691,6 +705,9 @@ export const api = {
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + (order.tip || 0);
 
     const table = order.tableId ? (db.tables || []).find(t => t.id === order.tableId) : null;
+    if (table) {
+      table.status = 'ocupada';
+    }
     const tableCode = table ? getTableCodeForClient(table) : `Comanda #${order.orderNumber}`;
     const waiterName = user?.name || order.waiterName || 'Mozo';
 

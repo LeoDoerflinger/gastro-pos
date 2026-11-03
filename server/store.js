@@ -25,7 +25,7 @@ export function normalizeUsersRoleNames(users = []) {
   const indices = {};
   for (const u of users) {
     const r = u.role || 'mozo';
-    const base = ROLE_LABELS[r] || 'Operador';
+    const base = ROLE_LABELS[r] || 'Usuario';
     if (counts[r] > 1) {
       indices[r] = (indices[r] || 0) + 1;
       u.name = `${base} ${indices[r]}`;
@@ -215,7 +215,7 @@ class Store {
     const role = userData.role || 'mozo';
     const newUser = {
       id: userData.id || ('u_' + Date.now()),
-      name: ROLE_LABELS[role] || 'Operador',
+      name: ROLE_LABELS[role] || 'Usuario',
       role,
       pin: cleanPin,
       email: userData.email || '',
@@ -473,6 +473,9 @@ class Store {
   }
 
   createOrder(orderData, user) {
+    if (!this.getActiveShift()) {
+      throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
+    }
     const nextOrderNumber = Math.max(100, ...this.data.orders.map(o => o.orderNumber || 0)) + 1;
     const subtotal = (orderData.items || []).reduce((acc, it) => acc + (it.unitPrice * it.quantity), 0);
     const deliveryFee = Number(orderData.deliveryFee) || 0;
@@ -557,8 +560,16 @@ class Store {
   }
 
   addItemsToOrder(orderId, newItems, user) {
+    if (!this.getActiveShift()) {
+      throw new Error('La caja se encuentra cerrada. Iniciá un turno de caja para realizar comandas o adiciones.');
+    }
     const order = this.data.orders.find(o => o.id === orderId);
     if (!order) return null;
+
+    // Si la mesa estaba en cuenta solicitada o pendiente de cobro, vuelve a abierto
+    if (order.status === 'cuenta_solicitada' || order.status === 'pendiente_cobro' || order.status === 'cuenta_pedida') {
+      order.status = 'abierto';
+    }
 
     const formattedItems = newItems.map((it, idx) => ({
       id: 'item_' + Date.now() + '_' + idx,
@@ -576,6 +587,9 @@ class Store {
     order.total = order.subtotal + (order.deliveryFee || 0) - (order.discount || 0) + (order.tip || 0);
 
     const table = order.tableId ? this.data.tables.find(t => t.id === order.tableId) : null;
+    if (table) {
+      table.status = 'ocupada';
+    }
     const tableCode = table ? getTableCodeForStore(table) : `Comanda #${order.orderNumber}`;
     const waiterName = user?.name || order.waiterName || 'Mozo';
 

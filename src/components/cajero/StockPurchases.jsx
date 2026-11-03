@@ -134,7 +134,7 @@ export default function StockPurchases() {
               Nuevo ingreso de mercadería
             </h3>
             <span className="text-xs text-[var(--text-secondary)]">
-              Operador: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
+              Usuario: <strong className="text-[var(--text-primary)]">{currentUser.name}</strong>
             </span>
           </div>
 

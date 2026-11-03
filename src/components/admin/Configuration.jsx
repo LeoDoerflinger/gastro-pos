@@ -68,10 +68,10 @@ export default function Configuration() {
         avatar: avatarIcon
       });
       await refreshData();
-      showToast(`Operador ${created.name} (PIN ${created.pin}) habilitado`);
+      showToast(`Usuario ${created.name} (PIN ${created.pin}) habilitado`);
       setUserPin('');
     } catch (err) {
-      showToast(err.message || 'No se pudo registrar el operador', 'error');
+      showToast(err.message || 'No se pudo registrar el usuario', 'error');
     } finally {
       setSubmitting(false);
     }
@@ -79,22 +79,22 @@ export default function Configuration() {
 
   const handleDeleteUser = async (id, name) => {
     if (id === currentUser.id) {
-      showToast('No podés dar de baja el operador con sesión abierta', 'error');
+      showToast('No podés dar de baja el usuario con sesión abierta', 'error');
       return;
     }
     if (window.confirm(`¿Dar de baja a ${name}?`)) {
       try {
         await api.deleteUser(id);
         await refreshData();
-        showToast(`Operador ${name} dado de baja`);
+        showToast(`Usuario ${name} dado de baja`);
       } catch (err) {
-        showToast('No se pudo eliminar el operador', 'error');
+        showToast('No se pudo eliminar el usuario', 'error');
       }
     }
   };
 
   return (
-    <section className="space-y-5" aria-label="Configuración de salón y operadores">
+    <section className="space-y-5" aria-label="Configuración de salón y usuarios">
       {/* Open Header */}
       <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
@@ -102,7 +102,7 @@ export default function Configuration() {
             Configuración de salón y personal
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
-            Administrá la numeración por sectores y las claves PIN de acceso de cada operador.
+            Administrá la numeración por sectores y las claves PIN de acceso de cada usuario.
           </p>
         </div>
 
@@ -237,7 +237,7 @@ export default function Configuration() {
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
           <div className="lg:col-span-5 pos-panel p-5 space-y-4">
             <h3 className="font-display font-bold text-base text-[var(--text-primary)] pb-3 border-b border-[var(--border-subtle)]">
-              Registrar operador
+              Registrar usuario
             </h3>
 
             <form onSubmit={handleAddUser} className="space-y-3.5">
@@ -281,7 +281,7 @@ export default function Configuration() {
                 className="pos-btn-primary w-full"
               >
                 <i className="fa-solid fa-user-plus text-xs" aria-hidden="true"></i>
-                <span>Habilitar operador</span>
+                <span>Habilitar usuario</span>
               </button>
             </form>
           </div>
