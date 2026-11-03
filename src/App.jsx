@@ -147,21 +147,6 @@ export default function App() {
         {renderContent()}
       </main>
 
-      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 sm:px-6 py-2.5 text-xs text-[var(--text-secondary)]">
-        <div className="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
-            <span>·</span>
-            <span>Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong></span>
-          </div>
-          <div className="flex items-center gap-3 font-mono">
-            <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>
-            <span>·</span>
-            <span>Tema: {theme === 'graphite' ? 'Grafito Táctil' : 'Papel Técnico'}</span>
-          </div>
-        </div>
-      </footer>
-
       <PinModal />
       <MobileQrModal />
       <ShiftBalanceModal />

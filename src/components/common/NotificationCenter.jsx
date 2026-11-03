@@ -3,7 +3,15 @@ import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import ReceiptModal from './ReceiptModal';
 
-function playNotificationSound(type = 'appear') {
+let lastSoundTime = 0;
+
+function playArrivalSound() {
+  const nowMs = Date.now();
+  if (nowMs - lastSoundTime < 800) {
+    return; // Evita acople de audio y repeticion por rafagas
+  }
+  lastSoundTime = nowMs;
+
   try {
     const AudioCtx = window.AudioContext || window.webkitAudioContext;
     if (!AudioCtx) return;
@@ -17,33 +25,21 @@ function playNotificationSound(type = 'appear') {
     osc.connect(gain);
     gain.connect(ctx.destination);
 
-    if (type === 'appear') {
-      // Gentle 2-tone pleasant ascending chime (523Hz C5 -> 659Hz E5)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(523.25, now);
-      osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.12, now + 0.03);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
-      osc.start(now);
-      osc.stop(now + 0.36);
-    } else {
-      // Soft descending chime when leaving screen (440Hz -> 349Hz)
-      osc.type = 'sine';
-      osc.frequency.setValueAtTime(440, now);
-      osc.frequency.exponentialRampToValueAtTime(349.23, now + 0.10);
-      gain.gain.setValueAtTime(0.001, now);
-      gain.gain.linearRampToValueAtTime(0.06, now + 0.02);
-      gain.gain.exponentialRampToValueAtTime(0.001, now + 0.22);
-      osc.start(now);
-      osc.stop(now + 0.23);
-    }
+    // Sonido suave y discreto solo al llegar comanda o cuenta
+    osc.type = 'sine';
+    osc.frequency.setValueAtTime(523.25, now);
+    osc.frequency.exponentialRampToValueAtTime(659.25, now + 0.12);
+    gain.gain.setValueAtTime(0.001, now);
+    gain.gain.linearRampToValueAtTime(0.12, now + 0.03);
+    gain.gain.exponentialRampToValueAtTime(0.001, now + 0.35);
+    osc.start(now);
+    osc.stop(now + 0.36);
 
     setTimeout(() => {
       ctx.close().catch(() => {});
     }, 500);
   } catch {
-    // Browser may restrict audio before user gesture
+    // Restriccion de audio del navegador
   }
 }
 
@@ -68,6 +64,7 @@ export default function NotificationCenter() {
   const [dismissedFromScreen, setDismissedFromScreen] = useState(() => new Set());
   const [exitingIds, setExitingIds] = useState(() => new Set());
   const seenIdsRef = useRef(new Set());
+  const isInitialMount = useRef(true);
 
   useEffect(() => {
     if (!isNotificationsOpen) return;
@@ -80,25 +77,29 @@ export default function NotificationCenter() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isNotificationsOpen, setIsNotificationsOpen]);
 
-  // Handle auto-dismiss and sounds for new unread notifications
+  // Sonido exclusivamente al llegar una nueva notificacion no leida
   useEffect(() => {
+    if (isInitialMount.current) {
+      (notifications || []).forEach(n => seenIdsRef.current.add(n.id));
+      isInitialMount.current = false;
+      return;
+    }
     const unread = (notifications || []).filter(n => !n.read);
     const brandNew = unread.filter(n => !seenIdsRef.current.has(n.id));
 
     if (brandNew.length > 0) {
       brandNew.forEach(n => seenIdsRef.current.add(n.id));
-      playNotificationSound('appear');
+      playArrivalSound();
     }
+  }, [notifications]);
 
-    // Schedule 6s auto-dismiss for active unread notifications that are not yet dismissed from screen
+  // Auto-cierre de popups a los 6s en pantalla (sin ningun sonido al desaparecer)
+  useEffect(() => {
+    const unread = (notifications || []).filter(n => !n.read);
     unread.forEach(n => {
       if (!dismissedFromScreen.has(n.id) && !exitingIds.has(n.id)) {
         const timer = setTimeout(() => {
-          // Trigger exit animation
           setExitingIds(prev => new Set([...prev, n.id]));
-          playNotificationSound('disappear');
-
-          // After 350ms animation, remove from screen without marking as read
           setTimeout(() => {
             setDismissedFromScreen(prev => new Set([...prev, n.id]));
             setExitingIds(prev => {
@@ -126,7 +127,6 @@ export default function NotificationCenter() {
 
   const handleManualDismissPopup = (notifId, markRead = false) => {
     setExitingIds(prev => new Set([...prev, notifId]));
-    playNotificationSound('disappear');
     setTimeout(() => {
       setDismissedFromScreen(prev => new Set([...prev, notifId]));
       setExitingIds(prev => {

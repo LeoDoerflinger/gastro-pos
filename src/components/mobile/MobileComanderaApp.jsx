@@ -135,6 +135,15 @@ export default function MobileComanderaApp() {
               <i className="fa-solid fa-key text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
             </button>
 
+            <a
+              href="/"
+              title="Volver a versión escritorio"
+              aria-label="Volver a versión escritorio"
+              className="pos-btn-secondary px-2.5 text-xs inline-flex items-center"
+            >
+              <i className="fa-solid fa-desktop text-xs" aria-hidden="true"></i>
+            </a>
+
             <button
               type="button"
               onClick={logoutUser}
@@ -303,23 +312,6 @@ export default function MobileComanderaApp() {
           </div>
         )}
       </main>
-
-      {/* Footer */}
-      <footer className="border-t border-[var(--border-subtle)] bg-[var(--bg-surface)] px-3 py-2.5 text-xs text-[var(--text-secondary)]">
-        <div className="max-w-xl mx-auto flex flex-wrap items-center justify-between gap-2">
-          <div className="flex items-center gap-2">
-            <span className="font-display font-bold text-[var(--text-primary)]">GastroPOS</span>
-            <span>·</span>
-            <span>Usuario: <strong className="text-[var(--text-primary)]">{formatUserRoleDisplay(currentUser.name, currentUser.role, users)}</strong></span>
-          </div>
-          <div className="flex items-center gap-3 font-mono">
-            <span>{activeShift ? 'Caja abierta' : 'Caja cerrada'}</span>
-            <a href="/" className="pos-btn-secondary text-xs px-3 font-sans">
-              Versión escritorio
-            </a>
-          </div>
-        </div>
-      </footer>
 
       {selectedTable && (
         <OrderTakingModal

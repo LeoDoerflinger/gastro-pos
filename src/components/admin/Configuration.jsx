@@ -15,6 +15,59 @@ export default function Configuration() {
 
   const [userRole, setUserRole] = useState('mozo');
   const [userPin, setUserPin] = useState('');
+  const [userName, setUserName] = useState('');
+  const [userEmail, setUserEmail] = useState('');
+
+  // Estado para edicion de usuario
+  const [editingUser, setEditingUser] = useState(null);
+  const [editName, setEditName] = useState('');
+  const [editPin, setEditPin] = useState('');
+  const [editEmail, setEditEmail] = useState('');
+  const [editRole, setEditRole] = useState('mozo');
+
+  useEffect(() => {
+    const onKeyDown = (e) => {
+      if (e.key === 'Escape') {
+        setEditingUser(null);
+      }
+    };
+    if (editingUser) {
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
+  }, [editingUser]);
+
+  const handleOpenEditUser = (u) => {
+    setEditingUser(u);
+    setEditName(u.name || '');
+    setEditPin(u.pin || '');
+    setEditEmail(u.email || '');
+    setEditRole(u.role || 'mozo');
+  };
+
+  const handleSaveEditUser = async (e) => {
+    e.preventDefault();
+    if (editPin.length !== 4) {
+      showToast('Ingresá un PIN numérico de 4 cifras', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.updateUser(editingUser.id, {
+        name: editName.trim(),
+        pin: editPin.trim(),
+        email: editEmail.trim(),
+        role: editRole
+      });
+      await refreshData();
+      showToast(`Datos de ${editName} actualizados`);
+      setEditingUser(null);
+    } catch (err) {
+      showToast(err.message || 'No se pudo actualizar el usuario', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleAddTable = async (e) => {
     e.preventDefault();
@@ -65,11 +118,15 @@ export default function Configuration() {
       const created = await api.createUser({
         role: userRole,
         pin: userPin.trim(),
+        name: userName.trim() || undefined,
+        email: userEmail.trim() || undefined,
         avatar: avatarIcon
       });
       await refreshData();
       showToast(`Usuario ${created.name} (PIN ${created.pin}) habilitado`);
       setUserPin('');
+      setUserName('');
+      setUserEmail('');
     } catch (err) {
       showToast(err.message || 'No se pudo registrar el usuario', 'error');
     } finally {
@@ -256,6 +313,18 @@ export default function Configuration() {
               </div>
 
               <div>
+                <label htmlFor="cfg-user-name" className="pos-label">Nombre o alias (opcional):</label>
+                <input
+                  id="cfg-user-name"
+                  type="text"
+                  placeholder="Ej. Lucas / Mozo 1"
+                  value={userName}
+                  onChange={(e) => setUserName(e.target.value)}
+                  className="pos-input"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="cfg-user-pin" className="pos-label">Clave PIN (4 dígitos):</label>
                 <input
                   id="cfg-user-pin"
@@ -270,9 +339,21 @@ export default function Configuration() {
                 />
               </div>
 
+              <div>
+                <label htmlFor="cfg-user-email" className="pos-label">Mail de contacto (opcional):</label>
+                <input
+                  id="cfg-user-email"
+                  type="email"
+                  placeholder="usuario@gastrogestion.com"
+                  value={userEmail}
+                  onChange={(e) => setUserEmail(e.target.value)}
+                  className="pos-input"
+                />
+              </div>
+
               <div className="pos-subpanel p-3 text-xs text-[var(--text-secondary)] space-y-1">
-                <strong className="text-[var(--text-primary)] block">Identificación por rol:</strong>
-                <p>· El sistema asigna automáticamente el nombre por puesto y agrega número correlativo si hay más de un usuario en ese rol.</p>
+                <strong className="text-[var(--text-primary)] block">Identificación de personal:</strong>
+                <p>· Podés personalizar el nombre, la clave PIN y el mail de contacto de cada integrante del equipo.</p>
               </div>
 
               <button
@@ -302,16 +383,27 @@ export default function Configuration() {
                       </div>
                       <div>
                         <div className="font-bold text-sm text-[var(--text-primary)]">{u.name}</div>
-                        <div className="text-xs text-[var(--text-secondary)] font-mono capitalize">
-                          {u.role} · PIN <strong className="text-[var(--text-primary)]">{u.pin}</strong>
+                        <div className="text-xs text-[var(--text-secondary)] font-mono">
+                          <span className="capitalize font-semibold">{u.role}</span> · PIN <strong className="text-[var(--text-primary)]">{u.pin}</strong>
+                          {u.email && <span className="text-[var(--text-muted)] ml-1.5 font-sans">({u.email})</span>}
                         </div>
                       </div>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                      {u.id === currentUser.id ? (
-                        <span className="pos-badge pos-badge-open">En uso</span>
-                      ) : (
+                    <div className="flex items-center gap-1.5">
+                      {u.id === currentUser.id && (
+                        <span className="pos-badge pos-badge-open mr-1">En uso</span>
+                      )}
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditUser(u)}
+                        className="pos-btn-ghost text-[var(--text-muted)] hover:text-[var(--text-primary)]"
+                        aria-label={`Editar datos de ${u.name}`}
+                        title="Modificar nombre, PIN o correo"
+                      >
+                        <i className="fa-solid fa-pen-to-square text-sm" aria-hidden="true"></i>
+                      </button>
+                      {u.id !== currentUser.id && (
                         <button
                           type="button"
                           onClick={() => handleDeleteUser(u.id, u.name)}
@@ -326,6 +418,109 @@ export default function Configuration() {
                 );
               })}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* Modal para editar datos básicos del usuario */}
+      {editingUser && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-user-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between border-b border-[var(--border-subtle)] pb-3">
+              <div className="flex items-center gap-2.5">
+                <i className="fa-solid fa-user-pen text-[var(--accent-brand)]" aria-hidden="true"></i>
+                <h3 id="edit-user-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Modificar datos de {editingUser.name}
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setEditingUser(null)}
+                className="pos-btn-ghost -mr-1"
+                aria-label="Cerrar ventana de edición"
+              >
+                <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditUser} className="space-y-3.5">
+              <div>
+                <label htmlFor="edit-usr-name" className="pos-label">Nombre o alias:</label>
+                <input
+                  id="edit-usr-name"
+                  type="text"
+                  value={editName}
+                  onChange={(e) => setEditName(e.target.value)}
+                  className="pos-input"
+                  required
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-usr-pin" className="pos-label">Clave PIN (4 dígitos):</label>
+                  <input
+                    id="edit-usr-pin"
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={4}
+                    value={editPin}
+                    onChange={(e) => setEditPin(e.target.value.replace(/\D/g, ''))}
+                    className="pos-input font-mono font-bold text-center tracking-widest text-base"
+                    required
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-usr-role" className="pos-label">Puesto / Rol:</label>
+                  <select
+                    id="edit-usr-role"
+                    value={editRole}
+                    onChange={(e) => setEditRole(e.target.value)}
+                    className="pos-input"
+                  >
+                    <option value="mozo">Mozo</option>
+                    <option value="cajero">Cajero</option>
+                    <option value="admin">Admin</option>
+                  </select>
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-usr-email" className="pos-label">Mail de contacto:</label>
+                <input
+                  id="edit-usr-email"
+                  type="email"
+                  placeholder="ejemplo@gastrogestion.com"
+                  value={editEmail}
+                  onChange={(e) => setEditEmail(e.target.value)}
+                  className="pos-input"
+                />
+              </div>
+
+              <div className="flex items-center justify-end gap-2.5 pt-3 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setEditingUser(null)}
+                  className="pos-btn-secondary"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary"
+                >
+                  <i className="fa-solid fa-floppy-disk text-xs" aria-hidden="true"></i>
+                  <span>{submitting ? 'Guardando...' : 'Guardar cambios'}</span>
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

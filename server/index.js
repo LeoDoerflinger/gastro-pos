@@ -45,6 +45,15 @@ app.post('/api/users', (req, res) => {
   }
 });
 
+app.put('/api/users/:id', (req, res) => {
+  try {
+    const updated = store.updateUser(req.params.id, req.body || {});
+    res.json(updated);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.delete('/api/users/:id', (req, res) => {
   store.deleteUser(req.params.id);
   res.json({ success: true });

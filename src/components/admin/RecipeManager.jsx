@@ -145,12 +145,12 @@ export default function RecipeManager() {
   };
 
   return (
-    <section className="space-y-5" aria-label="Recetario y escandallos">
+    <section className="space-y-5" aria-label="Recetario e ingredientes">
       {/* Open Header */}
       <div className="pb-4 border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
         <div>
           <h2 className="font-display font-bold text-lg text-[var(--text-primary)]">
-            Recetario y escandallos de cocina
+            Recetario e ingredientes de cocina
           </h2>
           <p className="text-sm text-[var(--text-secondary)]">
             Definí qué cantidad de cada insumo lleva cada plato para descontar stock automáticamente al comandar.
@@ -190,7 +190,7 @@ export default function RecipeManager() {
                   onClick={() => handleSelectProduct(prod)}
                   className={`w-full p-3.5 text-left transition-colors flex flex-col gap-1.5 min-h-[68px] ${
                     isSelected
-                      ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--accent-brand)]'
+                      ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--border-strong)]'
                       : 'hover:bg-[var(--bg-hover)]'
                   }`}
                 >
@@ -221,7 +221,7 @@ export default function RecipeManager() {
             <div>
               <div className="p-4 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                 <div>
-                  <span className="text-xs font-semibold text-[var(--accent-brand)] block">
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] block">
                     {selectedProduct.category}
                   </span>
                   <h3 className="font-display font-bold text-lg text-[var(--text-primary)]">

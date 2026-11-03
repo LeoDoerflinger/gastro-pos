@@ -68,9 +68,12 @@ export default function SidebarDrawer() {
 
   const navItemClass = (tab) => {
     const active = activeTab === tab;
+    const isNeutralTab = tab === 'stock_purchases' || tab === 'recetario';
     return `w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded text-sm transition-colors text-left ${
       active
-        ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] font-bold border border-[var(--border-strong)] border-l-4 border-l-[var(--accent-brand)]'
+        ? isNeutralTab
+          ? 'bg-[var(--bg-elevated)] text-[var(--text-primary)] font-bold border border-[var(--border-strong)] border-l-4 border-l-[var(--border-strong)]'
+          : 'bg-[var(--bg-elevated)] text-[var(--text-primary)] font-bold border border-[var(--border-strong)] border-l-4 border-l-[var(--accent-brand)]'
         : 'text-[var(--text-secondary)] hover:bg-[var(--bg-hover)] hover:text-[var(--text-primary)] font-medium border border-transparent'
     }`;
   };
@@ -157,7 +160,7 @@ export default function SidebarDrawer() {
             aria-current={activeTab === 'mesas' ? 'page' : undefined}
             className={navItemClass('mesas')}
           >
-            <i className="fa-solid fa-utensils w-4 text-center text-sm text-[var(--accent-brand)]" aria-hidden="true"></i>
+            <i className="fa-solid fa-utensils w-4 text-center text-sm" aria-hidden="true"></i>
             <span>Salón y Mesas</span>
           </button>
 
@@ -220,7 +223,7 @@ export default function SidebarDrawer() {
                 className={navItemClass('recetario')}
               >
                 <i className="fa-solid fa-book-open w-4 text-center text-sm" aria-hidden="true"></i>
-                <span>Recetario y Escandallos</span>
+                <span>Recetario e ingredientes</span>
               </button>
 
               <button

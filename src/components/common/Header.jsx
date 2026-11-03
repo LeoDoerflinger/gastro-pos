@@ -25,7 +25,7 @@ export default function Header() {
     arqueo: 'Arqueo de Caja',
     delivery: 'Delivery y Take Away',
     stock_purchases: 'Facturas y Proveedores',
-    recetario: 'Recetario y Escandallos',
+    recetario: 'Recetario e ingredientes',
     stock_control: 'Control de Stock',
     ventas: 'Ventas y Analítica',
     config: 'Configuración'

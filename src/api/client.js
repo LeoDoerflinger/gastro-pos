@@ -379,6 +379,40 @@ export const api = {
     return db.users.find(u => u.id === newUser.id) || newUser;
   },
 
+  updateUser: async (id, updates = {}) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/users/${id}`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(updates)
+    }).catch(() => {});
+
+    const user = (db.users || []).find(u => u.id === id);
+    if (!user) throw new Error('Usuario no encontrado');
+
+    if (updates.pin) {
+      const cleanPin = String(updates.pin).trim();
+      if (cleanPin.length !== 4) throw new Error('Ingresá un PIN válido de 4 dígitos');
+      const conflict = (db.users || []).find(u => u.id !== id && String(u.pin).trim() === cleanPin);
+      if (conflict) throw new Error(`El PIN ${cleanPin} ya está asignado a otro usuario`);
+      user.pin = cleanPin;
+    }
+
+    if (typeof updates.name === 'string' && updates.name.trim()) {
+      user.name = updates.name.trim();
+    }
+    if (typeof updates.email === 'string') {
+      user.email = updates.email.trim();
+    }
+    if (updates.role && updates.role !== user.role) {
+      user.role = updates.role;
+      user.avatar = updates.avatar || (user.role === 'admin' ? 'fa-solid fa-user-shield' : user.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie');
+      normalizeUsersRoleNames(db.users);
+    }
+    saveLocalDb(db);
+    return user;
+  },
+
   deleteUser: async (id) => {
     const db = await ensureDbInitialized();
     rawFetchJson(`/users/${id}`, { method: 'DELETE' }).catch(() => {});

@@ -227,6 +227,33 @@ class Store {
     return this.data.users.find(u => u.id === newUser.id) || newUser;
   }
 
+  updateUser(id, updates = {}) {
+    const user = (this.data.users || []).find(u => u.id === id);
+    if (!user) throw new Error('Usuario no encontrado');
+
+    if (updates.pin) {
+      const cleanPin = String(updates.pin).trim();
+      if (cleanPin.length !== 4) throw new Error('Ingresá un PIN válido de 4 dígitos');
+      const conflict = (this.data.users || []).find(u => u.id !== id && String(u.pin).trim() === cleanPin);
+      if (conflict) throw new Error(`El PIN ${cleanPin} ya está asignado a otro usuario`);
+      user.pin = cleanPin;
+    }
+
+    if (typeof updates.name === 'string' && updates.name.trim()) {
+      user.name = updates.name.trim();
+    }
+    if (typeof updates.email === 'string') {
+      user.email = updates.email.trim();
+    }
+    if (updates.role && updates.role !== user.role) {
+      user.role = updates.role;
+      user.avatar = updates.avatar || (user.role === 'admin' ? 'fa-solid fa-user-shield' : user.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie');
+      normalizeUsersRoleNames(this.data.users);
+    }
+    this.save();
+    return user;
+  }
+
   deleteUser(id) {
     this.data.users = this.data.users.filter(u => u.id !== id);
     normalizeUsersRoleNames(this.data.users);
