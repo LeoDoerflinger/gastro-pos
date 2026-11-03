@@ -2,6 +2,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { useApp } from '../../context/AppContext';
 import { api } from '../../api/client';
 import ReceiptModal from './ReceiptModal';
+import { buildWhatsAppLink, getDefaultDeliveryMessage } from '../../utils/phoneHelper';
 
 let lastSoundTime = 0;
 
@@ -184,6 +185,9 @@ export default function NotificationCenter() {
           {floatingPopups.map(notif => {
             const isCuenta = notif.type === 'cuenta';
             const isExiting = exitingIds.has(notif.id);
+            const relatedOrder = (orders || []).find(o => o.id === notif.orderId);
+            const isDispatch = relatedOrder && (relatedOrder.channel === 'delivery' || relatedOrder.channel === 'take_away');
+            const hasPhone = relatedOrder && relatedOrder.customerPhone;
 
             return (
               <div
@@ -281,6 +285,31 @@ export default function NotificationCenter() {
                         <span>Ticket</span>
                       </button>
                     )}
+
+                    {isDispatch && hasPhone && (() => {
+                      const waUrl = buildWhatsAppLink(
+                        relatedOrder.customerPhone,
+                        getDefaultDeliveryMessage({
+                          customerName: relatedOrder.customerName,
+                          orderNumber: relatedOrder.orderNumber,
+                          channel: relatedOrder.channel,
+                          driverName: relatedOrder.driverName
+                        })
+                      );
+                      if (!waUrl) return null;
+                      return (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pos-btn-secondary text-xs px-2.5 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1.5"
+                          title="Contactar al cliente por WhatsApp"
+                        >
+                          <i className="fa-brands fa-whatsapp text-emerald-500 text-xs" aria-hidden="true"></i>
+                          <span>WhatsApp</span>
+                        </a>
+                      );
+                    })()}
 
                     <button
                       type="button"
@@ -385,6 +414,9 @@ export default function NotificationCenter() {
               ) : (
                 filteredList.map(notif => {
                   const isCuenta = notif.type === 'cuenta';
+                  const relatedOrder = (orders || []).find(o => o.id === notif.orderId);
+                  const isDispatch = relatedOrder && (relatedOrder.channel === 'delivery' || relatedOrder.channel === 'take_away');
+                  const hasPhone = relatedOrder && relatedOrder.customerPhone;
                   return (
                     <div
                       key={notif.id}
@@ -463,6 +495,31 @@ export default function NotificationCenter() {
                             <span>Ver ticket</span>
                           </button>
                         )}
+
+                        {isDispatch && hasPhone && (() => {
+                          const waUrl = buildWhatsAppLink(
+                            relatedOrder.customerPhone,
+                            getDefaultDeliveryMessage({
+                              customerName: relatedOrder.customerName,
+                              orderNumber: relatedOrder.orderNumber,
+                              channel: relatedOrder.channel,
+                              driverName: relatedOrder.driverName
+                            })
+                          );
+                          if (!waUrl) return null;
+                          return (
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="pos-btn-secondary text-xs px-3 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 inline-flex items-center gap-1.5"
+                              title="Contactar al cliente por WhatsApp"
+                            >
+                              <i className="fa-brands fa-whatsapp text-emerald-500 text-xs" aria-hidden="true"></i>
+                              <span>WhatsApp</span>
+                            </a>
+                          );
+                        })()}
 
                         {!notif.read && (
                           <button

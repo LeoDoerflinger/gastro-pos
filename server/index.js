@@ -219,6 +219,71 @@ app.post('/api/suppliers', (req, res) => {
   res.status(201).json(newSup);
 });
 
+app.put('/api/suppliers/:id', (req, res) => {
+  const updated = store.updateSupplier(req.params.id, req.body || {});
+  if (!updated) return res.status(404).json({ error: 'Proveedor no encontrado' });
+  res.json(updated);
+});
+
+app.delete('/api/suppliers/:id', (req, res) => {
+  const result = store.deleteSupplier(req.params.id);
+  if (!result) return res.status(404).json({ error: 'Proveedor no encontrado' });
+  res.json({ ok: true, result });
+});
+
+app.get('/api/supplier-payments', (req, res) => {
+  res.json(store.getSupplierPayments());
+});
+
+app.post('/api/suppliers/:id/payments', (req, res) => {
+  try {
+    const { amount, paymentMethod, voucherId, notes, user } = req.body || {};
+    const result = store.addSupplierPayment(req.params.id, { amount, paymentMethod, voucherId, notes, user });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+// --- Cuentas Corrientes de Clientes ---
+app.get('/api/customers', (req, res) => {
+  res.json(store.getCustomers());
+});
+
+app.post('/api/customers', (req, res) => {
+  const created = store.addCustomer(req.body || {});
+  res.status(201).json(created);
+});
+
+app.put('/api/customers/:id', (req, res) => {
+  const updated = store.updateCustomer(req.params.id, req.body || {});
+  if (!updated) return res.status(404).json({ error: 'Cliente no encontrado' });
+  res.json(updated);
+});
+
+app.delete('/api/customers/:id', (req, res) => {
+  try {
+    const result = store.deleteCustomer(req.params.id);
+    res.json({ ok: true, result });
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
+app.get('/api/customer-payments', (req, res) => {
+  res.json(store.getCustomerPayments());
+});
+
+app.post('/api/customers/:id/payments', (req, res) => {
+  try {
+    const { amount, paymentMethod, notes, user } = req.body || {};
+    const result = store.addCustomerPayment(req.params.id, { amount, paymentMethod, notes, user });
+    res.status(201).json(result);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 app.get('/api/purchases', (req, res) => {
   res.json(store.getPurchases());
 });

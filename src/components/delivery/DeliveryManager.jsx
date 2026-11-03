@@ -2,6 +2,7 @@ import React, { useState, useMemo, useEffect } from 'react';
 import { useApp } from '../../context/AppContext';
 import CobroModal from '../cajero/CobroModal';
 import { api } from '../../api/client';
+import { buildWhatsAppLink, getDefaultDeliveryMessage, normalizeArgentinePhone } from '../../utils/phoneHelper';
 
 const AVAILABLE_EXTRAS = [
   { id: 'ext_muzza', name: 'Extra Muzzarella', price: 1800 },
@@ -31,19 +32,19 @@ const QUICK_NOTES = [
 const MAX_DELIVERY_RADIUS_KM = 5.0;
 
 const RESTAURANT_LOCATION = {
-  name: 'Local Central GastroPOS',
-  address: 'Av. Corrientes 1500, San Nicolás, CABA',
-  lat: -34.6037,
-  lng: -58.3816
+  name: 'Local Central GastroPOS Córdoba',
+  address: 'Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital',
+  lat: -31.4241,
+  lng: -64.1873
 };
 
 const PRESET_ADDRESSES = [
-  { address: 'Talcahuano 450, Tribunales', distanceKm: 0.8 },
-  { address: 'Av. Callao 1120, Recoleta Sur', distanceKm: 1.4 },
-  { address: 'Av. Santa Fe 2340, Barrio Norte', distanceKm: 2.6 },
-  { address: 'Av. Pueyrredón 1650, Recoleta', distanceKm: 3.4 },
-  { address: 'Av. Coronel Díaz 2100, Palermo', distanceKm: 4.5 },
-  { address: 'Av. Cabildo 2400, Belgrano', distanceKm: 7.2 }
+  { address: 'Bv. San Juan 320, Centro / Güemes', distanceKm: 0.7 },
+  { address: 'Bv. Chacabuco 850, Nueva Córdoba', distanceKm: 1.1 },
+  { address: 'Belgrano 740, Barrio Güemes', distanceKm: 1.3 },
+  { address: 'Av. 24 de Septiembre 1100, General Paz', distanceKm: 2.4 },
+  { address: 'Mariano Fragueiro 1900, Alta Córdoba', distanceKm: 3.8 },
+  { address: 'Av. Colón 2800, Alberdi', distanceKm: 4.3 }
 ];
 
 function calculateDeliveryInfo(distanceKm) {
@@ -302,7 +303,7 @@ export default function DeliveryManager() {
   };
 
   const mapQuery = encodeURIComponent(
-    `${deliveryAddress.trim() || RESTAURANT_LOCATION.address}, Buenos Aires, Argentina`
+    `${deliveryAddress.trim() || RESTAURANT_LOCATION.address}, Córdoba, Argentina`
   );
 
   return (
@@ -387,9 +388,35 @@ export default function DeliveryManager() {
                       {order.customerName || 'Cliente mostrador'}
                     </div>
                     {order.customerPhone && (
-                      <p className="text-xs text-[var(--text-secondary)] font-mono">
-                        Tel: {order.customerPhone}
-                      </p>
+                      <div className="flex items-center justify-between gap-2 pt-0.5">
+                        <p className="text-xs text-[var(--text-secondary)] font-mono">
+                          Tel: {order.customerPhone}
+                        </p>
+                        {((isDelivery && kStatus === 'en_camino') || (!isDelivery && kStatus === 'listo')) && (() => {
+                          const waUrl = buildWhatsAppLink(
+                            order.customerPhone,
+                            getDefaultDeliveryMessage({
+                              customerName: order.customerName,
+                              orderNumber: order.orderNumber,
+                              channel: order.channel,
+                              driverName: order.driverName
+                            })
+                          );
+                          if (!waUrl) return null;
+                          return (
+                            <a
+                              href={waUrl}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-emerald-500/10 border border-emerald-500/30 text-emerald-600 dark:text-emerald-400 font-sans font-semibold text-[11px] hover:bg-emerald-500/20 transition-colors"
+                              title="Avisar por WhatsApp al cliente"
+                            >
+                              <i className="fa-brands fa-whatsapp text-emerald-500 text-xs" aria-hidden="true"></i>
+                              <span>Avisar WhatsApp</span>
+                            </a>
+                          );
+                        })()}
+                      </div>
                     )}
                     {isDelivery && order.deliveryAddress && (
                       <div className="text-xs text-[var(--text-secondary)] flex items-start gap-1.5 pt-1">
@@ -468,6 +495,31 @@ export default function DeliveryManager() {
                         <span>Entregado</span>
                       </button>
                     )}
+
+                    {((isDelivery && kStatus === 'en_camino') || (!isDelivery && kStatus === 'listo')) && order.customerPhone && (() => {
+                      const waUrl = buildWhatsAppLink(
+                        order.customerPhone,
+                        getDefaultDeliveryMessage({
+                          customerName: order.customerName,
+                          orderNumber: order.orderNumber,
+                          channel: order.channel,
+                          driverName: order.driverName
+                        })
+                      );
+                      if (!waUrl) return null;
+                      return (
+                        <a
+                          href={waUrl}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="pos-btn-secondary text-xs flex-1 text-emerald-600 dark:text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/10 flex items-center justify-center gap-1.5"
+                          title="Contactar al cliente por WhatsApp"
+                        >
+                          <i className="fa-brands fa-whatsapp text-emerald-500 text-sm" aria-hidden="true"></i>
+                          <span>WhatsApp</span>
+                        </a>
+                      );
+                    })()}
 
                     <button
                       type="button"
@@ -580,11 +632,19 @@ export default function DeliveryManager() {
                   <input
                     id="del-customer-phone"
                     type="tel"
-                    placeholder="Ej. 11 4455-8899"
+                    placeholder="Ej. 351 512-3456 o 155123456"
                     value={customerPhone}
                     onChange={(e) => setCustomerPhone(e.target.value)}
                     className="pos-input font-mono"
                   />
+                  {customerPhone && (() => {
+                    const norm = normalizeArgentinePhone(customerPhone);
+                    return (
+                      <p className={`text-[11px] font-mono mt-1 ${norm ? 'text-emerald-600 dark:text-emerald-400' : 'text-[var(--text-muted)]'}`}>
+                        {norm ? `WhatsApp: +${norm}` : 'Formato: código de área + número (sin 0 ni 15)'}
+                      </p>
+                    );
+                  })()}
                 </div>
               </div>
 

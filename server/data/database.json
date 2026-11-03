@@ -42,7 +42,7 @@
       "stock": 18.5,
       "minStock": 5,
       "costPerUnit": 7800,
-      "lastUpdated": "2026-11-03T19:52:42.501Z"
+      "lastUpdated": "2026-11-03T21:37:25.785Z"
     },
     {
       "id": "ing_salsa_tomate",
@@ -52,7 +52,7 @@
       "stock": 14.2,
       "minStock": 4,
       "costPerUnit": 2400,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_bollo_pizza",
@@ -62,7 +62,7 @@
       "stock": 45,
       "minStock": 15,
       "costPerUnit": 950,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_aceitunas_verdes",
@@ -72,7 +72,7 @@
       "stock": 350,
       "minStock": 80,
       "costPerUnit": 45,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_jamon_cocido",
@@ -82,7 +82,7 @@
       "stock": 6.8,
       "minStock": 2,
       "costPerUnit": 9200,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_morron_conserva",
@@ -92,7 +92,7 @@
       "stock": 4.2,
       "minStock": 1.5,
       "costPerUnit": 6500,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_carne_smash",
@@ -102,7 +102,7 @@
       "stock": 60,
       "minStock": 20,
       "costPerUnit": 1400,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_pan_brioche",
@@ -112,7 +112,7 @@
       "stock": 40,
       "minStock": 15,
       "costPerUnit": 680,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_cheddar_fetas",
@@ -122,7 +122,7 @@
       "stock": 120,
       "minStock": 30,
       "costPerUnit": 350,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_panceta_ahumada",
@@ -132,7 +132,7 @@
       "stock": 5.4,
       "minStock": 1.5,
       "costPerUnit": 11500,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_papas_baston",
@@ -142,7 +142,7 @@
       "stock": 28,
       "minStock": 8,
       "costPerUnit": 2900,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_cerveza_ipa",
@@ -152,7 +152,7 @@
       "stock": 42.5,
       "minStock": 15,
       "costPerUnit": 1900,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_coca_cola_lata",
@@ -162,7 +162,7 @@
       "stock": 72,
       "minStock": 24,
       "costPerUnit": 980,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_agua_mineral",
@@ -172,7 +172,7 @@
       "stock": 50,
       "minStock": 20,
       "costPerUnit": 650,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_disco_empanada",
@@ -182,7 +182,7 @@
       "stock": 96,
       "minStock": 24,
       "costPerUnit": 220,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
     },
     {
       "id": "ing_relleno_carne",
@@ -192,7 +192,157 @@
       "stock": 8.5,
       "minStock": 2,
       "costPerUnit": 6200,
-      "lastUpdated": "2026-11-03T19:52:42.502Z"
+      "lastUpdated": "2026-11-03T21:37:25.788Z"
+    },
+    {
+      "id": "ing_lomo_vacuno",
+      "name": "Bife de Lomo Vacuno Seleccionado",
+      "category": "Carnicería",
+      "unit": "kg",
+      "stock": 15,
+      "minStock": 4,
+      "costPerUnit": 14500,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_pan_lomo",
+      "name": "Pan de Lomito Tostado Artesanal",
+      "category": "Panadería",
+      "unit": "u",
+      "stock": 40,
+      "minStock": 12,
+      "costPerUnit": 1100,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_lechuga_tomate",
+      "name": "Lechuga Repollada y Tomate Redondo",
+      "category": "Verdulería",
+      "unit": "kg",
+      "stock": 12,
+      "minStock": 3,
+      "costPerUnit": 2200,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_mayo_casera",
+      "name": "Mayonesa Casera al Huevo",
+      "category": "Almacén",
+      "unit": "kg",
+      "stock": 8,
+      "minStock": 2,
+      "costPerUnit": 3200,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_cebolla",
+      "name": "Cebolla Dorada para Salteado",
+      "category": "Verdulería",
+      "unit": "kg",
+      "stock": 25,
+      "minStock": 5,
+      "costPerUnit": 1200,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_longaniza",
+      "name": "Longaniza Calabresa Feteada",
+      "category": "Fiambrería",
+      "unit": "kg",
+      "stock": 6,
+      "minStock": 1.5,
+      "costPerUnit": 13500,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_milanesa_carne",
+      "name": "Corte de Nalga Tiernizada Rebozada",
+      "category": "Carnicería",
+      "unit": "kg",
+      "stock": 18,
+      "minStock": 5,
+      "costPerUnit": 9800,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_sorrentinos_crudos",
+      "name": "Sorrentinos Caseros Jamón y Muzzarella",
+      "category": "Pastas",
+      "unit": "u",
+      "stock": 80,
+      "minStock": 20,
+      "costPerUnit": 750,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_fernet_branca",
+      "name": "Fernet Branca 750ml",
+      "category": "Bebidas",
+      "unit": "l",
+      "stock": 18,
+      "minStock": 5,
+      "costPerUnit": 14500,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_coca_cola_15",
+      "name": "Coca Cola Sabor Original 1.5L",
+      "category": "Bebidas",
+      "unit": "u",
+      "stock": 36,
+      "minStock": 10,
+      "costPerUnit": 2600,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_pritty_15",
+      "name": "Pritty Limón 1.5L descartable",
+      "category": "Bebidas",
+      "unit": "u",
+      "stock": 30,
+      "minStock": 8,
+      "costPerUnit": 1900,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_vino_malbec_bot",
+      "name": "Botella Vino Malbec Selección 750ml",
+      "category": "Bebidas",
+      "unit": "u",
+      "stock": 24,
+      "minStock": 6,
+      "costPerUnit": 5400,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_dulce_leche",
+      "name": "Dulce de Leche Repostero Colonial",
+      "category": "Lácteos",
+      "unit": "kg",
+      "stock": 10,
+      "minStock": 3,
+      "costPerUnit": 4600,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_crema_leche",
+      "name": "Crema de Leche Fresca Doble",
+      "category": "Lácteos",
+      "unit": "kg",
+      "stock": 6,
+      "minStock": 2,
+      "costPerUnit": 5800,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
+    },
+    {
+      "id": "ing_galletitas_choc",
+      "name": "Galletitas de Chocolate Chocotorta",
+      "category": "Almacén",
+      "unit": "kg",
+      "stock": 8,
+      "minStock": 2.5,
+      "costPerUnit": 4200,
+      "lastUpdated": "2026-11-03T21:37:25.806Z"
     }
   ],
   "products": [
@@ -440,6 +590,421 @@
           "unit": "u"
         }
       ]
+    },
+    {
+      "id": "prod_lomito_completo",
+      "name": "Lomito Completo Cordobés con Papas",
+      "category": "Lomitos",
+      "price": 14800,
+      "description": "Bife de lomo tierno, muzzarella, jamón cocido, lechuga, tomate, huevo a la plancha y mayonesa casera en pan de lomo con papas bastón.",
+      "badge": "fa-solid fa-burger",
+      "recipe": [
+        {
+          "ingredientId": "ing_lomo_vacuno",
+          "quantity": 0.22,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_pan_lomo",
+          "quantity": 1,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_jamon_cocido",
+          "quantity": 0.06,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_lechuga_tomate",
+          "quantity": 0.1,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_mayo_casera",
+          "quantity": 0.04,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_papas_baston",
+          "quantity": 0.2,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_lomito_criollo",
+      "name": "Lomito Criollo Especial con Papas",
+      "category": "Lomitos",
+      "price": 15500,
+      "description": "Bife de lomo, queso fundido, morrones asados, cebolla salteada y chimichurri serrano con papas.",
+      "badge": "fa-solid fa-burger",
+      "recipe": [
+        {
+          "ingredientId": "ing_lomo_vacuno",
+          "quantity": 0.22,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_pan_lomo",
+          "quantity": 1,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_morron_conserva",
+          "quantity": 0.06,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_cebolla",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_papas_baston",
+          "quantity": 0.2,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_pizza_fugazzeta_rellena",
+      "name": "Pizza Fugazzeta Rellena Especial Grande",
+      "category": "Pizzas",
+      "price": 18500,
+      "description": "Doble masa rellena con abundante muzzarella y jamón cocido, cubierta de cebollas doradas al orégano.",
+      "badge": "fa-solid fa-pizza-slice",
+      "recipe": [
+        {
+          "ingredientId": "ing_bollo_pizza",
+          "quantity": 1.5,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.35,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_jamon_cocido",
+          "quantity": 0.15,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_cebolla",
+          "quantity": 0.2,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_pizza_napolitana",
+      "name": "Pizza Napolitana con Ajo & Tomate Natural",
+      "category": "Pizzas",
+      "price": 15200,
+      "description": "Muzzarella artesanal, rodajas de tomate natural fresco, ajo picado suave, aceitunas y orégano.",
+      "badge": "fa-solid fa-pizza-slice",
+      "recipe": [
+        {
+          "ingredientId": "ing_bollo_pizza",
+          "quantity": 1,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_salsa_tomate",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.25,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_lechuga_tomate",
+          "quantity": 0.15,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_aceitunas_verdes",
+          "quantity": 8,
+          "unit": "u"
+        }
+      ]
+    },
+    {
+      "id": "prod_pizza_calabresa",
+      "name": "Pizza Calabresa Artesanal Grande",
+      "category": "Pizzas",
+      "price": 16500,
+      "description": "Muzzarella fundida, longaniza feteada de primera calidad y morrones asados.",
+      "badge": "fa-solid fa-pizza-slice",
+      "recipe": [
+        {
+          "ingredientId": "ing_bollo_pizza",
+          "quantity": 1,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_salsa_tomate",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.25,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_longaniza",
+          "quantity": 0.12,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_morron_conserva",
+          "quantity": 0.05,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_milanesa_napolitana",
+      "name": "Milanesa Napolitana con Papas Fritas",
+      "category": "Minutas",
+      "price": 13900,
+      "description": "Milanesa de carne tiernizada, salsa pomodoro casera, jamón cocido y muzzarella gratinada con papas bastón.",
+      "badge": "fa-solid fa-drumstick-bite",
+      "recipe": [
+        {
+          "ingredientId": "ing_milanesa_carne",
+          "quantity": 0.25,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_salsa_tomate",
+          "quantity": 0.06,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_jamon_cocido",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_muzza",
+          "quantity": 0.1,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_papas_baston",
+          "quantity": 0.25,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_milanesa_caballo",
+      "name": "Milanesa a Caballo con Papas Fritas",
+      "category": "Minutas",
+      "price": 12800,
+      "description": "Milanesa crocante cubierta con dos huevos a la plancha y abundante porción de papas fritas.",
+      "badge": "fa-solid fa-drumstick-bite",
+      "recipe": [
+        {
+          "ingredientId": "ing_milanesa_carne",
+          "quantity": 0.25,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_papas_baston",
+          "quantity": 0.25,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_empanadas_docena",
+      "name": "Docena de Empanadas Criollas Cordobesas",
+      "category": "Minutas",
+      "price": 19800,
+      "description": "12 empanadas al horno rellenas de carne cortada a cuchillo, huevo, cebolla de verdeo y toque suave de pasas.",
+      "badge": "fa-solid fa-stroopwafel",
+      "recipe": [
+        {
+          "ingredientId": "ing_disco_empanada",
+          "quantity": 12,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_relleno_carne",
+          "quantity": 0.6,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_sorrentinos_jamon_queso",
+      "name": "Sorrentinos Caseros de Jamón y Queso",
+      "category": "Pastas",
+      "price": 12500,
+      "description": "Pasta fresca artesanal rellena de jamón y muzzarella, con salsa pomodoro o crema y queso rallado.",
+      "badge": "fa-solid fa-bowl-food",
+      "recipe": [
+        {
+          "ingredientId": "ing_sorrentinos_crudos",
+          "quantity": 6,
+          "unit": "u"
+        },
+        {
+          "ingredientId": "ing_salsa_tomate",
+          "quantity": 0.1,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_crema_leche",
+          "quantity": 0.05,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_fernet_vaso",
+      "name": "Fernet Branca con Coca 70/30 (Vaso 500ml)",
+      "category": "Bebidas",
+      "price": 5200,
+      "description": "El clásico cordobés con Fernet Branca, Coca Cola y abundante hielo en vaso largo.",
+      "badge": "fa-solid fa-glass-water",
+      "recipe": [
+        {
+          "ingredientId": "ing_fernet_branca",
+          "quantity": 0.15,
+          "unit": "l"
+        },
+        {
+          "ingredientId": "ing_coca_cola_15",
+          "quantity": 0.25,
+          "unit": "u"
+        }
+      ]
+    },
+    {
+      "id": "prod_fernet_jarra",
+      "name": "Jarra de Fernet Branca 70/30 (1.5 Litros)",
+      "category": "Bebidas",
+      "price": 14500,
+      "description": "Jarra para compartir de Fernet Branca con Coca Cola y hielo para la mesa.",
+      "badge": "fa-solid fa-beer-mug-empty",
+      "recipe": [
+        {
+          "ingredientId": "ing_fernet_branca",
+          "quantity": 0.45,
+          "unit": "l"
+        },
+        {
+          "ingredientId": "ing_coca_cola_15",
+          "quantity": 0.7,
+          "unit": "u"
+        }
+      ]
+    },
+    {
+      "id": "prod_pritty_limon",
+      "name": "Gaseosa Pritty Limón 1.5L",
+      "category": "Bebidas",
+      "price": 3200,
+      "description": "La tradicional gaseosa cordobesa con sabor a limón en botella familiar 1.5 litros.",
+      "badge": "fa-solid fa-bottle-water",
+      "recipe": [
+        {
+          "ingredientId": "ing_pritty_15",
+          "quantity": 1,
+          "unit": "u"
+        }
+      ]
+    },
+    {
+      "id": "prod_vino_malbec",
+      "name": "Vino Malbec Selección 750ml",
+      "category": "Bebidas",
+      "price": 9800,
+      "description": "Botella 750ml de vino tinto Malbec de bodega nacional seleccionada.",
+      "badge": "fa-solid fa-wine-bottle",
+      "recipe": [
+        {
+          "ingredientId": "ing_vino_malbec_bot",
+          "quantity": 1,
+          "unit": "u"
+        }
+      ]
+    },
+    {
+      "id": "prod_flan_casero",
+      "name": "Flan Casero Mixto (Dulce de Leche & Crema)",
+      "category": "Postres",
+      "price": 4500,
+      "description": "Flan artesanal de 8 huevos con caramelo casero, dulce de leche colonial y crema chantilly.",
+      "badge": "fa-solid fa-cake-candles",
+      "recipe": [
+        {
+          "ingredientId": "ing_dulce_leche",
+          "quantity": 0.06,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_crema_leche",
+          "quantity": 0.04,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_panqueque_ddl",
+      "name": "Panqueque Tibio con Dulce de Leche",
+      "category": "Postres",
+      "price": 4800,
+      "description": "Dos panqueques dorados a la manteca, rellenos con abundante dulce de leche y azúcar flambeada.",
+      "badge": "fa-solid fa-cake-candles",
+      "recipe": [
+        {
+          "ingredientId": "ing_dulce_leche",
+          "quantity": 0.08,
+          "unit": "kg"
+        }
+      ]
+    },
+    {
+      "id": "prod_chocotorta",
+      "name": "Copa de Chocotorta Casera",
+      "category": "Postres",
+      "price": 4900,
+      "description": "Postre tradicional argentino en copa con galletitas de chocolate embebidas en café, dulce de leche y queso crema.",
+      "badge": "fa-solid fa-cake-candles",
+      "recipe": [
+        {
+          "ingredientId": "ing_galletitas_choc",
+          "quantity": 0.08,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_dulce_leche",
+          "quantity": 0.06,
+          "unit": "kg"
+        },
+        {
+          "ingredientId": "ing_crema_leche",
+          "quantity": 0.04,
+          "unit": "kg"
+        }
+      ]
     }
   ],
   "tables": [
@@ -463,7 +1028,7 @@
       "activeOrderId": "ord_demo_1",
       "diners": 3,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-03T19:07:42.502Z"
+      "openedAt": "2026-11-03T20:52:25.788Z"
     },
     {
       "id": "m3",
@@ -474,7 +1039,7 @@
       "activeOrderId": "ord_demo_2",
       "diners": 2,
       "waiterId": "u_mozo1",
-      "openedAt": "2026-11-03T18:42:42.502Z"
+      "openedAt": "2026-11-03T20:27:25.788Z"
     },
     {
       "id": "m4",
@@ -496,7 +1061,7 @@
       "activeOrderId": "ord_demo_3",
       "diners": 4,
       "waiterId": "u_mozo2",
-      "openedAt": "2026-11-03T19:27:42.502Z"
+      "openedAt": "2026-11-03T21:12:25.788Z"
     },
     {
       "id": "m6",
@@ -605,7 +1170,7 @@
       "tip": 0,
       "total": 24600,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T19:07:42.502Z",
+      "createdAt": "2026-11-03T20:52:25.788Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -659,7 +1224,7 @@
       "tip": 3670,
       "total": 40370,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T18:42:42.502Z",
+      "createdAt": "2026-11-03T20:27:25.788Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -713,7 +1278,7 @@
       "tip": 0,
       "total": 37900,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T19:27:42.502Z",
+      "createdAt": "2026-11-03T21:12:25.788Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -749,7 +1314,7 @@
       "tip": 0,
       "total": 27000,
       "paymentMethod": null,
-      "createdAt": "2026-11-03T19:32:42.502Z",
+      "createdAt": "2026-11-03T21:17:25.788Z",
       "closedAt": null,
       "closedBy": null
     },
@@ -761,7 +1326,7 @@
       "tableNumber": null,
       "customerName": "Florencia Rossi",
       "customerPhone": "11-9876-5432",
-      "deliveryAddress": "Av. Corrientes 3450, Piso 4 B (Timbre Rossi)",
+      "deliveryAddress": "Bv. Chacabuco 650, Piso 3 B, Nueva Córdoba, Córdoba Capital",
       "deliveryFee": 1800,
       "driverName": "Repartidor 1",
       "waiterId": "u_cajero",
@@ -794,7 +1359,7 @@
       "tip": 0,
       "total": 16200,
       "paymentMethod": "mercadopago",
-      "createdAt": "2026-11-03T19:17:42.502Z",
+      "createdAt": "2026-11-03T21:02:25.788Z",
       "closedAt": null,
       "closedBy": null
     }
@@ -802,35 +1367,39 @@
   "suppliers": [
     {
       "id": "sup_1",
-      "name": "Distribuidora Lácteos del Sur S.R.L.",
+      "name": "Distribuidora Lácteos Córdoba S.R.L.",
       "cuit": "30-71234567-9",
-      "phone": "011-4301-8899",
-      "email": "ventas@lacteosdelsur.com.ar",
-      "category": "Lácteos y Quesos"
+      "phone": "0351-430-8899",
+      "email": "ventas@lacteoscordoba.com.ar",
+      "category": "Lácteos y Quesos",
+      "status": "activo"
     },
     {
       "id": "sup_2",
-      "name": "Molinos & Harinas San Martín",
+      "name": "Molinos & Harinas San Martín (Suc. Córdoba)",
       "cuit": "30-68991234-3",
-      "phone": "011-4752-1100",
+      "phone": "0351-475-1100",
       "email": "pedidos@molinossanmartin.com",
-      "category": "Panadería y Almacén"
+      "category": "Panadería y Almacén",
+      "status": "activo"
     },
     {
       "id": "sup_3",
-      "name": "Frigorífico Bovino Central",
+      "name": "Frigorífico Bovino Central Córdoba",
       "cuit": "30-55443322-1",
-      "phone": "011-4200-3344",
+      "phone": "0351-420-3344",
       "email": "carnes@bovinogourmet.com",
-      "category": "Carnicería"
+      "category": "Carnicería",
+      "status": "activo"
     },
     {
       "id": "sup_4",
-      "name": "Cervecería & Bebidas Quilmes Directo",
+      "name": "Distribuidora de Bebidas La Docta S.A.",
       "cuit": "30-50001000-4",
-      "phone": "0800-222-3344",
-      "email": "atencion@distribebidas.com",
-      "category": "Bebidas y Cervezas"
+      "phone": "0351-460-2233",
+      "email": "atencion@distribebidascordoba.com",
+      "category": "Bebidas y Cervezas",
+      "status": "activo"
     }
   ],
   "purchases": [
@@ -903,9 +1472,9 @@
       "shiftNumber": 42,
       "cashierId": "u_cajero",
       "cashierName": "Cajero",
-      "openedAt": "2026-11-03T14:52:42.502Z",
+      "openedAt": "2026-11-03T16:37:25.788Z",
       "openedDate": "3/11/2026",
-      "openedTime": "11:52",
+      "openedTime": "13:37",
       "initialCash": 45000,
       "status": "abierta",
       "movements": [
@@ -914,7 +1483,7 @@
           "type": "egreso",
           "amount": 3500,
           "reason": "Compra urgente 2 bolsas de hielo rolo",
-          "createdAt": "2026-11-03T16:52:42.518Z",
+          "createdAt": "2026-11-03T18:37:25.806Z",
           "user": "Cajero"
         },
         {
@@ -922,7 +1491,7 @@
           "type": "ingreso",
           "amount": 15000,
           "reason": "Refuerzo cambio de billetes chicos",
-          "createdAt": "2026-11-03T17:52:42.518Z",
+          "createdAt": "2026-11-03T19:37:25.806Z",
           "user": "Admin"
         }
       ],
@@ -964,7 +1533,7 @@
           "notes": ""
         }
       ],
-      "createdAt": "2026-11-03T19:42:42.518Z",
+      "createdAt": "2026-11-03T21:27:25.806Z",
       "read": true
     }
   ],
@@ -976,7 +1545,7 @@
       "tableNumber": 1,
       "total": 31200,
       "paymentMethod": "efectivo",
-      "closedAt": "2026-11-03T15:52:42.518Z",
+      "closedAt": "2026-11-03T17:37:25.806Z",
       "waiterName": "Mozo 1"
     },
     {
@@ -986,7 +1555,7 @@
       "tableNumber": null,
       "total": 16000,
       "paymentMethod": "mercadopago",
-      "closedAt": "2026-11-03T16:52:42.518Z",
+      "closedAt": "2026-11-03T18:37:25.806Z",
       "waiterName": "Cajero"
     },
     {
@@ -996,14 +1565,14 @@
       "tableNumber": null,
       "total": 28500,
       "paymentMethod": "debito",
-      "closedAt": "2026-11-03T18:52:42.518Z",
+      "closedAt": "2026-11-03T20:37:25.806Z",
       "waiterName": "Cajero"
     }
   ],
   "stockLog": [
     {
       "id": "log_1",
-      "timestamp": "2026-11-03T14:52:42.518Z",
+      "timestamp": "2026-11-03T16:37:25.806Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
       "type": "compra",
@@ -1014,7 +1583,7 @@
     },
     {
       "id": "log_2",
-      "timestamp": "2026-11-03T19:07:42.518Z",
+      "timestamp": "2026-11-03T20:52:25.806Z",
       "ingredientId": "ing_muzza",
       "ingredientName": "Queso Muzzarella en Barra",
       "type": "merma",
@@ -1025,7 +1594,7 @@
     },
     {
       "id": "log_3",
-      "timestamp": "2026-11-03T19:22:42.518Z",
+      "timestamp": "2026-11-03T21:07:25.806Z",
       "ingredientId": "ing_bollo_pizza",
       "ingredientName": "Bollo de Masa Madre Pizza",
       "type": "ajuste_manual",
@@ -1035,5 +1604,68 @@
       "user": "Admin"
     }
   ],
-  "lastUpdated": 1793739617277
+  "customers": [
+    {
+      "id": "cust_1",
+      "name": "Estudio Contable Córdoba & Asoc.",
+      "phone": "3515123456",
+      "dniCuit": "30-71458921-2",
+      "address": "Bv. San Juan 450, Centro",
+      "currentBalance": 35000,
+      "creditLimit": 150000,
+      "notes": "Almuerzos ejecutivos de lunes a viernes",
+      "status": "activo",
+      "createdAt": "2026-10-04T21:37:25.806Z"
+    },
+    {
+      "id": "cust_2",
+      "name": "Dr. Fernando Morales",
+      "phone": "3516889922",
+      "dniCuit": "20-28456123-4",
+      "address": "San Lorenzo 210, Nueva Córdoba",
+      "currentBalance": 14800,
+      "creditLimit": 80000,
+      "notes": "Cliente habitual cena",
+      "status": "activo",
+      "createdAt": "2026-10-14T21:37:25.806Z"
+    },
+    {
+      "id": "cust_3",
+      "name": "Mariana Gómez (Arquitectura)",
+      "phone": "3513344556",
+      "dniCuit": "27-33123456-8",
+      "address": "Belgrano 740, Barrio Güemes",
+      "currentBalance": 0,
+      "creditLimit": 60000,
+      "notes": "Eventos y reuniones de equipo",
+      "status": "activo",
+      "createdAt": "2026-10-24T21:37:25.806Z"
+    }
+  ],
+  "customerPayments": [
+    {
+      "id": "cpay_1",
+      "customerId": "cust_1",
+      "customerName": "Estudio Contable Córdoba & Asoc.",
+      "amount": 25000,
+      "paymentMethod": "transferencia",
+      "date": "2026-11-01",
+      "notes": "Transferencia Bancor comprobante #94120",
+      "registeredBy": "Cajero",
+      "createdAt": "2026-11-01T21:37:25.806Z"
+    }
+  ],
+  "supplierPayments": [
+    {
+      "id": "spay_1",
+      "supplierId": "sup_1",
+      "supplierName": "Distribuidora Lácteos del Sur S.R.L.",
+      "amount": 50000,
+      "paymentMethod": "transferencia",
+      "date": "2026-10-31",
+      "notes": "Anticipo cuenta corriente compra semanal",
+      "registeredBy": "Admin",
+      "createdAt": "2026-10-31T21:37:25.806Z"
+    }
+  ]
 }

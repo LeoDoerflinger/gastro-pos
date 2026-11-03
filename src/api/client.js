@@ -896,6 +896,23 @@ export const api = {
     order.closedAt = new Date().toISOString();
     order.closedBy = payload.closedBy?.name || 'Cajero';
 
+    if (payload.paymentMethod === 'cuenta_corriente' && payload.paymentDetails?.customerId) {
+      if (!db.customers) db.customers = [];
+      const cust = db.customers.find(c => c.id === payload.paymentDetails.customerId);
+      if (cust) {
+        cust.currentBalance = (cust.currentBalance || 0) + order.total;
+        order.customerId = cust.id;
+        order.customerName = cust.name;
+        if (!cust.ordersHistory) cust.ordersHistory = [];
+        cust.ordersHistory.unshift({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          total: order.total,
+          date: order.closedAt
+        });
+      }
+    }
+
     if (order.tableId) {
       const table = (db.tables || []).find(t => t.id === order.tableId);
       if (table) {
@@ -924,12 +941,221 @@ export const api = {
       cuit: supData.cuit || '',
       phone: supData.phone || '',
       email: supData.email || '',
-      category: supData.category || 'Varios'
+      category: supData.category || 'Varios',
+      status: 'activo'
     };
     rawFetchJson('/suppliers', { method: 'POST', body: JSON.stringify(newSup) }).catch(() => {});
+    if (!db.suppliers) db.suppliers = [];
     db.suppliers.push(newSup);
     saveLocalDb(db);
     return newSup;
+  },
+
+  updateSupplier: async (id, updates) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/suppliers/${id}`, { method: 'PUT', body: JSON.stringify(updates) }).catch(() => {});
+    const sup = (db.suppliers || []).find(s => s.id === id);
+    if (!sup) throw new Error('Proveedor no encontrado');
+
+    if (updates.name) sup.name = updates.name.trim();
+    if (updates.cuit !== undefined) sup.cuit = updates.cuit.trim();
+    if (updates.phone !== undefined) sup.phone = updates.phone.trim();
+    if (updates.email !== undefined) sup.email = updates.email.trim();
+    if (updates.category) sup.category = updates.category.trim();
+    if (updates.status !== undefined) sup.status = updates.status;
+
+    saveLocalDb(db);
+    return { ...sup };
+  },
+
+  deleteSupplier: async (id) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/suppliers/${id}`, { method: 'DELETE' }).catch(() => {});
+    const sup = (db.suppliers || []).find(s => s.id === id);
+    if (!sup) throw new Error('Proveedor no encontrado');
+
+    const hasPurchases = (db.purchases || []).some(p => p.supplierId === id);
+    if (hasPurchases) {
+      sup.status = 'inactivo';
+    } else {
+      db.suppliers = db.suppliers.filter(s => s.id !== id);
+    }
+    saveLocalDb(db);
+    return { ok: true, status: sup.status };
+  },
+
+  getSupplierPayments: async () => {
+    const db = await ensureDbInitialized();
+    return [...(db.supplierPayments || [])];
+  },
+
+  addSupplierPayment: async (supplierId, { amount, paymentMethod = 'transferencia', voucherId = null, notes = '', user }) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/suppliers/${supplierId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, paymentMethod, voucherId, notes, user })
+    }).catch(() => {});
+
+    const sup = (db.suppliers || []).find(s => s.id === supplierId);
+    if (!sup) throw new Error('Proveedor no encontrado');
+
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) throw new Error('Importe inválido');
+
+    if (voucherId && Array.isArray(db.purchases)) {
+      const pur = db.purchases.find(p => p.id === voucherId);
+      if (pur) pur.paymentStatus = 'pagado';
+    }
+
+    const paymentRecord = {
+      id: 'spay_' + Date.now(),
+      supplierId: sup.id,
+      supplierName: sup.name,
+      amount: paymentAmount,
+      paymentMethod,
+      voucherId,
+      notes: notes || '',
+      date: new Date().toISOString().split('T')[0],
+      registeredBy: user?.name || 'Admin',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!db.supplierPayments) db.supplierPayments = [];
+    db.supplierPayments.unshift(paymentRecord);
+
+    if (paymentMethod === 'efectivo') {
+      const activeShift = (db.cashShifts || []).find(isShiftActive);
+      if (activeShift) {
+        if (!activeShift.movements) activeShift.movements = [];
+        activeShift.movements.push({
+          id: 'mov_' + Date.now(),
+          type: 'egreso',
+          amount: paymentAmount,
+          reason: `Pago proveedor ${sup.name} (${notes || 'Cta. Cte.'})`,
+          user: user?.name || 'Cajero',
+          timestamp: new Date().toISOString(),
+          date: formatDateAr(new Date()),
+          time: formatTimeAr(new Date())
+        });
+      }
+    }
+
+    saveLocalDb(db);
+    return { supplier: sup, payment: paymentRecord };
+  },
+
+  // --- Cuentas Corrientes de Clientes ---
+  getCustomers: async () => {
+    const db = await ensureDbInitialized();
+    return [...(db.customers || [])];
+  },
+
+  createCustomer: async (custData) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson('/customers', { method: 'POST', body: JSON.stringify(custData) }).catch(() => {});
+    const newCust = {
+      id: 'cust_' + Date.now(),
+      name: custData.name?.trim() || 'Cliente Sin Nombre',
+      phone: custData.phone?.trim() || '',
+      dniCuit: custData.dniCuit?.trim() || '',
+      address: custData.address?.trim() || '',
+      currentBalance: Number(custData.currentBalance) || 0,
+      creditLimit: Number(custData.creditLimit) || 100000,
+      notes: custData.notes?.trim() || '',
+      status: 'activo',
+      createdAt: new Date().toISOString()
+    };
+    if (!db.customers) db.customers = [];
+    db.customers.push(newCust);
+    saveLocalDb(db);
+    return newCust;
+  },
+
+  updateCustomer: async (id, updates) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/customers/${id}`, { method: 'PUT', body: JSON.stringify(updates) }).catch(() => {});
+    const cust = (db.customers || []).find(c => c.id === id);
+    if (!cust) throw new Error('Cliente no encontrado');
+
+    if (updates.name) cust.name = updates.name.trim();
+    if (updates.phone !== undefined) cust.phone = updates.phone.trim();
+    if (updates.dniCuit !== undefined) cust.dniCuit = updates.dniCuit.trim();
+    if (updates.address !== undefined) cust.address = updates.address.trim();
+    if (updates.creditLimit !== undefined) cust.creditLimit = Number(updates.creditLimit) || 0;
+    if (updates.notes !== undefined) cust.notes = updates.notes.trim();
+    if (updates.status !== undefined) cust.status = updates.status;
+
+    saveLocalDb(db);
+    return { ...cust };
+  },
+
+  deleteCustomer: async (id) => {
+    const db = await ensureDbInitialized();
+    const cust = (db.customers || []).find(c => c.id === id);
+    if (!cust) throw new Error('Cliente no encontrado');
+    if ((cust.currentBalance || 0) > 0) {
+      throw new Error(`El cliente tiene un saldo pendiente de $${cust.currentBalance.toLocaleString('es-AR')}`);
+    }
+    rawFetchJson(`/customers/${id}`, { method: 'DELETE' }).catch(() => {});
+    cust.status = 'inactivo';
+    saveLocalDb(db);
+    return { ok: true, status: cust.status };
+  },
+
+  getCustomerPayments: async () => {
+    const db = await ensureDbInitialized();
+    return [...(db.customerPayments || [])];
+  },
+
+  addCustomerPayment: async (customerId, { amount, paymentMethod = 'efectivo', notes = '', user }) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson(`/customers/${customerId}/payments`, {
+      method: 'POST',
+      body: JSON.stringify({ amount, paymentMethod, notes, user })
+    }).catch(() => {});
+
+    const cust = (db.customers || []).find(c => c.id === customerId);
+    if (!cust) throw new Error('Cliente no encontrado');
+
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) throw new Error('Importe inválido');
+
+    cust.currentBalance = Math.max(0, (cust.currentBalance || 0) - paymentAmount);
+
+    const paymentRecord = {
+      id: 'cpay_' + Date.now(),
+      customerId: cust.id,
+      customerName: cust.name,
+      amount: paymentAmount,
+      paymentMethod,
+      notes: notes || '',
+      date: new Date().toISOString().split('T')[0],
+      registeredBy: user?.name || 'Cajero',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!db.customerPayments) db.customerPayments = [];
+    db.customerPayments.unshift(paymentRecord);
+
+    if (paymentMethod === 'efectivo') {
+      const activeShift = (db.cashShifts || []).find(isShiftActive);
+      if (activeShift) {
+        if (!activeShift.movements) activeShift.movements = [];
+        activeShift.movements.push({
+          id: 'mov_' + Date.now(),
+          type: 'ingreso',
+          amount: paymentAmount,
+          reason: `Cobro Cta. Cte. cliente ${cust.name}`,
+          user: user?.name || 'Cajero',
+          timestamp: new Date().toISOString(),
+          date: formatDateAr(new Date()),
+          time: formatTimeAr(new Date())
+        });
+      }
+    }
+
+    saveLocalDb(db);
+    return { customer: cust, payment: paymentRecord };
   },
 
   getPurchases: async () => {

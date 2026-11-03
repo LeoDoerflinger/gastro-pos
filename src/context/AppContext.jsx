@@ -68,6 +68,9 @@ export function AppProvider({ children }) {
   const [activeShift, setActiveShift] = useState(null);
   const [suppliers, setSuppliers] = useState([]);
   const [purchases, setPurchases] = useState([]);
+  const [customers, setCustomers] = useState([]);
+  const [customerPayments, setCustomerPayments] = useState([]);
+  const [supplierPayments, setSupplierPayments] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [stockLog, setStockLog] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -92,6 +95,9 @@ export function AppProvider({ children }) {
         shiftRes,
         suppliersData,
         purchasesData,
+        customersData,
+        custPaymentsData,
+        supPaymentsData,
         analyticsData,
         logData,
         notifsData
@@ -104,6 +110,9 @@ export function AppProvider({ children }) {
         api.getActiveShift(),
         api.getSuppliers(),
         api.getPurchases(),
+        api.getCustomers(),
+        api.getCustomerPayments(),
+        api.getSupplierPayments(),
         api.getAnalytics(),
         api.getStockLog(),
         api.getNotifications()
@@ -118,6 +127,9 @@ export function AppProvider({ children }) {
       setActiveShift(activeShiftObj || null);
       setSuppliers(suppliersData);
       setPurchases(purchasesData);
+      setCustomers(customersData || []);
+      setCustomerPayments(custPaymentsData || []);
+      setSupplierPayments(supPaymentsData || []);
       setAnalytics(analyticsData);
       setStockLog(logData);
       setNotifications(notifsData || []);
@@ -267,6 +279,12 @@ export function AppProvider({ children }) {
         activeShift,
         suppliers,
         purchases,
+        customers,
+        setCustomers,
+        customerPayments,
+        setCustomerPayments,
+        supplierPayments,
+        setSupplierPayments,
         analytics,
         stockLog,
         notifications,

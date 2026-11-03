@@ -31,18 +31,120 @@ export default function StockPurchases() {
   const [newSupPhone, setNewSupPhone] = useState('');
   const [newSupEmail, setNewSupEmail] = useState('');
 
+  // Form states for edit supplier
+  const [isEditSupplierModalOpen, setIsEditSupplierModalOpen] = useState(false);
+  const [selectedSupForEdit, setSelectedSupForEdit] = useState(null);
+  const [editSupName, setEditSupName] = useState('');
+  const [editSupCuit, setEditSupCuit] = useState('');
+  const [editSupCategory, setEditSupCategory] = useState('Lácteos');
+  const [editSupPhone, setEditSupPhone] = useState('');
+  const [editSupEmail, setEditSupEmail] = useState('');
+  const [editSupStatus, setEditSupStatus] = useState('activo');
+
+  // Quick ingredient creation modal
+  const [isQuickIngModalOpen, setIsQuickIngModalOpen] = useState(false);
+  const [quickIngName, setQuickIngName] = useState('');
+  const [quickIngCategory, setQuickIngCategory] = useState('Carnicería');
+  const [quickIngUnit, setQuickIngUnit] = useState('kg');
+  const [quickIngCost, setQuickIngCost] = useState('5000');
+  const [quickIngStock, setQuickIngStock] = useState('10');
+
   useEffect(() => {
     const onKeyDown = (e) => {
       if (e.key === 'Escape') {
         setIsNewSupplierModalOpen(false);
+        setIsEditSupplierModalOpen(false);
+        setIsQuickIngModalOpen(false);
         setSelectedPurchaseForDetail(null);
       }
     };
-    if (isNewSupplierModalOpen || selectedPurchaseForDetail) {
+    if (isNewSupplierModalOpen || isEditSupplierModalOpen || isQuickIngModalOpen || selectedPurchaseForDetail) {
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
     }
-  }, [isNewSupplierModalOpen, selectedPurchaseForDetail]);
+  }, [isNewSupplierModalOpen, isEditSupplierModalOpen, isQuickIngModalOpen, selectedPurchaseForDetail]);
+
+  const handleOpenEditSupplier = (sup) => {
+    setSelectedSupForEdit(sup);
+    setEditSupName(sup.name || '');
+    setEditSupCuit(sup.cuit || '');
+    setEditSupCategory(sup.category || 'Lácteos');
+    setEditSupPhone(sup.phone || '');
+    setEditSupEmail(sup.email || '');
+    setEditSupStatus(sup.status || 'activo');
+    setIsEditSupplierModalOpen(true);
+  };
+
+  const handleSaveEditSupplier = async (e) => {
+    e.preventDefault();
+    if (!selectedSupForEdit || !editSupName.trim()) return;
+    setSubmitting(true);
+    try {
+      await api.updateSupplier(selectedSupForEdit.id, {
+        name: editSupName.trim(),
+        cuit: editSupCuit.trim(),
+        category: editSupCategory,
+        phone: editSupPhone.trim(),
+        email: editSupEmail.trim(),
+        status: editSupStatus
+      });
+      showToast(`Datos del proveedor "${editSupName}" actualizados`);
+      await refreshData();
+      setIsEditSupplierModalOpen(false);
+    } catch (err) {
+      showToast(err.message || 'No se pudo actualizar el proveedor', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
+  const handleToggleSupplierStatus = async (sup) => {
+    const isCurrentlyActive = sup.status !== 'inactivo';
+    const actionLabel = isCurrentlyActive ? 'dar de baja' : 'reactivar';
+    if (!window.confirm(`¿Seguro que querés ${actionLabel} al proveedor "${sup.name}"?`)) return;
+
+    try {
+      await api.updateSupplier(sup.id, {
+        status: isCurrentlyActive ? 'inactivo' : 'activo'
+      });
+      showToast(`Proveedor "${sup.name}" ${isCurrentlyActive ? 'dado de baja' : 'reactivado'}`);
+      await refreshData();
+    } catch (err) {
+      showToast(err.message || 'Error al cambiar estado del proveedor', 'error');
+    }
+  };
+
+  const handleCreateQuickIng = async (e) => {
+    e.preventDefault();
+    if (!quickIngName.trim()) {
+      showToast('Ingresá el nombre del producto o insumo', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const created = await api.addIngredient({
+        name: quickIngName.trim(),
+        category: quickIngCategory,
+        unit: quickIngUnit,
+        costPerUnit: Number(quickIngCost) || 0,
+        stock: Number(quickIngStock) || 0,
+        minStock: 2
+      });
+      showToast(`Insumo "${created.name}" guardado en base de datos para compras y recetas`);
+      await refreshData();
+      // Auto-assign to current active purchase item or add row
+      setPurchaseItems(prev => [
+        ...prev,
+        { ingredientId: created.id, quantity: Number(quickIngStock) || 5, unitCost: Number(quickIngCost) || 0 }
+      ]);
+      setIsQuickIngModalOpen(false);
+      setQuickIngName('');
+    } catch (err) {
+      showToast(err.message || 'No se pudo crear el insumo', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleAddItemRow = () => {
     setPurchaseItems(prev => [
@@ -331,12 +433,22 @@ export default function StockPurchases() {
                     className="p-3 bg-[var(--bg-subtle)] flex flex-col md:flex-row md:items-center gap-3"
                   >
                     <div className="flex-1">
-                      <label htmlFor={`pur-ing-${idx}`} className="pos-label">Insumo recibido:</label>
+                      <div className="flex items-center justify-between mb-1">
+                        <label htmlFor={`pur-ing-${idx}`} className="pos-label mb-0">Insumo recibido:</label>
+                        <button
+                          type="button"
+                          onClick={() => setIsQuickIngModalOpen(true)}
+                          className="text-[11px] font-semibold text-[var(--accent-brand)] hover:underline inline-flex items-center gap-1"
+                        >
+                          <i className="fa-solid fa-plus text-[10px]" aria-hidden="true"></i>
+                          <span>Crear nuevo insumo</span>
+                        </button>
+                      </div>
                       <select
                         id={`pur-ing-${idx}`}
                         value={item.ingredientId}
                         onChange={(e) => handleItemChange(idx, 'ingredientId', e.target.value)}
-                        className="pos-input bg-[var(--bg-surface)]"
+                        className="pos-input bg-[var(--bg-surface)] text-xs"
                       >
                         {ingredients.map(ing => (
                           <option key={ing.id} value={ing.id}>
@@ -551,16 +663,45 @@ export default function StockPurchases() {
                 <div>
                   <div className="flex items-start justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5">
                     <div>
-                      <h4 className="font-display font-bold text-base text-[var(--text-primary)]">
-                        {sup.name}
-                      </h4>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        <h4 className="font-display font-bold text-base text-[var(--text-primary)]">
+                          {sup.name}
+                        </h4>
+                        {sup.status === 'inactivo' && (
+                          <span className="pos-badge pos-badge-danger text-xs font-semibold">
+                            Inactivo
+                          </span>
+                        )}
+                      </div>
                       <span className="pos-badge pos-badge-neutral text-xs mt-1">
                         {sup.category || 'Almacén'}
                       </span>
                     </div>
-                    <span className="w-8 h-8 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] text-[var(--text-muted)] flex items-center justify-center text-xs shrink-0">
-                      <i className="fa-solid fa-truck" aria-hidden="true"></i>
-                    </span>
+                    <div className="flex items-center gap-1">
+                      <button
+                        type="button"
+                        onClick={() => handleOpenEditSupplier(sup)}
+                        className="pos-btn-secondary text-xs p-1.5"
+                        title="Editar datos del proveedor"
+                        aria-label={`Editar proveedor ${sup.name}`}
+                      >
+                        <i className="fa-solid fa-pen-to-square text-xs" aria-hidden="true"></i>
+                      </button>
+
+                      <button
+                        type="button"
+                        onClick={() => handleToggleSupplierStatus(sup)}
+                        className={`text-xs p-1.5 rounded border transition-colors ${
+                          sup.status === 'inactivo'
+                            ? 'bg-emerald-500/15 text-emerald-400 border-emerald-500/30 hover:bg-emerald-500/25'
+                            : 'bg-rose-500/15 text-rose-400 border-rose-500/30 hover:bg-rose-500/25'
+                        }`}
+                        title={sup.status === 'inactivo' ? 'Reactivar proveedor' : 'Dar de baja proveedor'}
+                        aria-label={sup.status === 'inactivo' ? `Reactivar proveedor ${sup.name}` : `Dar de baja proveedor ${sup.name}`}
+                      >
+                        <i className={`fa-solid ${sup.status === 'inactivo' ? 'fa-check' : 'fa-ban'} text-xs`} aria-hidden="true"></i>
+                      </button>
+                    </div>
                   </div>
 
                   <div className="mt-3 space-y-1.5 text-xs text-[var(--text-secondary)]">
@@ -861,6 +1002,262 @@ export default function StockPurchases() {
                 </button>
               </div>
             </div>
+          </div>
+        </div>
+      )}
+      {/* Modal: Editar Proveedor */}
+      {isEditSupplierModalOpen && selectedSupForEdit && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="edit-sup-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-pen-to-square text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+                <h3 id="edit-sup-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Editar proveedor
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditSupplierModalOpen(false)}
+                className="pos-btn-ghost"
+                aria-label="Cerrar ventana"
+              >
+                <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditSupplier} className="p-4 space-y-3.5">
+              <div>
+                <label htmlFor="edit-sup-name" className="pos-label">Razón Social / Nombre Comercial *</label>
+                <input
+                  id="edit-sup-name"
+                  type="text"
+                  required
+                  value={editSupName}
+                  onChange={(e) => setEditSupName(e.target.value)}
+                  className="pos-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-sup-cuit" className="pos-label">CUIT:</label>
+                  <input
+                    id="edit-sup-cuit"
+                    type="text"
+                    value={editSupCuit}
+                    onChange={(e) => setEditSupCuit(e.target.value)}
+                    className="pos-input font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-sup-cat" className="pos-label">Rubro principal:</label>
+                  <select
+                    id="edit-sup-cat"
+                    value={editSupCategory}
+                    onChange={(e) => setEditSupCategory(e.target.value)}
+                    className="pos-input"
+                  >
+                    <option value="Lácteos y Quesos">Lácteos y Quesos</option>
+                    <option value="Carnicería">Carnicería</option>
+                    <option value="Panadería y Almacén">Panadería y Almacén</option>
+                    <option value="Bebidas y Cervezas">Bebidas y Cervezas</option>
+                    <option value="Verdulería">Verdulería</option>
+                    <option value="Fiambrería">Fiambrería</option>
+                    <option value="Pastas">Pastas</option>
+                    <option value="Descartables">Descartables</option>
+                    <option value="Varios">Varios</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-sup-phone" className="pos-label">Teléfono:</label>
+                  <input
+                    id="edit-sup-phone"
+                    type="text"
+                    value={editSupPhone}
+                    onChange={(e) => setEditSupPhone(e.target.value)}
+                    className="pos-input font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-sup-email" className="pos-label">Correo electrónico:</label>
+                  <input
+                    id="edit-sup-email"
+                    type="email"
+                    value={editSupEmail}
+                    onChange={(e) => setEditSupEmail(e.target.value)}
+                    className="pos-input"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label htmlFor="edit-sup-status" className="pos-label">Estado:</label>
+                <select
+                  id="edit-sup-status"
+                  value={editSupStatus}
+                  onChange={(e) => setEditSupStatus(e.target.value)}
+                  className="pos-input"
+                >
+                  <option value="activo">Activo (Habilitado para compras)</option>
+                  <option value="inactivo">Inactivo (Dado de baja)</option>
+                </select>
+              </div>
+
+              <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditSupplierModalOpen(false)}
+                  className="pos-btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary flex-1"
+                >
+                  {submitting ? 'Guardando...' : 'Actualizar proveedor'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal: Crear Insumo Rápido durante la carga de factura */}
+      {isQuickIngModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="quick-ing-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-wheat-awn text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+                <h3 id="quick-ing-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Nuevo producto / insumo para compra
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsQuickIngModalOpen(false)}
+                className="pos-btn-ghost"
+                aria-label="Cerrar ventana"
+              >
+                <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateQuickIng} className="p-4 space-y-3.5">
+              <div>
+                <label className="pos-label">Nombre del producto / insumo *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder="Ej. Bife de Lomo, Fernet Branca..."
+                  value={quickIngName}
+                  onChange={(e) => setQuickIngName(e.target.value)}
+                  className="pos-input text-xs"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="pos-label">Rubro:</label>
+                  <select
+                    value={quickIngCategory}
+                    onChange={(e) => setQuickIngCategory(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="Carnicería">Carnicería</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Lácteos">Lácteos y Quesos</option>
+                    <option value="Fiambrería">Fiambrería</option>
+                    <option value="Verdulería">Verdulería</option>
+                    <option value="Bebidas">Bebidas y Cervezas</option>
+                    <option value="Pastas">Pastas</option>
+                    <option value="Conservas">Conservas</option>
+                    <option value="Almacén">Almacén general</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label className="pos-label">Unidad de medida:</label>
+                  <select
+                    value={quickIngUnit}
+                    onChange={(e) => setQuickIngUnit(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="u">Unidades (u)</option>
+                    <option value="l">Litros (l)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label className="pos-label">Costo unitario ($):</label>
+                  <input
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={quickIngCost}
+                    onChange={(e) => setQuickIngCost(e.target.value)}
+                    className="pos-input text-xs font-mono"
+                  />
+                </div>
+
+                <div>
+                  <label className="pos-label">Cantidad a incorporar:</label>
+                  <input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="10"
+                    value={quickIngStock}
+                    onChange={(e) => setQuickIngStock(e.target.value)}
+                    className="pos-input text-xs font-mono"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[11px] text-[var(--text-muted)] bg-[var(--bg-subtle)] p-2 rounded border border-[var(--border-subtle)]">
+                Al guardar, quedará registrado en la base de datos y se sumará automáticamente a los ítems del comprobante actual.
+              </p>
+
+              <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setIsQuickIngModalOpen(false)}
+                  className="pos-btn-secondary flex-1 text-xs"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary flex-1 text-xs"
+                >
+                  {submitting ? 'Guardando...' : 'Crear e incluir en factura'}
+                </button>
+              </div>
+            </form>
           </div>
         </div>
       )}

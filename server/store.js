@@ -75,6 +75,11 @@ class Store {
         if (waiter) o.waiterName = waiter.name;
       });
     }
+    if (!Array.isArray(this.data.customers)) this.data.customers = [];
+    if (!Array.isArray(this.data.customerPayments)) this.data.customerPayments = [];
+    if (!Array.isArray(this.data.supplierPayments)) this.data.supplierPayments = [];
+    if (!Array.isArray(this.data.suppliers)) this.data.suppliers = [];
+    if (!Array.isArray(this.data.purchases)) this.data.purchases = [];
     if (Array.isArray(this.data.cashShifts)) {
       this.data.cashShifts.forEach(s => {
         if (!s.openedDate && s.openedAt) s.openedDate = formatDateAr(s.openedAt);
@@ -175,6 +180,9 @@ class Store {
         cashShifts: Array.isArray(clientState.cashShifts) ? clientState.cashShifts : this.data.cashShifts,
         suppliers: Array.isArray(clientState.suppliers) ? clientState.suppliers : this.data.suppliers,
         purchases: Array.isArray(clientState.purchases) ? clientState.purchases : this.data.purchases,
+        customers: Array.isArray(clientState.customers) ? clientState.customers : (this.data.customers || []),
+        customerPayments: Array.isArray(clientState.customerPayments) ? clientState.customerPayments : (this.data.customerPayments || []),
+        supplierPayments: Array.isArray(clientState.supplierPayments) ? clientState.supplierPayments : (this.data.supplierPayments || []),
         stockLog: Array.isArray(clientState.stockLog) ? clientState.stockLog : this.data.stockLog,
         notifications: Array.isArray(clientState.notifications) ? clientState.notifications : (this.data.notifications || []),
         historicalSales: Array.isArray(clientState.historicalSales) ? clientState.historicalSales : this.data.historicalSales,
@@ -748,6 +756,24 @@ class Store {
     order.closedAt = new Date().toISOString();
     order.closedBy = closedBy?.name || 'Cajero';
 
+    // Si se cobra mediante Cuenta Corriente, impactar en el saldo del cliente
+    if (paymentMethod === 'cuenta_corriente' && paymentDetails?.customerId) {
+      if (!this.data.customers) this.data.customers = [];
+      const customer = this.data.customers.find(c => c.id === paymentDetails.customerId);
+      if (customer) {
+        customer.currentBalance = (customer.currentBalance || 0) + order.total;
+        order.customerId = customer.id;
+        order.customerName = customer.name;
+        if (!customer.ordersHistory) customer.ordersHistory = [];
+        customer.ordersHistory.unshift({
+          orderId: order.id,
+          orderNumber: order.orderNumber,
+          total: order.total,
+          date: order.closedAt
+        });
+      }
+    }
+
     // Si tiene mesa asociada, liberar la mesa
     if (order.tableId) {
       const table = this.data.tables.find(t => t.id === order.tableId);
@@ -853,6 +879,194 @@ class Store {
 
     this.save();
     return newPurchase;
+  }
+
+  updateSupplier(id, updates = {}) {
+    if (!this.data.suppliers) this.data.suppliers = [];
+    const sup = this.data.suppliers.find(s => s.id === id);
+    if (!sup) return null;
+
+    if (updates.name) sup.name = updates.name.trim();
+    if (updates.cuit !== undefined) sup.cuit = updates.cuit.trim();
+    if (updates.phone !== undefined) sup.phone = updates.phone.trim();
+    if (updates.email !== undefined) sup.email = updates.email.trim();
+    if (updates.category) sup.category = updates.category.trim();
+    if (updates.status !== undefined) sup.status = updates.status;
+
+    this.save();
+    return sup;
+  }
+
+  deleteSupplier(id) {
+    if (!this.data.suppliers) return false;
+    const sup = this.data.suppliers.find(s => s.id === id);
+    if (!sup) return false;
+
+    const hasPurchases = (this.data.purchases || []).some(p => p.supplierId === id);
+    if (hasPurchases) {
+      sup.status = 'inactivo';
+      this.save();
+      return { deactivated: true, supplier: sup };
+    } else {
+      this.data.suppliers = this.data.suppliers.filter(s => s.id !== id);
+      this.save();
+      return { deleted: true };
+    }
+  }
+
+  getSupplierPayments() {
+    return this.data.supplierPayments || [];
+  }
+
+  addSupplierPayment(supplierId, { amount, paymentMethod = 'transferencia', voucherId = null, notes = '', user }) {
+    if (!this.data.suppliers) this.data.suppliers = [];
+    const sup = this.data.suppliers.find(s => s.id === supplierId);
+    if (!sup) throw new Error('Proveedor no encontrado');
+
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      throw new Error('El importe debe ser mayor a cero');
+    }
+
+    if (voucherId && Array.isArray(this.data.purchases)) {
+      const pur = this.data.purchases.find(p => p.id === voucherId);
+      if (pur) {
+        pur.paymentStatus = 'pagado';
+      }
+    }
+
+    const paymentRecord = {
+      id: 'spay_' + Date.now(),
+      supplierId: sup.id,
+      supplierName: sup.name,
+      amount: paymentAmount,
+      paymentMethod,
+      voucherId,
+      notes: notes || '',
+      date: new Date().toISOString().split('T')[0],
+      registeredBy: user?.name || 'Admin',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!this.data.supplierPayments) this.data.supplierPayments = [];
+    this.data.supplierPayments.unshift(paymentRecord);
+
+    if (paymentMethod === 'efectivo') {
+      const activeShift = this.getActiveShift();
+      if (activeShift) {
+        this.addCashMovement(activeShift.id, {
+          type: 'egreso',
+          amount: paymentAmount,
+          reason: `Pago a proveedor ${sup.name} (${notes || 'Cta. Cte.'})`,
+          user: user?.name || 'Cajero'
+        });
+      }
+    }
+
+    this.save();
+    return { supplier: sup, payment: paymentRecord };
+  }
+
+  // --- Cuentas Corrientes de Clientes ---
+  getCustomers() {
+    return this.data.customers || [];
+  }
+
+  addCustomer(custData = {}) {
+    if (!this.data.customers) this.data.customers = [];
+    const newCust = {
+      id: 'cust_' + Date.now(),
+      name: custData.name?.trim() || 'Cliente Sin Nombre',
+      phone: custData.phone?.trim() || '',
+      dniCuit: custData.dniCuit?.trim() || '',
+      address: custData.address?.trim() || '',
+      currentBalance: Number(custData.currentBalance) || 0,
+      creditLimit: Number(custData.creditLimit) || 100000,
+      notes: custData.notes?.trim() || '',
+      status: 'activo',
+      createdAt: new Date().toISOString()
+    };
+    this.data.customers.push(newCust);
+    this.save();
+    return newCust;
+  }
+
+  updateCustomer(id, updates = {}) {
+    if (!this.data.customers) this.data.customers = [];
+    const cust = this.data.customers.find(c => c.id === id);
+    if (!cust) return null;
+
+    if (updates.name) cust.name = updates.name.trim();
+    if (updates.phone !== undefined) cust.phone = updates.phone.trim();
+    if (updates.dniCuit !== undefined) cust.dniCuit = updates.dniCuit.trim();
+    if (updates.address !== undefined) cust.address = updates.address.trim();
+    if (updates.creditLimit !== undefined) cust.creditLimit = Number(updates.creditLimit) || 0;
+    if (updates.notes !== undefined) cust.notes = updates.notes.trim();
+    if (updates.status !== undefined) cust.status = updates.status;
+
+    this.save();
+    return cust;
+  }
+
+  deleteCustomer(id) {
+    if (!this.data.customers) return false;
+    const cust = this.data.customers.find(c => c.id === id);
+    if (!cust) return false;
+
+    if ((cust.currentBalance || 0) > 0) {
+      throw new Error(`El cliente tiene un saldo pendiente de $${cust.currentBalance.toLocaleString('es-AR')}`);
+    }
+
+    cust.status = 'inactivo';
+    this.save();
+    return { deactivated: true, customer: cust };
+  }
+
+  getCustomerPayments() {
+    return this.data.customerPayments || [];
+  }
+
+  addCustomerPayment(customerId, { amount, paymentMethod = 'efectivo', notes = '', user }) {
+    if (!this.data.customers) this.data.customers = [];
+    const cust = this.data.customers.find(c => c.id === customerId);
+    if (!cust) throw new Error('Cliente no encontrado');
+
+    const paymentAmount = Number(amount);
+    if (isNaN(paymentAmount) || paymentAmount <= 0) {
+      throw new Error('El importe debe ser mayor a cero');
+    }
+
+    cust.currentBalance = Math.max(0, (cust.currentBalance || 0) - paymentAmount);
+
+    const paymentRecord = {
+      id: 'cpay_' + Date.now(),
+      customerId: cust.id,
+      customerName: cust.name,
+      amount: paymentAmount,
+      paymentMethod,
+      notes: notes || '',
+      date: new Date().toISOString().split('T')[0],
+      registeredBy: user?.name || 'Cajero',
+      createdAt: new Date().toISOString()
+    };
+
+    if (!this.data.customerPayments) this.data.customerPayments = [];
+    this.data.customerPayments.unshift(paymentRecord);
+
+    if (paymentMethod === 'efectivo') {
+      const activeShift = this.getActiveShift();
+      if (activeShift) {
+        this.addCashMovement(activeShift.id, {
+          type: 'ingreso',
+          amount: paymentAmount,
+          reason: `Cobro Cta. Cte. cliente ${cust.name}`,
+          user: user?.name || 'Cajero'
+        });
+      }
+    }
+
+    this.save();
+    return { customer: cust, payment: paymentRecord };
   }
 
   // --- Arqueos y Turnos de Caja ---

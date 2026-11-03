@@ -205,6 +205,16 @@ export default function SidebarDrawer() {
                 <i className="fa-solid fa-file-invoice-dollar w-4 text-center text-sm" aria-hidden="true"></i>
                 <span>Facturas y Proveedores</span>
               </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectTab('cuentas_corrientes')}
+                aria-current={activeTab === 'cuentas_corrientes' ? 'page' : undefined}
+                className={navItemClass('cuentas_corrientes')}
+              >
+                <i className="fa-solid fa-book-bookmark w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Cuentas Corrientes</span>
+              </button>
             </>
           )}
 

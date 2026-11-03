@@ -12,9 +12,21 @@ export default function RecipeManager() {
 
   const [isNewProductModalOpen, setIsNewProductModalOpen] = useState(false);
   const [newProductName, setNewProductName] = useState('');
-  const [newProductCategory, setNewProductCategory] = useState('Pizzas');
+  const [newProductCategory, setNewProductCategory] = useState('Lomitos');
   const [newProductPrice, setNewProductPrice] = useState('');
   const [newProductDesc, setNewProductDesc] = useState('');
+
+  // Subtab de catálogo (platos vs insumos)
+  const [catalogView, setCatalogView] = useState('platos'); // 'platos' | 'insumos'
+
+  // Nuevo ingrediente / insumo
+  const [isNewIngModalOpen, setIsNewIngModalOpen] = useState(false);
+  const [newIngName, setNewIngName] = useState('');
+  const [newIngCategory, setNewIngCategory] = useState('Carnicería');
+  const [newIngUnit, setNewIngUnit] = useState('kg');
+  const [newIngCost, setNewIngCost] = useState('5000');
+  const [newIngStock, setNewIngStock] = useState('10');
+  const [newIngMin, setNewIngMin] = useState('2');
 
   useEffect(() => {
     if (!selectedProduct && products.length > 0) {
@@ -26,13 +38,45 @@ export default function RecipeManager() {
   }, [products, selectedProduct, isEditing]);
 
   useEffect(() => {
-    if (!isNewProductModalOpen) return;
     const onKeyDown = (e) => {
-      if (e.key === 'Escape') setIsNewProductModalOpen(false);
+      if (e.key === 'Escape') {
+        setIsNewProductModalOpen(false);
+        setIsNewIngModalOpen(false);
+      }
     };
-    window.addEventListener('keydown', onKeyDown);
-    return () => window.removeEventListener('keydown', onKeyDown);
-  }, [isNewProductModalOpen]);
+    if (isNewProductModalOpen || isNewIngModalOpen) {
+      window.addEventListener('keydown', onKeyDown);
+      return () => window.removeEventListener('keydown', onKeyDown);
+    }
+  }, [isNewProductModalOpen, isNewIngModalOpen]);
+
+  const handleCreateIngredient = async (e) => {
+    e.preventDefault();
+    if (!newIngName.trim()) {
+      showToast('Ingresá el nombre del insumo o ingrediente', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const created = await api.addIngredient({
+        name: newIngName.trim(),
+        category: newIngCategory,
+        unit: newIngUnit,
+        costPerUnit: Number(newIngCost) || 0,
+        stock: Number(newIngStock) || 0,
+        minStock: Number(newIngMin) || 1
+      });
+      showToast(`Insumo "${created.name}" guardado para recetas y compras de proveedores`);
+      await refreshData();
+      setIsNewIngModalOpen(false);
+      setNewIngName('');
+      setNewIngCost('5000');
+    } catch (err) {
+      showToast(err.message || 'No se pudo crear el insumo', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleSelectProduct = (prod) => {
     setSelectedProduct(prod);
@@ -157,61 +201,124 @@ export default function RecipeManager() {
           </p>
         </div>
 
-        <button
-          type="button"
-          onClick={() => setIsNewProductModalOpen(true)}
-          className="pos-btn-primary self-start sm:self-auto shrink-0"
-        >
-          <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
-          <span>Nuevo plato</span>
-        </button>
+        <div className="flex items-center gap-2 self-start sm:self-auto shrink-0 flex-wrap">
+          <button
+            type="button"
+            onClick={() => setIsNewIngModalOpen(true)}
+            className="pos-btn-secondary"
+            title="Crear nueva materia prima o insumo para recetas y compras"
+          >
+            <i className="fa-solid fa-wheat-awn text-xs" aria-hidden="true"></i>
+            <span>Nuevo ingrediente</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setIsNewProductModalOpen(true)}
+            className="pos-btn-primary"
+          >
+            <i className="fa-solid fa-plus text-xs" aria-hidden="true"></i>
+            <span>Nuevo plato</span>
+          </button>
+        </div>
       </div>
 
       {/* Master-Detail Split */}
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-4">
         {/* Left: Menu Dishes List (Native <button> items per R-39) */}
         <div className="lg:col-span-5 pos-panel overflow-hidden flex flex-col">
-          <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
-            <span className="text-xs font-semibold text-[var(--text-secondary)]">
-              Carta activa ({products.length} platos)
+          <div className="px-3 py-2 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between gap-2">
+            <div className="flex rounded border border-[var(--border-strong)] p-0.5 bg-[var(--bg-surface)] text-xs" role="tablist">
+              <button
+                type="button"
+                role="tab"
+                aria-selected={catalogView === 'platos'}
+                onClick={() => setCatalogView('platos')}
+                className={`px-2.5 py-1 rounded font-semibold transition-colors ${
+                  catalogView === 'platos'
+                    ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Platos ({products.length})
+              </button>
+              <button
+                type="button"
+                role="tab"
+                aria-selected={catalogView === 'insumos'}
+                onClick={() => setCatalogView('insumos')}
+                className={`px-2.5 py-1 rounded font-semibold transition-colors ${
+                  catalogView === 'insumos'
+                    ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold'
+                    : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                }`}
+              >
+                Insumos ({ingredients.length})
+              </button>
+            </div>
+            <span className="text-[11px] text-[var(--text-muted)] font-mono">
+              {catalogView === 'platos' ? 'Escandallo' : 'Sincronizado'}
             </span>
           </div>
 
           <div className="divide-y divide-[var(--border-subtle)] overflow-y-auto max-h-[600px]">
-            {products.map(prod => {
-              const isSelected = selectedProduct?.id === prod.id;
-              const prodCost = calculateRecipeCost(prod.recipe);
-              const margin = prod.price > 0 ? Math.round(((prod.price - prodCost) / prod.price) * 100) : 0;
-
-              return (
-                <button
-                  key={prod.id}
-                  type="button"
-                  onClick={() => handleSelectProduct(prod)}
-                  className={`w-full p-3.5 text-left transition-colors flex flex-col gap-1.5 min-h-[68px] ${
-                    isSelected
-                      ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--border-strong)]'
-                      : 'hover:bg-[var(--bg-hover)]'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-2 w-full">
-                    <span className="font-bold text-sm text-[var(--text-primary)] leading-snug">
-                      {prod.name}
+            {catalogView === 'insumos' ? (
+              ingredients.map(ing => (
+                <div key={ing.id} className="p-3 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between gap-2">
+                  <div>
+                    <span className="font-bold text-xs text-[var(--text-primary)] block">
+                      {ing.name}
                     </span>
-                    <span className="font-mono font-bold text-sm text-[var(--text-primary)] shrink-0">
-                      ${prod.price.toLocaleString('es-AR')}
+                    <span className="pos-badge pos-badge-neutral text-[10px] mt-0.5">
+                      {ing.category || 'Almacén'}
                     </span>
                   </div>
-
-                  <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] w-full font-mono">
-                    <span>{prod.recipe?.length || 0} insumos</span>
-                    <span className="text-[var(--status-open-fg)]">
-                      Costo ${Math.round(prodCost).toLocaleString('es-AR')} · Margen {margin}%
+                  <div className="text-right">
+                    <span className="font-mono font-bold text-xs text-[var(--text-primary)] block">
+                      ${ing.costPerUnit?.toLocaleString('es-AR')} / {ing.unit}
+                    </span>
+                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                      Stock: {ing.stock} {ing.unit}
                     </span>
                   </div>
-                </button>
-              );
-            })}
+                </div>
+              ))
+            ) : (
+              products.map(prod => {
+                const isSelected = selectedProduct?.id === prod.id;
+                const prodCost = calculateRecipeCost(prod.recipe);
+                const margin = prod.price > 0 ? Math.round(((prod.price - prodCost) / prod.price) * 100) : 0;
+
+                return (
+                  <button
+                    key={prod.id}
+                    type="button"
+                    onClick={() => handleSelectProduct(prod)}
+                    className={`w-full p-3.5 text-left transition-colors flex flex-col gap-1.5 min-h-[68px] ${
+                      isSelected
+                        ? 'bg-[var(--bg-elevated)] border-l-4 border-l-[var(--border-strong)]'
+                        : 'hover:bg-[var(--bg-hover)]'
+                    }`}
+                  >
+                    <div className="flex items-start justify-between gap-2 w-full">
+                      <span className="font-bold text-sm text-[var(--text-primary)] leading-snug">
+                        {prod.name}
+                      </span>
+                      <span className="font-mono font-bold text-sm text-[var(--text-primary)] shrink-0">
+                        ${prod.price.toLocaleString('es-AR')}
+                      </span>
+                    </div>
+
+                    <div className="flex items-center justify-between text-xs text-[var(--text-secondary)] w-full font-mono">
+                      <span>{prod.recipe?.length || 0} insumos</span>
+                      <span className="text-[var(--status-open-fg)]">
+                        Costo ${Math.round(prodCost).toLocaleString('es-AR')} · Margen {margin}%
+                      </span>
+                    </div>
+                  </button>
+                );
+              })
+            )}
           </div>
         </div>
 
@@ -447,6 +554,7 @@ export default function RecipeManager() {
                   onChange={(e) => setNewProductCategory(e.target.value)}
                   className="pos-input"
                 >
+                  <option value="Lomitos">Lomitos</option>
                   <option value="Pizzas">Pizzas</option>
                   <option value="Hamburguesas">Hamburguesas</option>
                   <option value="Minutas & Entradas">Minutas y Entradas</option>
@@ -499,6 +607,151 @@ export default function RecipeManager() {
               </button>
             </div>
           </form>
+        </div>
+      )}
+      {/* Modal: Crear Insumo / Materia Prima */}
+      {isNewIngModalOpen && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3"
+          role="dialog"
+          aria-modal="true"
+          aria-labelledby="new-ing-modal-title"
+        >
+          <div className="pos-panel w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-wheat-awn text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+                <h3 id="new-ing-modal-title" className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Nuevo insumo / materia prima
+                </h3>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsNewIngModalOpen(false)}
+                className="pos-btn-ghost"
+                aria-label="Cerrar ventana"
+              >
+                <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateIngredient} className="p-4 space-y-3.5">
+              <div>
+                <label htmlFor="new-ing-name-field" className="pos-label">Nombre del insumo / producto *</label>
+                <input
+                  id="new-ing-name-field"
+                  type="text"
+                  required
+                  placeholder="Ej. Bife de Lomo Vacuno, Pan de Lomito..."
+                  value={newIngName}
+                  onChange={(e) => setNewIngName(e.target.value)}
+                  className="pos-input"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="new-ing-cat-field" className="pos-label">Rubro / Categoría:</label>
+                  <select
+                    id="new-ing-cat-field"
+                    value={newIngCategory}
+                    onChange={(e) => setNewIngCategory(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="Carnicería">Carnicería</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Lácteos">Lácteos y Quesos</option>
+                    <option value="Fiambrería">Fiambrería</option>
+                    <option value="Verdulería">Verdulería</option>
+                    <option value="Bebidas">Bebidas y Cervezas</option>
+                    <option value="Pastas">Pastas</option>
+                    <option value="Conservas">Conservas</option>
+                    <option value="Almacén">Almacén general</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="new-ing-unit-field" className="pos-label">Unidad de medida:</label>
+                  <select
+                    id="new-ing-unit-field"
+                    value={newIngUnit}
+                    onChange={(e) => setNewIngUnit(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="kg">Kilogramos (kg)</option>
+                    <option value="g">Gramos (g)</option>
+                    <option value="u">Unidades (u)</option>
+                    <option value="l">Litros (l)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label htmlFor="new-ing-cost-field" className="pos-label">Costo unitario ($):</label>
+                  <input
+                    id="new-ing-cost-field"
+                    type="number"
+                    min="0"
+                    placeholder="0"
+                    value={newIngCost}
+                    onChange={(e) => setNewIngCost(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="new-ing-stock-field" className="pos-label">Stock inicial:</label>
+                  <input
+                    id="new-ing-stock-field"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="0"
+                    value={newIngStock}
+                    onChange={(e) => setNewIngStock(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="new-ing-min-field" className="pos-label">Stock mín. alerta:</label>
+                  <input
+                    id="new-ing-min-field"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    placeholder="1"
+                    value={newIngMin}
+                    onChange={(e) => setNewIngMin(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <p className="text-[11px] text-[var(--text-muted)] bg-[var(--bg-subtle)] p-2 rounded border border-[var(--border-subtle)]">
+                Este insumo quedará registrado en la base de datos y estará disponible inmediatamente tanto para el recetario como para las compras y remitos de proveedores.
+              </p>
+
+              <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setIsNewIngModalOpen(false)}
+                  className="pos-btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary flex-1"
+                >
+                  {submitting ? 'Guardando...' : 'Guardar insumo'}
+                </button>
+              </div>
+            </form>
+          </div>
         </div>
       )}
     </section>

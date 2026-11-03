@@ -14,6 +14,7 @@ import CajeroDashboard from './components/cajero/CajeroDashboard';
 import ArqueoCaja from './components/cajero/ArqueoCaja';
 import ShiftBalanceModal from './components/cajero/ShiftBalanceModal';
 import StockPurchases from './components/cajero/StockPurchases';
+import CuentasCorrientesManager from './components/cajero/CuentasCorrientesManager';
 import DeliveryManager from './components/delivery/DeliveryManager';
 import RecipeManager from './components/admin/RecipeManager';
 import StockControl from './components/admin/StockControl';
@@ -107,6 +108,10 @@ export default function App() {
 
     if (activeTab === 'stock_purchases') {
       return <StockPurchases />;
+    }
+
+    if (activeTab === 'cuentas_corrientes') {
+      return <CuentasCorrientesManager />;
     }
 
     if (isAdmin) {

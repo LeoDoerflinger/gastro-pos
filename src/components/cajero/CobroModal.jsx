@@ -6,7 +6,7 @@ import { getTableCode } from '../mozo/MozoSalonView';
 import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
-  const { currentUser, tables, users, showToast, refreshData } = useApp();
+  const { currentUser, tables, users, customers, showToast, refreshData } = useApp();
 
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashTendered, setCashTendered] = useState('');
@@ -14,6 +14,12 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const [tipAmount, setTipAmount] = useState(order?.tip || 0);
   const [splitCash, setSplitCash] = useState('');
   const [splitDigital, setSplitDigital] = useState('');
+  const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [isQuickCustomerOpen, setIsQuickCustomerOpen] = useState(false);
+  const [quickCustName, setQuickCustName] = useState('');
+  const [quickCustPhone, setQuickCustPhone] = useState('');
+  const [quickCustDni, setQuickCustDni] = useState('');
+  const [quickCustLimit, setQuickCustLimit] = useState('100000');
   const [submitting, setSubmitting] = useState(false);
   const [closedOrderReceipt, setClosedOrderReceipt] = useState(null);
 
@@ -48,11 +54,43 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
     .filter((v, i, a) => v >= totalToPay && a.indexOf(v) === i)
     .slice(0, 4);
 
+  const handleCreateQuickCustomer = async (e) => {
+    e.preventDefault();
+    if (!quickCustName.trim()) {
+      showToast('Ingresá el nombre o razón social del cliente', 'error');
+      return;
+    }
+    try {
+      const created = await api.createCustomer({
+        name: quickCustName.trim(),
+        phone: quickCustPhone.trim(),
+        dniCuit: quickCustDni.trim(),
+        creditLimit: Number(quickCustLimit) || 100000
+      });
+      showToast(`Cliente ${created.name} registrado en cuenta corriente`);
+      await refreshData();
+      setSelectedCustomerId(created.id);
+      setIsQuickCustomerOpen(false);
+      setQuickCustName('');
+      setQuickCustPhone('');
+      setQuickCustDni('');
+    } catch (err) {
+      showToast(err.message || 'Error al crear cliente', 'error');
+    }
+  };
+
   const handleConfirmPayment = async () => {
     if (paymentMethod === 'efectivo' && tenderedNum < totalToPay) {
       showToast('El efectivo recibido es menor al total a cobrar', 'error');
       return;
     }
+
+    if (paymentMethod === 'cuenta_corriente' && !selectedCustomerId) {
+      showToast('Seleccioná un cliente de cuenta corriente para registrar el consumo', 'error');
+      return;
+    }
+
+    const selectedCust = customers?.find(c => c.id === selectedCustomerId);
 
     setSubmitting(true);
     try {
@@ -63,13 +101,19 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
         paymentDetails: {
           cashTendered: paymentMethod === 'efectivo' ? tenderedNum : null,
           changeDue: paymentMethod === 'efectivo' ? changeDue : 0,
-          splitDetails: paymentMethod === 'mixto' ? { cash: Number(splitCash), digital: Number(splitDigital) } : null
+          splitDetails: paymentMethod === 'mixto' ? { cash: Number(splitCash), digital: Number(splitDigital) } : null,
+          customerId: paymentMethod === 'cuenta_corriente' ? selectedCustomerId : null,
+          customerName: paymentMethod === 'cuenta_corriente' ? selectedCust?.name : null
         },
         closedBy: currentUser
       };
 
       const closed = await api.closeOrder(order.id, payload);
-      showToast(`Comanda #${order.orderNumber} cobrada y cerrada.`);
+      showToast(
+        paymentMethod === 'cuenta_corriente'
+          ? `Comanda #${order.orderNumber} cargada a cuenta corriente de ${selectedCust?.name || 'cliente'}.`
+          : `Comanda #${order.orderNumber} cobrada y cerrada.`
+      );
       await refreshData();
       onOrderClosed?.();
       setClosedOrderReceipt(closed);
@@ -85,6 +129,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
     { id: 'credito', label: 'Crédito', icon: 'fa-credit-card' },
     { id: 'mercadopago', label: 'QR / MP', icon: 'fa-qrcode' },
     { id: 'transferencia', label: 'Transfer.', icon: 'fa-building-columns' },
+    { id: 'cuenta_corriente', label: 'Cta. Cte.', icon: 'fa-book-bookmark' },
     { id: 'mixto', label: 'Mixto', icon: 'fa-scale-balanced' }
   ];
 
@@ -200,7 +245,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
             {/* Payment Method Keycaps */}
             <div>
               <span className="pos-label">Medio de pago:</span>
-              <div className="grid grid-cols-3 sm:grid-cols-6 gap-2" role="group" aria-label="Seleccionar medio de pago">
+              <div className="grid grid-cols-2 sm:grid-cols-4 md:grid-cols-7 gap-2" role="group" aria-label="Seleccionar medio de pago">
                 {paymentOptions.map(method => {
                   const active = paymentMethod === method.id;
                   return (
@@ -331,6 +376,135 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                     />
                   </div>
                 </div>
+              </div>
+            )}
+
+            {paymentMethod === 'cuenta_corriente' && (
+              <div className="pos-subpanel p-3.5 space-y-3">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                    <i className="fa-solid fa-book-bookmark text-[var(--accent-brand)]" aria-hidden="true"></i>
+                    <span>Cargar a cuenta corriente de cliente:</span>
+                  </span>
+                  <button
+                    type="button"
+                    onClick={() => setIsQuickCustomerOpen(!isQuickCustomerOpen)}
+                    className="pos-btn-secondary text-xs px-2.5"
+                  >
+                    <i className={`fa-solid ${isQuickCustomerOpen ? 'fa-xmark' : 'fa-plus'} text-xs`} aria-hidden="true"></i>
+                    <span>{isQuickCustomerOpen ? 'Cancelar' : 'Nuevo cliente'}</span>
+                  </button>
+                </div>
+
+                {isQuickCustomerOpen ? (
+                  <form onSubmit={handleCreateQuickCustomer} className="p-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded space-y-2.5">
+                    <div className="text-xs font-bold text-[var(--text-primary)]">
+                      Alta rápida de cliente para cuenta corriente
+                    </div>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <div>
+                        <label className="pos-label">Nombre / Razón Social *</label>
+                        <input
+                          type="text"
+                          required
+                          placeholder="Ej. Estudio Jurídico..."
+                          value={quickCustName}
+                          onChange={(e) => setQuickCustName(e.target.value)}
+                          className="pos-input text-xs"
+                        />
+                      </div>
+                      <div>
+                        <label className="pos-label">Teléfono (WhatsApp)</label>
+                        <input
+                          type="text"
+                          placeholder="Ej. 351 512-3456"
+                          value={quickCustPhone}
+                          onChange={(e) => setQuickCustPhone(e.target.value)}
+                          className="pos-input text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="pos-label">DNI o CUIT</label>
+                        <input
+                          type="text"
+                          placeholder="Ej. 20-33445566-7"
+                          value={quickCustDni}
+                          onChange={(e) => setQuickCustDni(e.target.value)}
+                          className="pos-input text-xs font-mono"
+                        />
+                      </div>
+                      <div>
+                        <label className="pos-label">Límite de crédito ($)</label>
+                        <input
+                          type="number"
+                          placeholder="100000"
+                          value={quickCustLimit}
+                          onChange={(e) => setQuickCustLimit(e.target.value)}
+                          className="pos-input text-xs font-mono"
+                        />
+                      </div>
+                    </div>
+                    <button type="submit" className="pos-btn-primary text-xs w-full">
+                      Guardar y seleccionar cliente
+                    </button>
+                  </form>
+                ) : (
+                  <div>
+                    <label htmlFor="customer-select" className="pos-label">
+                      Seleccionar cliente registrado:
+                    </label>
+                    <select
+                      id="customer-select"
+                      value={selectedCustomerId}
+                      onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      className="pos-input text-xs"
+                    >
+                      <option value="">-- Seleccioná un cliente con cuenta corriente --</option>
+                      {(customers || [])
+                        .filter(c => c.status !== 'inactivo')
+                        .map(c => (
+                          <option key={c.id} value={c.id}>
+                            {c.name} {c.phone ? `(${c.phone})` : ''} · Saldo actual: ${Number(c.currentBalance || 0).toLocaleString('es-AR')}
+                          </option>
+                        ))}
+                    </select>
+                  </div>
+                )}
+
+                {selectedCustomerId && (() => {
+                  const cust = customers.find(c => c.id === selectedCustomerId);
+                  if (!cust) return null;
+                  const current = Number(cust.currentBalance || 0);
+                  const nextBalance = current + totalToPay;
+                  const limit = Number(cust.creditLimit || 0);
+                  const isOverLimit = limit > 0 && nextBalance > limit;
+
+                  return (
+                    <div className={`p-3 rounded border text-xs space-y-1.5 ${
+                      isOverLimit ? 'bg-[var(--status-danger-bg)] border-[var(--status-danger-bar)]' : 'bg-[var(--bg-elevated)] border-[var(--border-subtle)]'
+                    }`}>
+                      <div className="flex justify-between items-center text-[var(--text-primary)]">
+                        <span>Cliente: <strong>{cust.name}</strong></span>
+                        <span className="font-mono text-[var(--text-secondary)]">Límite: ${limit.toLocaleString('es-AR')}</span>
+                      </div>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[var(--text-muted)]">Saldo actual adeudado:</span>
+                        <span className="font-mono font-bold text-[var(--text-primary)]">${current.toLocaleString('es-AR')}</span>
+                      </div>
+                      <div className="flex justify-between items-center pt-1 border-t border-[var(--border-subtle)]">
+                        <span className="font-semibold text-[var(--text-primary)]">Nuevo saldo tras este consumo:</span>
+                        <span className={`font-mono font-bold text-sm ${isOverLimit ? 'text-[var(--status-danger-fg)]' : 'text-[var(--accent-brand)]'}`}>
+                          ${nextBalance.toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                      {isOverLimit && (
+                        <p className="text-[11px] text-[var(--status-danger-fg)] font-semibold pt-0.5">
+                          Atención: El nuevo saldo supera el límite de crédito acordado.
+                        </p>
+                      )}
+                    </div>
+                  );
+                })()}
               </div>
             )}
           </div>

@@ -62,7 +62,7 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
           >
             <div className="text-center pb-3 border-b border-dashed border-[#8c867a]">
               <div className="font-bold text-sm tracking-tight">GASTROPOS RESTÓ</div>
-              <p className="text-[11px] text-[#43464c]">Av. Corrientes 1500, CABA</p>
+              <p className="text-[11px] text-[#43464c]">Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital · Tel: (0351) 425-8899</p>
               <p className="text-[11px] text-[#43464c]">CUIT 30-71999888-4 · IVA Resp. Inscripto</p>
             </div>
 
