@@ -107,7 +107,7 @@ export default function SidebarDrawer() {
                 {businessConfig?.name || activeTenant?.name || 'GastroPOS'}
               </span>
               <span className="text-[11px] text-[var(--text-muted)] font-mono block truncate">
-                @{businessConfig?.domain || activeTenant?.domain || 'quepibar.gp.com'}
+                @{businessConfig?.domain || activeTenant?.domain || 'prueba1.gp.com'}
               </span>
             </div>
           </div>

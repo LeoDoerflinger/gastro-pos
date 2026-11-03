@@ -1,27 +1,27 @@
 {
-  "activeTenantId": "quepibar",
+  "activeTenantId": "prueba1",
   "tenants": {
-    "quepibar": {
-      "id": "quepibar",
-      "slug": "quepibar",
-      "name": "Qué Pi Bar & Tapas",
-      "domain": "quepibar.gp.com",
+    "prueba1": {
+      "id": "prueba1",
+      "slug": "prueba1",
+      "name": "Local 1",
+      "domain": "prueba1.gp.com",
       "cuit": "30-71458921-3",
       "address": "Belgrano 740, Barrio Güemes, Córdoba Capital",
       "phone": "(0351) 460-2211",
-      "email": "admin@quepibar.gp.com",
+      "email": "admin@prueba1.gp.com",
       "receiptFooter": "¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas",
       "businessConfig": {
-        "name": "Qué Pi Bar & Tapas",
-        "legalName": "Qué Pi Bar Gastronomía SRL",
-        "slug": "quepibar",
-        "domain": "quepibar.gp.com",
+        "name": "Local 1",
+        "legalName": "Local 1 SRL",
+        "slug": "prueba1",
+        "domain": "prueba1.gp.com",
         "cuit": "30-71458921-3",
         "address": "Belgrano 740, Barrio Güemes, Córdoba Capital",
         "phone": "(0351) 460-2211",
-        "email": "admin@quepibar.gp.com",
+        "email": "admin@prueba1.gp.com",
         "city": "Córdoba Capital",
-        "receiptFooter": "¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas"
+        "receiptFooter": "¡Gracias por visitarnos en Local 1!"
       },
       "users": [
         {
@@ -30,7 +30,7 @@
           "role": "admin",
           "pin": "1234",
           "password": "admin123",
-          "email": "admin@quepibar.gp.com",
+          "email": "admin@prueba1.gp.com",
           "avatar": "fa-solid fa-user-shield"
         },
         {
@@ -39,7 +39,7 @@
           "role": "cajero",
           "pin": "2222",
           "password": "cajero123",
-          "email": "cajero@quepibar.gp.com",
+          "email": "cajero@prueba1.gp.com",
           "avatar": "fa-solid fa-cash-register"
         },
         {
@@ -48,7 +48,7 @@
           "role": "mozo",
           "pin": "1111",
           "password": "mozo123",
-          "email": "mozo1@quepibar.gp.com",
+          "email": "mozo1@prueba1.gp.com",
           "avatar": "fa-solid fa-user-tie"
         },
         {
@@ -57,7 +57,7 @@
           "role": "mozo",
           "pin": "1112",
           "password": "mozo123",
-          "email": "mozo2@quepibar.gp.com",
+          "email": "mozo2@prueba1.gp.com",
           "avatar": "fa-solid fa-user-tie"
         }
       ],
@@ -1664,27 +1664,27 @@
       "stockLog": [],
       "lastUpdated": 1700000000000
     },
-    "ppopular": {
-      "id": "ppopular",
-      "slug": "ppopular",
-      "name": "Parador Popular Restó",
-      "domain": "ppopular.gp.com",
+    "prueba2": {
+      "id": "prueba2",
+      "slug": "prueba2",
+      "name": "Local 2",
+      "domain": "prueba2.gp.com",
       "cuit": "30-68994512-8",
       "address": "Bv. San Juan 320, Centro, Córdoba Capital",
       "phone": "(0351) 422-9010",
-      "email": "admin@ppopular.gp.com",
+      "email": "admin@prueba2.gp.com",
       "receiptFooter": "¡El sabor del bodegón cordobés! Parador Popular",
       "businessConfig": {
-        "name": "Parador Popular Restó",
-        "legalName": "Parador Popular Tradicional SA",
-        "slug": "ppopular",
-        "domain": "ppopular.gp.com",
+        "name": "Local 2",
+        "legalName": "Local 2 SRL",
+        "slug": "prueba2",
+        "domain": "prueba2.gp.com",
         "cuit": "30-68994512-8",
         "address": "Bv. San Juan 320, Centro, Córdoba Capital",
         "phone": "(0351) 422-9010",
-        "email": "admin@ppopular.gp.com",
+        "email": "admin@prueba2.gp.com",
         "city": "Córdoba Capital",
-        "receiptFooter": "¡El sabor del bodegón cordobés! Parador Popular"
+        "receiptFooter": "¡Gracias por visitarnos en Local 2!"
       },
       "users": [
         {
@@ -1693,7 +1693,7 @@
           "role": "admin",
           "pin": "1234",
           "password": "admin123",
-          "email": "admin@ppopular.gp.com",
+          "email": "admin@prueba2.gp.com",
           "avatar": "fa-solid fa-user-shield"
         },
         {
@@ -1702,7 +1702,7 @@
           "role": "cajero",
           "pin": "2222",
           "password": "cajero123",
-          "email": "cajero@ppopular.gp.com",
+          "email": "cajero@prueba2.gp.com",
           "avatar": "fa-solid fa-cash-register"
         },
         {
@@ -1711,7 +1711,7 @@
           "role": "mozo",
           "pin": "1111",
           "password": "mozo123",
-          "email": "mozo1@ppopular.gp.com",
+          "email": "mozo1@prueba2.gp.com",
           "avatar": "fa-solid fa-user-tie"
         },
         {
@@ -1720,7 +1720,7 @@
           "role": "mozo",
           "pin": "1112",
           "password": "mozo123",
-          "email": "mozo2@ppopular.gp.com",
+          "email": "mozo2@prueba2.gp.com",
           "avatar": "fa-solid fa-user-tie"
         }
       ],
@@ -2863,27 +2863,27 @@
       "stockLog": [],
       "lastUpdated": 1700000000000
     },
-    "boxpoint": {
-      "id": "boxpoint",
-      "slug": "boxpoint",
-      "name": "Box Point Café & Fast Casual",
-      "domain": "boxpoint.gp.com",
+    "prueba3": {
+      "id": "prueba3",
+      "slug": "prueba3",
+      "name": "Local 3",
+      "domain": "prueba3.gp.com",
       "cuit": "30-71999888-4",
       "address": "Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital",
       "phone": "(0351) 425-8899",
-      "email": "admin@boxpoint.gp.com",
+      "email": "admin@prueba3.gp.com",
       "receiptFooter": "¡Gracias por visitarnos en Nueva Córdoba! Box Point Café",
       "businessConfig": {
-        "name": "Box Point Café & Fast Casual",
-        "legalName": "Box Point Coffee House SRL",
-        "slug": "boxpoint",
-        "domain": "boxpoint.gp.com",
+        "name": "Local 3",
+        "legalName": "Local 3 SRL",
+        "slug": "prueba3",
+        "domain": "prueba3.gp.com",
         "cuit": "30-71999888-4",
         "address": "Av. Hipólito Yrigoyen 450, Nueva Córdoba, Córdoba Capital",
         "phone": "(0351) 425-8899",
-        "email": "admin@boxpoint.gp.com",
+        "email": "admin@prueba3.gp.com",
         "city": "Córdoba Capital",
-        "receiptFooter": "¡Gracias por visitarnos en Nueva Córdoba! Box Point Café"
+        "receiptFooter": "¡Gracias por visitarnos en Local 3!"
       },
       "users": [
         {
@@ -2892,7 +2892,7 @@
           "role": "admin",
           "pin": "1234",
           "password": "admin123",
-          "email": "admin@boxpoint.gp.com",
+          "email": "admin@prueba3.gp.com",
           "avatar": "fa-solid fa-user-shield"
         },
         {
@@ -2901,7 +2901,7 @@
           "role": "cajero",
           "pin": "2222",
           "password": "cajero123",
-          "email": "cajero@boxpoint.gp.com",
+          "email": "cajero@prueba3.gp.com",
           "avatar": "fa-solid fa-cash-register"
         },
         {
@@ -2910,7 +2910,7 @@
           "role": "mozo",
           "pin": "1111",
           "password": "barista123",
-          "email": "barista@boxpoint.gp.com",
+          "email": "barista@prueba3.gp.com",
           "avatar": "fa-solid fa-mug-hot"
         }
       ],

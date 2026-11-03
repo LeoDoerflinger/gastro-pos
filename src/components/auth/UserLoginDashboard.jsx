@@ -21,8 +21,8 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
     showToast
   } = useApp();
 
-  const [loginMode, setLoginMode] = useState('corporate'); // 'corporate' | 'selector' | 'register'
-  const [corporateEmail, setCorporateEmail] = useState('admin@quepibar.gp.com');
+  const [loginMode, setLoginMode] = useState('selector'); // 'selector' | 'corporate' | 'register'
+  const [corporateEmail, setCorporateEmail] = useState('admin@prueba1.gp.com');
   const [corporatePassword, setCorporatePassword] = useState('admin123');
   const [corporateError, setCorporateError] = useState('');
   const [submittingCorp, setSubmittingCorp] = useState(false);
@@ -245,23 +245,23 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             <button
               type="button"
               role="tab"
+              aria-selected={loginMode === 'selector'}
+              onClick={() => { setLoginMode('selector'); setError(''); }}
+              className={`pos-segment-btn text-xs sm:text-sm px-4 py-2 font-semibold ${loginMode === 'selector' ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)]' : ''}`}
+            >
+              <i className="fa-solid fa-store text-xs mr-1.5" aria-hidden="true"></i>
+              <span>Establecimientos y Personal</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
               aria-selected={loginMode === 'corporate'}
               onClick={() => { setLoginMode('corporate'); setCorporateError(''); }}
               className={`pos-segment-btn text-xs sm:text-sm px-4 py-2 font-semibold ${loginMode === 'corporate' ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)]' : ''}`}
             >
               <i className="fa-solid fa-envelope text-xs mr-1.5" aria-hidden="true"></i>
               <span>Ingreso Corporativo</span>
-            </button>
-
-            <button
-              type="button"
-              role="tab"
-              aria-selected={loginMode === 'selector'}
-              onClick={() => { setLoginMode('selector'); setError(''); }}
-              className={`pos-segment-btn text-xs sm:text-sm px-4 py-2 font-semibold ${loginMode === 'selector' ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)]' : ''}`}
-            >
-              <i className="fa-solid fa-store text-xs mr-1.5" aria-hidden="true"></i>
-              <span>Locales Demo / PIN</span>
             </button>
 
             <button
@@ -292,13 +292,13 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             {/* Quick Test Chips */}
             <div className="space-y-1.5 bg-[var(--bg-subtle)] p-3 rounded border border-[var(--border-subtle)]">
               <span className="text-[11px] font-semibold text-[var(--text-secondary)] block">
-                Accesos demo preconfigurados para prueba inmediata:
+                Accesos preconfigurados para prueba inmediata:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { label: 'Qué Pi Bar', email: 'admin@quepibar.gp.com', pass: 'admin123' },
-                  { label: 'Parador Popular', email: 'admin@ppopular.gp.com', pass: 'admin123' },
-                  { label: 'Box Point', email: 'admin@boxpoint.gp.com', pass: 'admin123' }
+                  { label: 'Local 1 (admin)', email: 'admin@prueba1.gp.com', pass: 'admin123' },
+                  { label: 'Local 2 (admin)', email: 'admin@prueba2.gp.com', pass: 'admin123' },
+                  { label: 'Local 3 (admin)', email: 'admin@prueba3.gp.com', pass: 'admin123' }
                 ].map(demo => (
                   <button
                     key={demo.email}
@@ -323,7 +323,7 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                   id="corp-email"
                   type="email"
                   required
-                  placeholder="ej. admin@quepibar.gp.com"
+                  placeholder="ej. admin@prueba1.gp.com"
                   value={corporateEmail}
                   onChange={(e) => setCorporateEmail(e.target.value)}
                   className="pos-input font-mono text-sm"
@@ -372,27 +372,27 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
               {[
                 {
-                  id: 'quepibar',
-                  name: 'Qué Pi Bar & Tapas',
-                  zone: 'Barrio Güemes',
-                  specialty: 'Cervecería artesanal, tapas y lomitos',
-                  adminEmail: 'admin@quepibar.gp.com',
-                  icon: 'fa-beer-mug-empty'
+                  id: 'prueba1',
+                  name: 'Local 1',
+                  zone: 'Sucursal 1',
+                  specialty: 'Bar, tapas y salón principal',
+                  adminEmail: 'admin@prueba1.gp.com',
+                  icon: 'fa-store'
                 },
                 {
-                  id: 'ppopular',
-                  name: 'Parador Popular Restó',
-                  zone: 'Centro',
-                  specialty: 'Bodegón tradicional, milanesas y pastas',
-                  adminEmail: 'admin@ppopular.gp.com',
+                  id: 'prueba2',
+                  name: 'Local 2',
+                  zone: 'Sucursal 2',
+                  specialty: 'Restó y cafetería',
+                  adminEmail: 'admin@prueba2.gp.com',
                   icon: 'fa-utensils'
                 },
                 {
-                  id: 'boxpoint',
-                  name: 'Box Point Café',
-                  zone: 'Nueva Córdoba',
-                  specialty: 'Cafetería de especialidad y fast casual',
-                  adminEmail: 'admin@boxpoint.gp.com',
+                  id: 'prueba3',
+                  name: 'Local 3',
+                  zone: 'Sucursal 3',
+                  specialty: 'Fast casual y delivery',
+                  adminEmail: 'admin@prueba3.gp.com',
                   icon: 'fa-mug-hot'
                 }
               ].map(venue => {
@@ -431,6 +431,29 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                   </button>
                 );
               })}
+            </div>
+
+            {/* Quick action bar */}
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3 p-3 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2">
+                <i className="fa-solid fa-circle-check text-[var(--accent-brand)] text-sm" aria-hidden="true"></i>
+                <span className="text-xs text-[var(--text-secondary)]">
+                  Establecimiento activo: <strong className="text-[var(--text-primary)]">{businessConfig?.name || 'Local 1'}</strong> ({businessConfig?.domain || 'prueba1.gp.com'})
+                </span>
+              </div>
+              <button
+                type="button"
+                onClick={() => {
+                  const adminUser = (users || []).find(u => u.role === 'admin') || users?.[0];
+                  if (adminUser) {
+                    switchUser(adminUser);
+                  }
+                }}
+                className="pos-btn-primary text-xs px-3 py-1.5 min-h-[34px] w-full sm:w-auto"
+              >
+                <i className="fa-solid fa-right-to-bracket text-xs mr-1.5" aria-hidden="true"></i>
+                <span>Ingresar como Admin en {businessConfig?.name || 'este local'}</span>
+              </button>
             </div>
 
             {/* PIN Keypad & Staff Selection inside the chosen venue */}

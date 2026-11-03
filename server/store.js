@@ -59,7 +59,7 @@ class Store {
   }
 
   get activeTenantId() {
-    return this.data?.activeTenantId || 'quepibar';
+    return this.data?.activeTenantId || 'prueba1';
   }
 
   getActiveTenantId() {
@@ -71,11 +71,11 @@ class Store {
     if (!this.data.tenants) {
       this.normalizeData();
     }
-    const tid = tenantId || this.data.activeTenantId || 'quepibar';
+    const tid = tenantId || this.data.activeTenantId || 'prueba1';
     if (!this.data.tenants[tid]) {
       const found = Object.values(this.data.tenants).find(t => t.slug === tid || t.id === tid);
       if (found) return found;
-      return this.data.tenants['quepibar'] || Object.values(this.data.tenants)[0];
+      return this.data.tenants['prueba1'] || Object.values(this.data.tenants)[0];
     }
     return this.data.tenants[tid];
   }
@@ -146,7 +146,7 @@ class Store {
     const domain = `${cleanSlug}.gp.com`;
     const adminEmail = `admin@${domain}`;
 
-    const templateTenant = this.getTenant('quepibar');
+    const templateTenant = this.getTenant('prueba1');
 
     const newTenant = {
       id: cleanSlug,
@@ -338,29 +338,29 @@ class Store {
       const legacyData = { ...this.data };
       delete legacyData.activeTenantId;
       this.data = {
-        activeTenantId: 'quepibar',
+        activeTenantId: 'prueba1',
         tenants: {
-          quepibar: {
-            id: 'quepibar',
-            slug: 'quepibar',
-            name: 'Qué Pi Bar & Tapas',
-            domain: 'quepibar.gp.com',
+          prueba1: {
+            id: 'prueba1',
+            slug: 'prueba1',
+            name: 'Local 1',
+            domain: 'prueba1.gp.com',
             cuit: '30-71458921-3',
-            address: 'Belgrano 740, Barrio Güemes, Córdoba Capital',
-            phone: '(0351) 460-2211',
-            email: 'admin@quepibar.gp.com',
-            receiptFooter: '¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas',
+            address: 'Av. Hipólito Yrigoyen 450, Nueva Córdoba',
+            phone: '(0351) 425-8899',
+            email: 'admin@prueba1.gp.com',
+            receiptFooter: '¡Gracias por visitarnos en Local 1!',
             businessConfig: {
-              name: 'Qué Pi Bar & Tapas',
-              legalName: 'Qué Pi Bar Gastronomía SRL',
-              slug: 'quepibar',
-              domain: 'quepibar.gp.com',
+              name: 'Local 1',
+              legalName: 'Local 1 SRL',
+              slug: 'prueba1',
+              domain: 'prueba1.gp.com',
               cuit: '30-71458921-3',
-              address: 'Belgrano 740, Barrio Güemes, Córdoba Capital',
-              phone: '(0351) 460-2211',
-              email: 'admin@quepibar.gp.com',
+              address: 'Av. Hipólito Yrigoyen 450, Nueva Córdoba',
+              phone: '(0351) 425-8899',
+              email: 'admin@prueba1.gp.com',
               city: 'Córdoba Capital',
-              receiptFooter: '¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas'
+              receiptFooter: '¡Gracias por visitarnos en Local 1!'
             },
             ...legacyData
           }
@@ -369,7 +369,7 @@ class Store {
     }
 
     if (!this.data.activeTenantId) {
-      this.data.activeTenantId = Object.keys(this.data.tenants)[0] || 'quepibar';
+      this.data.activeTenantId = Object.keys(this.data.tenants)[0] || 'prueba1';
     }
 
     Object.values(this.data.tenants).forEach(t => {

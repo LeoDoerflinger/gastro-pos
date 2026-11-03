@@ -4,16 +4,8 @@ import { api, SYNC_CHANNEL_NAME } from '../api/client';
 const AppContext = createContext(null);
 
 export function AppProvider({ children }) {
-  // Session starts unauthenticated (null) so the operator logs in from the User Access Dashboard
-  const [currentUser, setCurrentUser] = useState(() => {
-    try {
-      const stored = sessionStorage.getItem('gastro_user_session');
-      if (stored) return JSON.parse(stored);
-    } catch (e) {
-      console.error('Error loading stored user session:', e);
-    }
-    return null;
-  });
+  // Siempre iniciamos en null para que la portada principal sea el login de los distintos establecimientos
+  const [currentUser, setCurrentUser] = useState(null);
 
   const [theme, setThemeState] = useState(() => {
     try {
@@ -62,23 +54,23 @@ export function AppProvider({ children }) {
 
   const [activeTenantId, setActiveTenantIdState] = useState(() => {
     try {
-      return localStorage.getItem('gastro_pos_tenant_id') || 'quepibar';
+      return localStorage.getItem('gastro_pos_tenant_id') || 'prueba1';
     } catch (e) {
-      return 'quepibar';
+      return 'prueba1';
     }
   });
 
   const [tenantsList, setTenantsList] = useState([]);
   const [businessConfig, setBusinessConfig] = useState({
-    name: 'Qué Pi Bar & Tapas',
-    legalName: 'Qué Pi Bar Gastronomía SRL',
-    address: 'Belgrano 740, Barrio Güemes, Córdoba Capital',
-    phone: '(0351) 460-2211',
+    name: 'Local 1',
+    legalName: 'Local 1 SRL',
+    address: 'Av. Hipólito Yrigoyen 450, Nueva Córdoba',
+    phone: '(0351) 425-8899',
     cuit: '30-71458921-3',
-    email: 'admin@quepibar.gp.com',
+    email: 'admin@prueba1.gp.com',
     city: 'Córdoba Capital',
-    receiptFooter: '¡Gracias por visitarnos en Barrio Güemes! Qué Pi Bar & Tapas',
-    domain: 'quepibar.gp.com'
+    receiptFooter: '¡Gracias por visitarnos en Local 1!',
+    domain: 'prueba1.gp.com'
   });
 
   const [users, setUsers] = useState([]);

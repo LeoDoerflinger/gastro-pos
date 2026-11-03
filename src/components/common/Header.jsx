@@ -73,7 +73,7 @@ export default function Header() {
                   {businessConfig?.name || activeTenant?.name || 'GastroPOS'}
                 </span>
                 <span className="text-[10px] font-mono text-[var(--text-muted)] truncate max-w-[130px]">
-                  @{businessConfig?.domain || activeTenant?.domain || 'quepibar.gp.com'}
+                  @{businessConfig?.domain || activeTenant?.domain || 'prueba1.gp.com'}
                 </span>
               </div>
             </div>

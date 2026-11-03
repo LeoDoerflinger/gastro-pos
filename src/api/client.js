@@ -1,9 +1,9 @@
 const API_BASE = '/api';
 
-let activeTenantId = 'quepibar';
+let activeTenantId = 'prueba1';
 if (typeof window !== 'undefined') {
   try {
-    activeTenantId = localStorage.getItem('gastro_pos_tenant_id') || 'quepibar';
+    activeTenantId = localStorage.getItem('gastro_pos_tenant_id') || 'prueba1';
   } catch (e) {}
 }
 
@@ -326,7 +326,7 @@ function computeAnalyticsFromDb(db) {
 
 export const api = {
   setTenant: (tenantId) => {
-    activeTenantId = tenantId || 'quepibar';
+    activeTenantId = tenantId || 'prueba1';
     memoryDb = null;
     initPromise = null;
     if (typeof window !== 'undefined') {
@@ -343,9 +343,9 @@ export const api = {
       return await rawFetchJson('/tenants');
     } catch {
       return [
-        { id: 'quepibar', slug: 'quepibar', name: 'Qué Pi Bar & Tapas', domain: 'quepibar.gp.com', email: 'admin@quepibar.gp.com' },
-        { id: 'ppopular', slug: 'ppopular', name: 'Parador Popular Restó', domain: 'ppopular.gp.com', email: 'admin@ppopular.gp.com' },
-        { id: 'boxpoint', slug: 'boxpoint', name: 'Box Point Café & Fast Casual', domain: 'boxpoint.gp.com', email: 'admin@boxpoint.gp.com' }
+        { id: 'prueba1', slug: 'prueba1', name: 'Local 1', domain: 'prueba1.gp.com', email: 'admin@prueba1.gp.com' },
+        { id: 'prueba2', slug: 'prueba2', name: 'Local 2', domain: 'prueba2.gp.com', email: 'admin@prueba2.gp.com' },
+        { id: 'prueba3', slug: 'prueba3', name: 'Local 3', domain: 'prueba3.gp.com', email: 'admin@prueba3.gp.com' }
       ];
     }
   },
@@ -441,7 +441,7 @@ export const api = {
       const cleanPass = String(password || '').trim();
       const cleanPin = String(pin || '').trim();
 
-      let targetTenant = 'quepibar';
+      let targetTenant = 'prueba1';
       if (cleanEmail.includes('@') && cleanEmail.includes('.gp.com')) {
         const parts = cleanEmail.split('@')[1].split('.');
         if (parts[0]) targetTenant = parts[0];
