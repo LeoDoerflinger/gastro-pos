@@ -189,13 +189,13 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_aceitunas_verdes",
@@ -219,13 +219,13 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.04,
-              "unit": "kg"
+              "quantity": 40.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.125,
-              "unit": "kg"
+              "quantity": 125.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_aceitunas_verdes",
@@ -249,23 +249,23 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_jamon_cocido",
-              "quantity": 0.15,
-              "unit": "kg"
+              "quantity": 150.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_morron_conserva",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_aceitunas_verdes",
@@ -299,8 +299,8 @@
             },
             {
               "ingredientId": "ing_panceta_ahumada",
-              "quantity": 0.04,
-              "unit": "kg"
+              "quantity": 40.0,
+              "unit": "g"
             }
           ]
         },
@@ -339,8 +339,8 @@
           "recipe": [
             {
               "ingredientId": "ing_papas_baston",
-              "quantity": 0.35,
-              "unit": "kg"
+              "quantity": 350.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_cheddar_fetas",
@@ -349,8 +349,8 @@
             },
             {
               "ingredientId": "ing_panceta_ahumada",
-              "quantity": 0.03,
-              "unit": "kg"
+              "quantity": 30.0,
+              "unit": "g"
             }
           ]
         },
@@ -369,8 +369,8 @@
             },
             {
               "ingredientId": "ing_relleno_carne",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             }
           ]
         },
@@ -384,8 +384,8 @@
           "recipe": [
             {
               "ingredientId": "ing_cerveza_ipa",
-              "quantity": 0.5,
-              "unit": "l"
+              "quantity": 500.0,
+              "unit": "ml"
             }
           ]
         },
@@ -429,8 +429,8 @@
           "recipe": [
             {
               "ingredientId": "ing_lomo_vacuno",
-              "quantity": 0.22,
-              "unit": "kg"
+              "quantity": 220.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_pan_lomo",
@@ -439,28 +439,28 @@
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_jamon_cocido",
-              "quantity": 0.06,
-              "unit": "kg"
+              "quantity": 60.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_lechuga_tomate",
-              "quantity": 0.1,
-              "unit": "kg"
+              "quantity": 100.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_mayo_casera",
-              "quantity": 0.04,
-              "unit": "kg"
+              "quantity": 40.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_papas_baston",
-              "quantity": 0.2,
-              "unit": "kg"
+              "quantity": 200.0,
+              "unit": "g"
             }
           ]
         },
@@ -474,8 +474,8 @@
           "recipe": [
             {
               "ingredientId": "ing_lomo_vacuno",
-              "quantity": 0.22,
-              "unit": "kg"
+              "quantity": 220.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_pan_lomo",
@@ -484,23 +484,23 @@
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_morron_conserva",
-              "quantity": 0.06,
-              "unit": "kg"
+              "quantity": 60.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_cebolla",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_papas_baston",
-              "quantity": 0.2,
-              "unit": "kg"
+              "quantity": 200.0,
+              "unit": "g"
             }
           ]
         },
@@ -519,18 +519,18 @@
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.35,
-              "unit": "kg"
+              "quantity": 350.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_jamon_cocido",
-              "quantity": 0.15,
-              "unit": "kg"
+              "quantity": 150.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_cebolla",
-              "quantity": 0.2,
-              "unit": "kg"
+              "quantity": 200.0,
+              "unit": "g"
             }
           ]
         },
@@ -549,18 +549,18 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_lechuga_tomate",
-              "quantity": 0.15,
-              "unit": "kg"
+              "quantity": 150.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_aceitunas_verdes",
@@ -584,23 +584,23 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_longaniza",
-              "quantity": 0.12,
-              "unit": "kg"
+              "quantity": 120.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_morron_conserva",
-              "quantity": 0.05,
-              "unit": "kg"
+              "quantity": 50.0,
+              "unit": "g"
             }
           ]
         },
@@ -614,28 +614,28 @@
           "recipe": [
             {
               "ingredientId": "ing_milanesa_carne",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.06,
-              "unit": "kg"
+              "quantity": 60.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_jamon_cocido",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_muzza",
-              "quantity": 0.1,
-              "unit": "kg"
+              "quantity": 100.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_papas_baston",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             }
           ]
         },
@@ -649,13 +649,13 @@
           "recipe": [
             {
               "ingredientId": "ing_milanesa_carne",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_papas_baston",
-              "quantity": 0.25,
-              "unit": "kg"
+              "quantity": 250.0,
+              "unit": "g"
             }
           ]
         },
@@ -674,8 +674,8 @@
             },
             {
               "ingredientId": "ing_relleno_carne",
-              "quantity": 0.6,
-              "unit": "kg"
+              "quantity": 600.0,
+              "unit": "g"
             }
           ]
         },
@@ -694,13 +694,13 @@
             },
             {
               "ingredientId": "ing_salsa_tomate",
-              "quantity": 0.1,
-              "unit": "kg"
+              "quantity": 100.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_crema_leche",
-              "quantity": 0.05,
-              "unit": "kg"
+              "quantity": 50.0,
+              "unit": "g"
             }
           ]
         },
@@ -714,8 +714,8 @@
           "recipe": [
             {
               "ingredientId": "ing_fernet_branca",
-              "quantity": 0.15,
-              "unit": "l"
+              "quantity": 150.0,
+              "unit": "ml"
             },
             {
               "ingredientId": "ing_coca_cola_15",
@@ -734,8 +734,8 @@
           "recipe": [
             {
               "ingredientId": "ing_fernet_branca",
-              "quantity": 0.45,
-              "unit": "l"
+              "quantity": 450.0,
+              "unit": "ml"
             },
             {
               "ingredientId": "ing_coca_cola_15",
@@ -784,13 +784,13 @@
           "recipe": [
             {
               "ingredientId": "ing_dulce_leche",
-              "quantity": 0.06,
-              "unit": "kg"
+              "quantity": 60.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_crema_leche",
-              "quantity": 0.04,
-              "unit": "kg"
+              "quantity": 40.0,
+              "unit": "g"
             }
           ]
         },
@@ -804,8 +804,8 @@
           "recipe": [
             {
               "ingredientId": "ing_dulce_leche",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             }
           ]
         },
@@ -819,18 +819,18 @@
           "recipe": [
             {
               "ingredientId": "ing_galletitas_choc",
-              "quantity": 0.08,
-              "unit": "kg"
+              "quantity": 80.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_dulce_leche",
-              "quantity": 0.06,
-              "unit": "kg"
+              "quantity": 60.0,
+              "unit": "g"
             },
             {
               "ingredientId": "ing_crema_leche",
-              "quantity": 0.04,
-              "unit": "kg"
+              "quantity": 40.0,
+              "unit": "g"
             }
           ]
         }
@@ -840,20 +840,20 @@
           "id": "ing_muzza",
           "name": "Queso Muzzarella en Barra",
           "category": "Lácteos",
-          "unit": "kg",
-          "stock": 18.5,
-          "minStock": 5,
-          "costPerUnit": 7800,
+          "unit": "g",
+          "stock": 18500.0,
+          "minStock": 5000,
+          "costPerUnit": 7.8,
           "lastUpdated": "2026-11-03T21:37:25.785Z"
         },
         {
           "id": "ing_salsa_tomate",
           "name": "Salsa de Tomate Pomodoro Artesanal",
           "category": "Conservas",
-          "unit": "kg",
-          "stock": 14.2,
-          "minStock": 4,
-          "costPerUnit": 2400,
+          "unit": "g",
+          "stock": 14200.0,
+          "minStock": 4000,
+          "costPerUnit": 2.4,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
@@ -880,20 +880,20 @@
           "id": "ing_jamon_cocido",
           "name": "Jamón Cocido Feteado Primera Calidad",
           "category": "Fiambrería",
-          "unit": "kg",
-          "stock": 6.8,
-          "minStock": 2,
-          "costPerUnit": 9200,
+          "unit": "g",
+          "stock": 6800.0,
+          "minStock": 2000,
+          "costPerUnit": 9.2,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
           "id": "ing_morron_conserva",
           "name": "Morrones Asados en Conserva",
           "category": "Conservas",
-          "unit": "kg",
-          "stock": 4.2,
-          "minStock": 1.5,
-          "costPerUnit": 6500,
+          "unit": "g",
+          "stock": 4200.0,
+          "minStock": 1500.0,
+          "costPerUnit": 6.5,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
@@ -930,30 +930,30 @@
           "id": "ing_panceta_ahumada",
           "name": "Panceta Ahumada Crocante",
           "category": "Fiambrería",
-          "unit": "kg",
-          "stock": 5.4,
-          "minStock": 1.5,
-          "costPerUnit": 11500,
+          "unit": "g",
+          "stock": 5400.0,
+          "minStock": 1500.0,
+          "costPerUnit": 11.5,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
           "id": "ing_papas_baston",
           "name": "Papas Bastón Pre-fritas",
           "category": "Congelados",
-          "unit": "kg",
-          "stock": 28,
-          "minStock": 8,
-          "costPerUnit": 2900,
+          "unit": "g",
+          "stock": 28000,
+          "minStock": 8000,
+          "costPerUnit": 2.9,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
           "id": "ing_cerveza_ipa",
           "name": "Barril Cerveza Artesanal IPA (Litros)",
           "category": "Bebidas",
-          "unit": "l",
-          "stock": 42.5,
-          "minStock": 15,
-          "costPerUnit": 1900,
+          "unit": "ml",
+          "stock": 42500.0,
+          "minStock": 15000,
+          "costPerUnit": 1.9,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
@@ -990,20 +990,20 @@
           "id": "ing_relleno_carne",
           "name": "Relleno Empanadas Carne a Cuchillo",
           "category": "Cocina Preparados",
-          "unit": "kg",
-          "stock": 8.5,
-          "minStock": 2,
-          "costPerUnit": 6200,
+          "unit": "g",
+          "stock": 8500.0,
+          "minStock": 2000,
+          "costPerUnit": 6.2,
           "lastUpdated": "2026-11-03T21:37:25.788Z"
         },
         {
           "id": "ing_lomo_vacuno",
           "name": "Bife de Lomo Vacuno Seleccionado",
           "category": "Carnicería",
-          "unit": "kg",
-          "stock": 15,
-          "minStock": 4,
-          "costPerUnit": 14500,
+          "unit": "g",
+          "stock": 15000,
+          "minStock": 4000,
+          "costPerUnit": 14.5,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
@@ -1020,50 +1020,50 @@
           "id": "ing_lechuga_tomate",
           "name": "Lechuga Repollada y Tomate Redondo",
           "category": "Verdulería",
-          "unit": "kg",
-          "stock": 12,
-          "minStock": 3,
-          "costPerUnit": 2200,
+          "unit": "g",
+          "stock": 12000,
+          "minStock": 3000,
+          "costPerUnit": 2.2,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_mayo_casera",
           "name": "Mayonesa Casera al Huevo",
           "category": "Almacén",
-          "unit": "kg",
-          "stock": 8,
-          "minStock": 2,
-          "costPerUnit": 3200,
+          "unit": "g",
+          "stock": 8000,
+          "minStock": 2000,
+          "costPerUnit": 3.2,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_cebolla",
           "name": "Cebolla Dorada para Salteado",
           "category": "Verdulería",
-          "unit": "kg",
-          "stock": 25,
-          "minStock": 5,
-          "costPerUnit": 1200,
+          "unit": "g",
+          "stock": 25000,
+          "minStock": 5000,
+          "costPerUnit": 1.2,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_longaniza",
           "name": "Longaniza Calabresa Feteada",
           "category": "Fiambrería",
-          "unit": "kg",
-          "stock": 6,
-          "minStock": 1.5,
-          "costPerUnit": 13500,
+          "unit": "g",
+          "stock": 6000,
+          "minStock": 1500.0,
+          "costPerUnit": 13.5,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_milanesa_carne",
           "name": "Corte de Nalga Tiernizada Rebozada",
           "category": "Carnicería",
-          "unit": "kg",
-          "stock": 18,
-          "minStock": 5,
-          "costPerUnit": 9800,
+          "unit": "g",
+          "stock": 18000,
+          "minStock": 5000,
+          "costPerUnit": 9.8,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
@@ -1080,10 +1080,10 @@
           "id": "ing_fernet_branca",
           "name": "Fernet Branca 750ml",
           "category": "Bebidas",
-          "unit": "l",
-          "stock": 18,
-          "minStock": 5,
-          "costPerUnit": 14500,
+          "unit": "ml",
+          "stock": 18000,
+          "minStock": 5000,
+          "costPerUnit": 14.5,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
@@ -1120,30 +1120,30 @@
           "id": "ing_dulce_leche",
           "name": "Dulce de Leche Repostero Colonial",
           "category": "Lácteos",
-          "unit": "kg",
-          "stock": 10,
-          "minStock": 3,
-          "costPerUnit": 4600,
+          "unit": "g",
+          "stock": 10000,
+          "minStock": 3000,
+          "costPerUnit": 4.6,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_crema_leche",
           "name": "Crema de Leche Fresca Doble",
           "category": "Lácteos",
-          "unit": "kg",
-          "stock": 6,
-          "minStock": 2,
-          "costPerUnit": 5800,
+          "unit": "g",
+          "stock": 6000,
+          "minStock": 2000,
+          "costPerUnit": 5.8,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         },
         {
           "id": "ing_galletitas_choc",
           "name": "Galletitas de Chocolate Chocotorta",
           "category": "Almacén",
-          "unit": "kg",
-          "stock": 8,
-          "minStock": 2.5,
-          "costPerUnit": 4200,
+          "unit": "g",
+          "stock": 8000,
+          "minStock": 2500.0,
+          "costPerUnit": 4.2,
           "lastUpdated": "2026-11-03T21:37:25.806Z"
         }
       ],
@@ -1662,7 +1662,57 @@
         }
       ],
       "stockLog": [],
-      "lastUpdated": 1700000000000
+      "lastUpdated": 1700000000000,
+      "staffCcMovements": [
+        {
+          "id": "smov_1",
+          "userId": "u_qp_mozo1",
+          "userName": "Mozo 1",
+          "type": "sueldo",
+          "impact": 1,
+          "amount": 850000,
+          "concept": "Sueldo mes en curso",
+          "orderId": null,
+          "date": "2026-11-01T09:00:00.000Z",
+          "recordedBy": "Admin"
+        },
+        {
+          "id": "smov_2",
+          "userId": "u_qp_mozo1",
+          "userName": "Mozo 1",
+          "type": "consumo",
+          "impact": -1,
+          "amount": 50000,
+          "concept": "Consumo comanda Mesa S1",
+          "orderId": "ord_demo_mozo_1",
+          "date": "2026-11-02T14:30:00.000Z",
+          "recordedBy": "Cajero"
+        },
+        {
+          "id": "smov_3",
+          "userId": "u_qp_mozo1",
+          "userName": "Mozo 1",
+          "type": "adelanto",
+          "impact": -1,
+          "amount": 300000,
+          "concept": "Adelanto de sueldo en efectivo",
+          "orderId": null,
+          "date": "2026-11-02T18:00:00.000Z",
+          "recordedBy": "Admin"
+        },
+        {
+          "id": "smov_4",
+          "userId": "u_qp_mozo1",
+          "userName": "Mozo 1",
+          "type": "consumo",
+          "impact": -1,
+          "amount": 4500,
+          "concept": "Consumo IPA cargado desde mostrador",
+          "orderId": "ord_demo_mozo_2",
+          "date": "2026-11-03T16:20:00.000Z",
+          "recordedBy": "Cajero"
+        }
+      ]
     }
   }
 }

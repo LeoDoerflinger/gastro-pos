@@ -23,10 +23,20 @@ export default function RecipeManager() {
   const [isNewIngModalOpen, setIsNewIngModalOpen] = useState(false);
   const [newIngName, setNewIngName] = useState('');
   const [newIngCategory, setNewIngCategory] = useState('Carnicería');
-  const [newIngUnit, setNewIngUnit] = useState('kg');
-  const [newIngCost, setNewIngCost] = useState('5000');
-  const [newIngStock, setNewIngStock] = useState('10');
-  const [newIngMin, setNewIngMin] = useState('2');
+  const [newIngUnit, setNewIngUnit] = useState('g');
+  const [newIngCost, setNewIngCost] = useState('12');
+  const [newIngStock, setNewIngStock] = useState('5000');
+  const [newIngMin, setNewIngMin] = useState('1000');
+
+  // Editar ingrediente / insumo existente
+  const [isEditIngModalOpen, setIsEditIngModalOpen] = useState(false);
+  const [selectedIngForEdit, setSelectedIngForEdit] = useState(null);
+  const [editIngName, setEditIngName] = useState('');
+  const [editIngCategory, setEditIngCategory] = useState('Carnicería');
+  const [editIngUnit, setEditIngUnit] = useState('g');
+  const [editIngCost, setEditIngCost] = useState('12');
+  const [editIngStock, setEditIngStock] = useState('5000');
+  const [editIngMin, setEditIngMin] = useState('1000');
 
   useEffect(() => {
     if (!selectedProduct && products.length > 0) {
@@ -42,13 +52,51 @@ export default function RecipeManager() {
       if (e.key === 'Escape') {
         setIsNewProductModalOpen(false);
         setIsNewIngModalOpen(false);
+        setIsEditIngModalOpen(false);
       }
     };
-    if (isNewProductModalOpen || isNewIngModalOpen) {
+    if (isNewProductModalOpen || isNewIngModalOpen || isEditIngModalOpen) {
       window.addEventListener('keydown', onKeyDown);
       return () => window.removeEventListener('keydown', onKeyDown);
     }
-  }, [isNewProductModalOpen, isNewIngModalOpen]);
+  }, [isNewProductModalOpen, isNewIngModalOpen, isEditIngModalOpen]);
+
+  const handleOpenEditIngredient = (ing) => {
+    setSelectedIngForEdit(ing);
+    setEditIngName(ing.name || '');
+    setEditIngCategory(ing.category || 'Carnicería');
+    setEditIngUnit(ing.unit || 'g');
+    setEditIngCost(String(ing.costPerUnit || '0'));
+    setEditIngStock(String(ing.stock || '0'));
+    setEditIngMin(String(ing.minStock || '1'));
+    setIsEditIngModalOpen(true);
+  };
+
+  const handleSaveEditIngredient = async (e) => {
+    e.preventDefault();
+    if (!selectedIngForEdit || !editIngName.trim()) {
+      showToast('Ingresá el nombre del insumo', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.updateIngredient(selectedIngForEdit.id, {
+        name: editIngName.trim(),
+        category: editIngCategory,
+        unit: editIngUnit,
+        costPerUnit: Number(editIngCost) || 0,
+        stock: Number(editIngStock) || 0,
+        minStock: Number(editIngMin) || 1
+      });
+      showToast(`Insumo "${editIngName}" actualizado correctamente`);
+      await refreshData();
+      setIsEditIngModalOpen(false);
+    } catch (err) {
+      showToast(err.message || 'Error al actualizar insumo', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   const handleCreateIngredient = async (e) => {
     e.preventDefault();
@@ -93,7 +141,7 @@ export default function RecipeManager() {
     if (ingredients.length === 0) return;
     setEditedRecipe(prev => [
       ...prev,
-      { ingredientId: ingredients[0].id, quantity: 0.1, unit: ingredients[0].unit }
+      { ingredientId: ingredients[0].id, quantity: ingredients[0].unit === 'u' ? 1 : 100, unit: ingredients[0].unit }
     ]);
   };
 
@@ -264,22 +312,33 @@ export default function RecipeManager() {
           <div className="divide-y divide-[var(--border-subtle)] overflow-y-auto max-h-[600px]">
             {catalogView === 'insumos' ? (
               ingredients.map(ing => (
-                <div key={ing.id} className="p-3 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between gap-2">
-                  <div>
-                    <span className="font-bold text-xs text-[var(--text-primary)] block">
+                <div key={ing.id} className="p-3 hover:bg-[var(--bg-hover)] transition-colors flex items-center justify-between gap-3">
+                  <div className="min-w-0">
+                    <span className="font-bold text-xs text-[var(--text-primary)] block truncate">
                       {ing.name}
                     </span>
                     <span className="pos-badge pos-badge-neutral text-[10px] mt-0.5">
                       {ing.category || 'Almacén'}
                     </span>
                   </div>
-                  <div className="text-right">
-                    <span className="font-mono font-bold text-xs text-[var(--text-primary)] block">
-                      ${ing.costPerUnit?.toLocaleString('es-AR')} / {ing.unit}
-                    </span>
-                    <span className="text-[11px] text-[var(--text-muted)] font-mono">
-                      Stock: {ing.stock} {ing.unit}
-                    </span>
+                  <div className="flex items-center gap-2.5 shrink-0">
+                    <div className="text-right">
+                      <span className="font-mono font-bold text-xs text-[var(--text-primary)] block">
+                        ${ing.costPerUnit?.toLocaleString('es-AR')} / {ing.unit}
+                      </span>
+                      <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                        Stock: {ing.stock} {ing.unit}
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => handleOpenEditIngredient(ing)}
+                      className="pos-btn-secondary text-xs px-2.5 py-1 min-h-[30px]"
+                      title="Editar datos, costo y stock del insumo"
+                    >
+                      <i className="fa-solid fa-pen-to-square text-xs mr-1" aria-hidden="true"></i>
+                      <span>Editar</span>
+                    </button>
                   </div>
                 </div>
               ))
@@ -678,21 +737,20 @@ export default function RecipeManager() {
                     onChange={(e) => setNewIngUnit(e.target.value)}
                     className="pos-input text-xs"
                   >
-                    <option value="kg">Kilogramos (kg)</option>
                     <option value="g">Gramos (g)</option>
-                    <option value="u">Unidades (u)</option>
-                    <option value="l">Litros (l)</option>
                     <option value="ml">Mililitros (ml)</option>
+                    <option value="u">Unidades (u)</option>
                   </select>
                 </div>
               </div>
 
               <div className="grid grid-cols-3 gap-2.5">
                 <div>
-                  <label htmlFor="new-ing-cost-field" className="pos-label">Costo unitario ($):</label>
+                  <label htmlFor="new-ing-cost-field" className="pos-label">Costo por {newIngUnit} ($):</label>
                   <input
                     id="new-ing-cost-field"
                     type="number"
+                    step="0.001"
                     min="0"
                     placeholder="0"
                     value={newIngCost}
@@ -702,11 +760,11 @@ export default function RecipeManager() {
                 </div>
 
                 <div>
-                  <label htmlFor="new-ing-stock-field" className="pos-label">Stock inicial:</label>
+                  <label htmlFor="new-ing-stock-field" className="pos-label">Stock ({newIngUnit}):</label>
                   <input
                     id="new-ing-stock-field"
                     type="number"
-                    step="0.01"
+                    step="0.1"
                     min="0"
                     placeholder="0"
                     value={newIngStock}
@@ -716,11 +774,11 @@ export default function RecipeManager() {
                 </div>
 
                 <div>
-                  <label htmlFor="new-ing-min-field" className="pos-label">Stock mín. alerta:</label>
+                  <label htmlFor="new-ing-min-field" className="pos-label">Alerta mín. ({newIngUnit}):</label>
                   <input
                     id="new-ing-min-field"
                     type="number"
-                    step="0.01"
+                    step="0.1"
                     min="0"
                     placeholder="1"
                     value={newIngMin}
@@ -731,7 +789,7 @@ export default function RecipeManager() {
               </div>
 
               <p className="text-[11px] text-[var(--text-muted)] bg-[var(--bg-subtle)] p-2 rounded border border-[var(--border-subtle)]">
-                Este insumo quedará registrado en la base de datos y estará disponible inmediatamente tanto para el recetario como para las compras y remitos de proveedores.
+                Unidades estandarizadas a <strong className="text-[var(--text-primary)]">g, ml y u</strong> para evitar confusiones de costeo en recetas y compras.
               </p>
 
               <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
@@ -748,6 +806,149 @@ export default function RecipeManager() {
                   className="pos-btn-primary flex-1"
                 >
                   {submitting ? 'Guardando...' : 'Guardar insumo'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Modal Editar Insumo Existente */}
+      {isEditIngModalOpen && selectedIngForEdit && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-4"
+          role="dialog"
+          aria-modal="true"
+        >
+          <div className="pos-panel w-full max-w-lg p-5 space-y-4 shadow-2xl">
+            <div className="flex items-center justify-between pb-2 border-b border-[var(--border-subtle)]">
+              <div className="flex items-center gap-2">
+                <span className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] text-[var(--accent-brand)] flex items-center justify-center text-xs">
+                  <i className="fa-solid fa-pen-to-square" aria-hidden="true"></i>
+                </span>
+                <div>
+                  <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                    Editar Insumo / Materia Prima
+                  </h3>
+                  <p className="text-xs text-[var(--text-secondary)]">
+                    Modificá costos, unidad o stock del insumo seleccionado
+                  </p>
+                </div>
+              </div>
+              <button
+                type="button"
+                onClick={() => setIsEditIngModalOpen(false)}
+                className="pos-btn-ghost"
+              >
+                <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveEditIngredient} className="space-y-3.5">
+              <div>
+                <label htmlFor="edit-ing-name-field" className="pos-label">Nombre del insumo / producto *</label>
+                <input
+                  id="edit-ing-name-field"
+                  type="text"
+                  required
+                  value={editIngName}
+                  onChange={(e) => setEditIngName(e.target.value)}
+                  className="pos-input font-bold"
+                />
+              </div>
+
+              <div className="grid grid-cols-2 gap-3">
+                <div>
+                  <label htmlFor="edit-ing-cat-field" className="pos-label">Rubro / Categoría:</label>
+                  <select
+                    id="edit-ing-cat-field"
+                    value={editIngCategory}
+                    onChange={(e) => setEditIngCategory(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="Carnicería">Carnicería</option>
+                    <option value="Panadería">Panadería</option>
+                    <option value="Lácteos">Lácteos y Quesos</option>
+                    <option value="Fiambrería">Fiambrería</option>
+                    <option value="Verdulería">Verdulería</option>
+                    <option value="Bebidas">Bebidas y Cervezas</option>
+                    <option value="Pastas">Pastas</option>
+                    <option value="Conservas">Conservas</option>
+                    <option value="Almacén">Almacén general</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label htmlFor="edit-ing-unit-field" className="pos-label">Unidad de medida:</label>
+                  <select
+                    id="edit-ing-unit-field"
+                    value={editIngUnit}
+                    onChange={(e) => setEditIngUnit(e.target.value)}
+                    className="pos-input text-xs"
+                  >
+                    <option value="g">Gramos (g)</option>
+                    <option value="ml">Mililitros (ml)</option>
+                    <option value="u">Unidades (u)</option>
+                  </select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-3 gap-2.5">
+                <div>
+                  <label htmlFor="edit-ing-cost-field" className="pos-label">Costo por {editIngUnit} ($):</label>
+                  <input
+                    id="edit-ing-cost-field"
+                    type="number"
+                    step="0.001"
+                    min="0"
+                    value={editIngCost}
+                    onChange={(e) => setEditIngCost(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-ing-stock-field" className="pos-label">Stock actual ({editIngUnit}):</label>
+                  <input
+                    id="edit-ing-stock-field"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={editIngStock}
+                    onChange={(e) => setEditIngStock(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+
+                <div>
+                  <label htmlFor="edit-ing-min-field" className="pos-label">Alerta mín. ({editIngUnit}):</label>
+                  <input
+                    id="edit-ing-min-field"
+                    type="number"
+                    step="0.1"
+                    min="0"
+                    value={editIngMin}
+                    onChange={(e) => setEditIngMin(e.target.value)}
+                    className="pos-input font-mono text-xs"
+                  />
+                </div>
+              </div>
+
+              <div className="flex gap-2.5 pt-2 border-t border-[var(--border-subtle)]">
+                <button
+                  type="button"
+                  onClick={() => setIsEditIngModalOpen(false)}
+                  className="pos-btn-secondary flex-1"
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={submitting}
+                  className="pos-btn-primary flex-1"
+                >
+                  <i className="fa-solid fa-floppy-disk text-xs mr-1.5" aria-hidden="true"></i>
+                  <span>{submitting ? 'Guardando...' : 'Guardar cambios'}</span>
                 </button>
               </div>
             </form>

@@ -196,9 +196,11 @@ export default function ShiftBalanceModal() {
               </span>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 text-xs">
               {[
                 { key: 'efectivo', label: 'Efectivo en caja' },
+                { key: 'debito', label: 'Tarjeta Débito' },
+                { key: 'credito', label: 'Tarjeta Crédito' },
                 { key: 'qr_transferencia', label: 'QR / Transferencia' },
                 { key: 'cuenta_corriente', label: 'Cuenta Corriente' }
               ].map(m => (

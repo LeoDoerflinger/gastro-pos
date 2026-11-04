@@ -370,6 +370,20 @@ app.post('/api/customers/:id/payments', (req, res) => {
   }
 });
 
+// --- Cuentas Corrientes de Personal / Sueldos ---
+app.get('/api/staff-cc', (req, res) => {
+  res.json(store.getStaffCcMovements(req.tenantId));
+});
+
+app.post('/api/staff-cc', (req, res) => {
+  try {
+    const created = store.addStaffCcMovement(req.body || {}, req.tenantId);
+    res.status(201).json(created);
+  } catch (err) {
+    res.status(400).json({ error: err.message });
+  }
+});
+
 // --- Arqueos y Turnos de Caja ---
 app.get('/api/cash-shifts', (req, res) => {
   res.json(store.getCashShifts(req.tenantId));

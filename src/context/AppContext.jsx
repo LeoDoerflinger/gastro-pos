@@ -84,6 +84,7 @@ export function AppProvider({ children }) {
   const [customers, setCustomers] = useState([]);
   const [customerPayments, setCustomerPayments] = useState([]);
   const [supplierPayments, setSupplierPayments] = useState([]);
+  const [staffCcMovements, setStaffCcMovements] = useState([]);
   const [analytics, setAnalytics] = useState(null);
   const [stockLog, setStockLog] = useState([]);
   const [notifications, setNotifications] = useState([]);
@@ -111,6 +112,7 @@ export function AppProvider({ children }) {
         customersData,
         custPaymentsData,
         supPaymentsData,
+        staffCcData,
         analyticsData,
         logData,
         notifsData,
@@ -128,6 +130,7 @@ export function AppProvider({ children }) {
         api.getCustomers(),
         api.getCustomerPayments(),
         api.getSupplierPayments(),
+        api.getStaffCcMovements(),
         api.getAnalytics(),
         api.getStockLog(),
         api.getNotifications(),
@@ -147,6 +150,7 @@ export function AppProvider({ children }) {
       setCustomers(customersData || []);
       setCustomerPayments(custPaymentsData || []);
       setSupplierPayments(supPaymentsData || []);
+      setStaffCcMovements(staffCcData || []);
       setAnalytics(analyticsData);
       setStockLog(logData);
       setNotifications(notifsData || []);
@@ -356,6 +360,8 @@ export function AppProvider({ children }) {
         setCustomerPayments,
         supplierPayments,
         setSupplierPayments,
+        staffCcMovements,
+        setStaffCcMovements,
         analytics,
         stockLog,
         notifications,

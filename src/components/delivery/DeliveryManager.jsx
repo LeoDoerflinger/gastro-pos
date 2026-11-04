@@ -110,6 +110,10 @@ export default function DeliveryManager() {
   const [cartItems, setCartItems] = useState([]);
   const [submitting, setSubmitting] = useState(false);
 
+  // Filtros de categoría y búsqueda para platos
+  const [selectedCategory, setSelectedCategory] = useState('Todas');
+  const [dishSearch, setDishSearch] = useState('');
+
   // Modal for dish extras & kitchen clarifications
   const [editingItemIndex, setEditingItemIndex] = useState(null);
   const [tempNotes, setTempNotes] = useState('');
@@ -135,6 +139,19 @@ export default function DeliveryManager() {
   );
 
   const deliveryInfo = useMemo(() => calculateDeliveryInfo(distanceKm), [distanceKm]);
+
+  const dishCategories = useMemo(() => {
+    const cats = new Set((products || []).map(p => p.category).filter(Boolean));
+    return ['Todas', ...Array.from(cats)];
+  }, [products]);
+
+  const filteredCatalogProducts = useMemo(() => {
+    return (products || []).filter(prod => {
+      const matchCat = selectedCategory === 'Todas' || prod.category === selectedCategory;
+      const matchSearch = !dishSearch.trim() || prod.name?.toLowerCase().includes(dishSearch.toLowerCase());
+      return matchCat && matchSearch;
+    });
+  }, [products, selectedCategory, dishSearch]);
 
   const handleSelectPresetAddress = (preset) => {
     setDeliveryAddress(preset.address);
@@ -768,23 +785,69 @@ export default function DeliveryManager() {
                 </div>
               )}
 
-              {/* Quick Dish Picker */}
+              {/* Categorías y buscador de platos */}
               <div className="space-y-2">
-                <span className="pos-label">Elegí los platos del pedido:</span>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-44 overflow-y-auto p-2 pos-subpanel">
-                  {products.map(prod => (
-                    <button
-                      key={prod.id}
-                      type="button"
-                      onClick={() => handleAddToCart(prod)}
-                      className="min-h-[60px] p-2.5 rounded bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-left transition-colors flex flex-col justify-between"
-                    >
-                      <span className="text-xs font-bold text-[var(--text-primary)] truncate w-full">{prod.name}</span>
-                      <span className="text-xs font-mono font-bold text-[var(--accent-brand)]">
-                        ${prod.price.toLocaleString('es-AR')}
-                      </span>
-                    </button>
-                  ))}
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                  <span className="pos-label mb-0">Elegí los platos del pedido:</span>
+                  <div className="relative min-w-[180px]">
+                    <i className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)] absolute left-2.5 top-1/2 -translate-y-1/2 pointer-events-none" aria-hidden="true"></i>
+                    <input
+                      type="text"
+                      placeholder="Buscar plato..."
+                      value={dishSearch}
+                      onChange={(e) => setDishSearch(e.target.value)}
+                      className="pos-input text-xs pl-7 py-1 min-h-[32px]"
+                    />
+                  </div>
+                </div>
+
+                {/* Chips de Categorías */}
+                <div className="flex items-center gap-1.5 overflow-x-auto pb-1.5 scrollbar-thin" role="tablist" aria-label="Categorías de la carta">
+                  {dishCategories.map(cat => {
+                    const active = selectedCategory === cat;
+                    return (
+                      <button
+                        key={cat}
+                        type="button"
+                        role="tab"
+                        aria-selected={active}
+                        onClick={() => setSelectedCategory(cat)}
+                        className={`text-xs px-2.5 py-1 rounded whitespace-nowrap font-semibold transition-colors shrink-0 ${
+                          active
+                            ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold'
+                            : 'bg-[var(--bg-surface)] text-[var(--text-secondary)] hover:bg-[var(--bg-elevated)] hover:text-[var(--text-primary)] border border-[var(--border-subtle)]'
+                        }`}
+                      >
+                        {cat}
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Grid de Platos Filtrados */}
+                <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 max-h-48 overflow-y-auto p-2 pos-subpanel">
+                  {filteredCatalogProducts.length === 0 ? (
+                    <div className="col-span-full py-6 text-center text-xs text-[var(--text-muted)]">
+                      No hay platos en la categoría "{selectedCategory}".
+                    </div>
+                  ) : (
+                    filteredCatalogProducts.map(prod => (
+                      <button
+                        key={prod.id}
+                        type="button"
+                        onClick={() => handleAddToCart(prod)}
+                        className="min-h-[64px] p-2.5 rounded bg-[var(--bg-surface)] hover:bg-[var(--bg-elevated)] border border-[var(--border-subtle)] hover:border-[var(--border-strong)] text-left transition-colors flex flex-col justify-between"
+                      >
+                        <div className="w-full">
+                          <span className="text-xs font-bold text-[var(--text-primary)] truncate block w-full">{prod.name}</span>
+                          <span className="text-[10px] text-[var(--text-muted)] block truncate">{prod.category}</span>
+                        </div>
+                        <span className="text-xs font-mono font-bold text-[var(--accent-brand)] mt-1">
+                          ${prod.price.toLocaleString('es-AR')}
+                        </span>
+                      </button>
+                    ))
+                  )}
                 </div>
               </div>
 

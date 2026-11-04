@@ -1024,19 +1024,38 @@ class Store {
     order.closedAt = new Date().toISOString();
     order.closedBy = closedBy?.name || 'Cajero';
 
-    if (paymentMethod === 'cuenta_corriente' && paymentDetails?.customerId) {
-      if (!Array.isArray(t.customers)) t.customers = [];
-      const customer = t.customers.find(c => c.id === paymentDetails.customerId);
-      if (customer) {
-        customer.currentBalance = (customer.currentBalance || 0) + order.total;
-        order.customerId = customer.id;
-        order.customerName = customer.name;
-        if (!Array.isArray(customer.ordersHistory)) customer.ordersHistory = [];
-        customer.ordersHistory.unshift({
+    if (paymentMethod === 'cuenta_corriente') {
+      if (paymentDetails?.customerId) {
+        if (!Array.isArray(t.customers)) t.customers = [];
+        const customer = t.customers.find(c => c.id === paymentDetails.customerId);
+        if (customer) {
+          customer.currentBalance = (customer.currentBalance || 0) + order.total;
+          order.customerId = customer.id;
+          order.customerName = customer.name;
+          if (!Array.isArray(customer.ordersHistory)) customer.ordersHistory = [];
+          customer.ordersHistory.unshift({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            total: order.total,
+            date: order.closedAt
+          });
+        }
+      } else if (paymentDetails?.employeeId) {
+        if (!Array.isArray(t.staffCcMovements)) t.staffCcMovements = [];
+        const empName = paymentDetails.employeeName || 'Personal';
+        order.employeeId = paymentDetails.employeeId;
+        order.employeeName = empName;
+        t.staffCcMovements.unshift({
+          id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          userId: paymentDetails.employeeId,
+          userName: empName,
+          type: 'consumo',
+          impact: -1,
+          amount: order.total,
+          concept: `Consumo comanda #${order.orderNumber} (${order.channel === 'mesa' ? ('Mesa ' + (order.tableNumber || '')) : order.channel})`,
           orderId: order.id,
-          orderNumber: order.orderNumber,
-          total: order.total,
-          date: order.closedAt
+          date: order.closedAt,
+          recordedBy: closedBy?.name || 'Cajero'
         });
       }
     }
@@ -1435,6 +1454,8 @@ class Store {
 
     const salesByMethod = {
       efectivo: 0,
+      debito: 0,
+      credito: 0,
       qr_transferencia: 0,
       cuenta_corriente: 0
     };
@@ -1443,13 +1464,23 @@ class Store {
       const tot = Number(o.total) || 0;
       if (pm === 'efectivo') {
         salesByMethod.efectivo += tot;
-      } else if (pm === 'mixto') {
-        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
-        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
-        salesByMethod.efectivo += c;
-        salesByMethod.qr_transferencia += d;
+      } else if (pm === 'debito') {
+        salesByMethod.debito += tot;
+      } else if (pm === 'credito') {
+        salesByMethod.credito += tot;
+      } else if (pm === 'qr_transferencia') {
+        salesByMethod.qr_transferencia += tot;
       } else if (pm === 'cuenta_corriente') {
         salesByMethod.cuenta_corriente += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const deb = Number(o.paymentDetails?.splitDebito ?? o.paymentDetails?.splitDetails?.debito ?? 0);
+        const cred = Number(o.paymentDetails?.splitCredito ?? o.paymentDetails?.splitDetails?.credito ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? Math.max(0, tot - c - deb - cred));
+        salesByMethod.efectivo += c;
+        salesByMethod.debito += deb;
+        salesByMethod.credito += cred;
+        salesByMethod.qr_transferencia += d;
       } else {
         salesByMethod.qr_transferencia += tot;
       }
@@ -1514,19 +1545,29 @@ class Store {
       ventasPorCanal[ch] = (ventasPorCanal[ch] || 0) + (o.total || 0);
     });
 
-    const ventasPorMetodo = { efectivo: 0, qr_transferencia: 0, cuenta_corriente: 0 };
+    const ventasPorMetodo = { efectivo: 0, debito: 0, credito: 0, qr_transferencia: 0, cuenta_corriente: 0 };
     [...closedOrders, ...historical].forEach(o => {
       const pm = (o.paymentMethod || 'efectivo').toLowerCase();
       const tot = Number(o.total) || 0;
       if (pm === 'efectivo') {
         ventasPorMetodo.efectivo += tot;
-      } else if (pm === 'mixto') {
-        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
-        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
-        ventasPorMetodo.efectivo += c;
-        ventasPorMetodo.qr_transferencia += d;
+      } else if (pm === 'debito') {
+        ventasPorMetodo.debito += tot;
+      } else if (pm === 'credito') {
+        ventasPorMetodo.credito += tot;
+      } else if (pm === 'qr_transferencia') {
+        ventasPorMetodo.qr_transferencia += tot;
       } else if (pm === 'cuenta_corriente') {
         ventasPorMetodo.cuenta_corriente += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const deb = Number(o.paymentDetails?.splitDebito ?? o.paymentDetails?.splitDetails?.debito ?? 0);
+        const cred = Number(o.paymentDetails?.splitCredito ?? o.paymentDetails?.splitDetails?.credito ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? Math.max(0, tot - c - deb - cred));
+        ventasPorMetodo.efectivo += c;
+        ventasPorMetodo.debito += deb;
+        ventasPorMetodo.credito += cred;
+        ventasPorMetodo.qr_transferencia += d;
       } else {
         ventasPorMetodo.qr_transferencia += tot;
       }
@@ -1569,6 +1610,31 @@ class Store {
 
   getStockAuditLog(tenantId) {
     return this.getTenant(tenantId).stockLog || [];
+  }
+
+  getStaffCcMovements(tenantId) {
+    const t = this.getTenant(tenantId);
+    return t.staffCcMovements || [];
+  }
+
+  addStaffCcMovement(data, tenantId) {
+    const t = this.getTenant(tenantId);
+    if (!Array.isArray(t.staffCcMovements)) t.staffCcMovements = [];
+    const newMov = {
+      id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId: data.userId,
+      userName: data.userName,
+      type: data.type || 'consumo',
+      impact: data.type === 'sueldo' ? 1 : -1,
+      amount: Number(data.amount) || 0,
+      concept: data.concept || 'Movimiento cuenta corriente',
+      orderId: data.orderId || null,
+      date: data.date || new Date().toISOString(),
+      recordedBy: data.recordedBy || 'Admin'
+    };
+    t.staffCcMovements.unshift(newMov);
+    this.save();
+    return newMov;
   }
 }
 

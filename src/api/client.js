@@ -1109,19 +1109,38 @@ export const api = {
     order.closedAt = new Date().toISOString();
     order.closedBy = payload.closedBy?.name || 'Cajero';
 
-    if (payload.paymentMethod === 'cuenta_corriente' && payload.paymentDetails?.customerId) {
-      if (!db.customers) db.customers = [];
-      const cust = db.customers.find(c => c.id === payload.paymentDetails.customerId);
-      if (cust) {
-        cust.currentBalance = (cust.currentBalance || 0) + order.total;
-        order.customerId = cust.id;
-        order.customerName = cust.name;
-        if (!cust.ordersHistory) cust.ordersHistory = [];
-        cust.ordersHistory.unshift({
+    if (payload.paymentMethod === 'cuenta_corriente') {
+      if (payload.paymentDetails?.customerId) {
+        if (!db.customers) db.customers = [];
+        const cust = db.customers.find(c => c.id === payload.paymentDetails.customerId);
+        if (cust) {
+          cust.currentBalance = (cust.currentBalance || 0) + order.total;
+          order.customerId = cust.id;
+          order.customerName = cust.name;
+          if (!cust.ordersHistory) cust.ordersHistory = [];
+          cust.ordersHistory.unshift({
+            orderId: order.id,
+            orderNumber: order.orderNumber,
+            total: order.total,
+            date: order.closedAt
+          });
+        }
+      } else if (payload.paymentDetails?.employeeId) {
+        if (!db.staffCcMovements) db.staffCcMovements = [];
+        const empName = payload.paymentDetails.employeeName || 'Personal';
+        order.employeeId = payload.paymentDetails.employeeId;
+        order.employeeName = empName;
+        db.staffCcMovements.unshift({
+          id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+          userId: payload.paymentDetails.employeeId,
+          userName: empName,
+          type: 'consumo',
+          impact: -1,
+          amount: order.total,
+          concept: `Consumo comanda #${order.orderNumber} (${order.channel === 'mesa' ? ('Mesa ' + (order.tableNumber || '')) : order.channel})`,
           orderId: order.id,
-          orderNumber: order.orderNumber,
-          total: order.total,
-          date: order.closedAt
+          date: order.closedAt,
+          recordedBy: payload.closedBy?.name || 'Cajero'
         });
       }
     }
@@ -1371,6 +1390,46 @@ export const api = {
     return { customer: cust, payment: paymentRecord };
   },
 
+  // --- Cuentas Corrientes de Personal / Empleados (Rendición y Sueldos) ---
+  getStaffCcMovements: async () => {
+    const db = await ensureDbInitialized();
+    try {
+      const remote = await rawFetchJson('/staff-cc');
+      if (Array.isArray(remote)) {
+        db.staffCcMovements = remote;
+        saveLocalDb(db, { touch: false, broadcast: false });
+        return remote;
+      }
+    } catch (e) {}
+    return [...(db.staffCcMovements || [])];
+  },
+
+  addStaffCcMovement: async (movData) => {
+    const db = await ensureDbInitialized();
+    rawFetchJson('/staff-cc', {
+      method: 'POST',
+      body: JSON.stringify(movData)
+    }).catch(() => {});
+
+    const newMov = {
+      id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
+      userId: movData.userId,
+      userName: movData.userName,
+      type: movData.type || 'consumo',
+      impact: movData.type === 'sueldo' ? 1 : -1,
+      amount: Number(movData.amount) || 0,
+      concept: movData.concept || 'Movimiento cuenta corriente',
+      orderId: movData.orderId || null,
+      date: movData.date || new Date().toISOString(),
+      recordedBy: movData.recordedBy || 'Admin'
+    };
+
+    if (!Array.isArray(db.staffCcMovements)) db.staffCcMovements = [];
+    db.staffCcMovements.unshift(newMov);
+    saveLocalDb(db);
+    return newMov;
+  },
+
   getPurchases: async () => {
     const db = await ensureDbInitialized();
     return [...(db.purchases || [])];
@@ -1518,6 +1577,8 @@ export const api = {
 
     const salesByMethod = {
       efectivo: 0,
+      debito: 0,
+      credito: 0,
       qr_transferencia: 0,
       cuenta_corriente: 0
     };
@@ -1526,13 +1587,23 @@ export const api = {
       const tot = Number(o.total) || 0;
       if (pm === 'efectivo') {
         salesByMethod.efectivo += tot;
-      } else if (pm === 'mixto') {
-        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
-        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
-        salesByMethod.efectivo += c;
-        salesByMethod.qr_transferencia += d;
+      } else if (pm === 'debito') {
+        salesByMethod.debito += tot;
+      } else if (pm === 'credito') {
+        salesByMethod.credito += tot;
+      } else if (pm === 'qr_transferencia') {
+        salesByMethod.qr_transferencia += tot;
       } else if (pm === 'cuenta_corriente') {
         salesByMethod.cuenta_corriente += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const deb = Number(o.paymentDetails?.splitDebito ?? o.paymentDetails?.splitDetails?.debito ?? 0);
+        const cred = Number(o.paymentDetails?.splitCredito ?? o.paymentDetails?.splitDetails?.credito ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? Math.max(0, tot - c - deb - cred));
+        salesByMethod.efectivo += c;
+        salesByMethod.debito += deb;
+        salesByMethod.credito += cred;
+        salesByMethod.qr_transferencia += d;
       } else {
         salesByMethod.qr_transferencia += tot;
       }

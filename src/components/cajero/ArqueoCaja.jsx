@@ -43,6 +43,8 @@ export default function ArqueoCaja() {
 
   const salesByMethod = {
     efectivo: 0,
+    debito: 0,
+    credito: 0,
     qr_transferencia: 0,
     cuenta_corriente: 0
   };
@@ -52,15 +54,24 @@ export default function ArqueoCaja() {
     const tot = Number(o.total) || 0;
     if (pm === 'efectivo') {
       salesByMethod.efectivo += tot;
-    } else if (pm === 'mixto') {
-      const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
-      const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
-      salesByMethod.efectivo += c;
-      salesByMethod.qr_transferencia += d;
+    } else if (pm === 'debito') {
+      salesByMethod.debito += tot;
+    } else if (pm === 'credito') {
+      salesByMethod.credito += tot;
+    } else if (pm === 'qr_transferencia' || pm === 'mercadopago' || pm === 'transferencia') {
+      salesByMethod.qr_transferencia += tot;
     } else if (pm === 'cuenta_corriente') {
       salesByMethod.cuenta_corriente += tot;
+    } else if (pm === 'mixto') {
+      const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+      const deb = Number(o.paymentDetails?.splitDebito ?? o.paymentDetails?.splitDetails?.debito ?? 0);
+      const cred = Number(o.paymentDetails?.splitCredito ?? o.paymentDetails?.splitDetails?.credito ?? 0);
+      const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? Math.max(0, tot - c - deb - cred));
+      salesByMethod.efectivo += c;
+      salesByMethod.debito += deb;
+      salesByMethod.credito += cred;
+      salesByMethod.qr_transferencia += d;
     } else {
-      // qr_transferencia, mercadopago, transferencia, debito, credito
       salesByMethod.qr_transferencia += tot;
     }
   });
@@ -313,6 +324,8 @@ export default function ArqueoCaja() {
               <div className="divide-y divide-[var(--border-subtle)] px-4 text-sm">
                 {[
                   { key: 'efectivo', label: 'Efectivo en caja', icon: 'fa-money-bill-wave' },
+                  { key: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card' },
+                  { key: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card' },
                   { key: 'qr_transferencia', label: 'QR / Transferencia', icon: 'fa-qrcode' },
                   { key: 'cuenta_corriente', label: 'Cuenta Corriente', icon: 'fa-book-bookmark' }
                 ].map(item => (

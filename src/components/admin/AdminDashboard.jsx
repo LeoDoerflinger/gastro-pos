@@ -63,6 +63,8 @@ export default function AdminDashboard() {
 
   const paymentOptions = [
     { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
+    { id: 'debito', label: 'Débito', icon: 'fa-credit-card' },
+    { id: 'credito', label: 'Crédito', icon: 'fa-credit-card' },
     { id: 'qr_transferencia', label: 'QR / Transfer.', icon: 'fa-qrcode' },
     { id: 'cuenta_corriente', label: 'Cta. Cte.', icon: 'fa-book-bookmark' },
     { id: 'mixto', label: 'Mixto', icon: 'fa-scale-balanced' }

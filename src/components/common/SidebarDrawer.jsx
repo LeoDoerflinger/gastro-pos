@@ -70,7 +70,7 @@ export default function SidebarDrawer() {
 
   const navItemClass = (tab) => {
     const active = activeTab === tab;
-    const isNeutralTab = tab === 'stock_purchases' || tab === 'recetario';
+    const isNeutralTab = tab === 'stock_purchases' || tab === 'proveedores' || tab === 'recetario';
     return `w-full min-h-[44px] flex items-center gap-3 px-3.5 py-2.5 rounded text-sm transition-colors text-left ${
       active
         ? isNeutralTab
@@ -207,7 +207,17 @@ export default function SidebarDrawer() {
                 className={navItemClass('stock_purchases')}
               >
                 <i className="fa-solid fa-file-invoice-dollar w-4 text-center text-sm" aria-hidden="true"></i>
-                <span>Facturas y Proveedores</span>
+                <span>Facturas y Pagos</span>
+              </button>
+
+              <button
+                type="button"
+                onClick={() => handleSelectTab('proveedores')}
+                aria-current={activeTab === 'proveedores' ? 'page' : undefined}
+                className={navItemClass('proveedores')}
+              >
+                <i className="fa-solid fa-truck w-4 text-center text-sm" aria-hidden="true"></i>
+                <span>Proveedores</span>
               </button>
 
               <button
@@ -217,7 +227,7 @@ export default function SidebarDrawer() {
                 className={navItemClass('cuentas_corrientes')}
               >
                 <i className="fa-solid fa-book-bookmark w-4 text-center text-sm" aria-hidden="true"></i>
-                <span>Cuentas Corrientes</span>
+                <span>Cuentas Corrientes y Sueldos</span>
               </button>
             </>
           )}

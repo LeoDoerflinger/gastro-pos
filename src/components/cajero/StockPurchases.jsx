@@ -45,9 +45,9 @@ export default function StockPurchases() {
   const [isQuickIngModalOpen, setIsQuickIngModalOpen] = useState(false);
   const [quickIngName, setQuickIngName] = useState('');
   const [quickIngCategory, setQuickIngCategory] = useState('Carnicería');
-  const [quickIngUnit, setQuickIngUnit] = useState('kg');
-  const [quickIngCost, setQuickIngCost] = useState('5000');
-  const [quickIngStock, setQuickIngStock] = useState('10');
+  const [quickIngUnit, setQuickIngUnit] = useState('g');
+  const [quickIngCost, setQuickIngCost] = useState('12');
+  const [quickIngStock, setQuickIngStock] = useState('1000');
 
   useEffect(() => {
     const onKeyDown = (e) => {
@@ -1201,11 +1201,9 @@ export default function StockPurchases() {
                     onChange={(e) => setQuickIngUnit(e.target.value)}
                     className="pos-input text-xs"
                   >
-                    <option value="kg">Kilogramos (kg)</option>
                     <option value="g">Gramos (g)</option>
-                    <option value="u">Unidades (u)</option>
-                    <option value="l">Litros (l)</option>
                     <option value="ml">Mililitros (ml)</option>
+                    <option value="u">Unidades (u)</option>
                   </select>
                 </div>
               </div>

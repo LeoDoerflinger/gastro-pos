@@ -10,12 +10,14 @@ export default function CuentasCorrientesManager() {
     suppliers,
     purchases,
     supplierPayments,
+    users,
+    staffCcMovements,
     currentUser,
     showToast,
     refreshData
   } = useApp();
 
-  const [mainTab, setMainTab] = useState('customers'); // 'customers' | 'suppliers'
+  const [mainTab, setMainTab] = useState('customers'); // 'customers' | 'suppliers' | 'staff'
   const [searchQuery, setSearchQuery] = useState('');
 
   // Modals Clientes
@@ -45,6 +47,16 @@ export default function CuentasCorrientesManager() {
   const [supPaymentAmount, setSupPaymentAmount] = useState('');
   const [supPaymentMethod, setSupPaymentMethod] = useState('transferencia');
   const [supPaymentNotes, setSupPaymentNotes] = useState('');
+
+  // Modals y Estados Personal / Rendición de Sueldos
+  const [isStaffMovementModalOpen, setIsStaffMovementModalOpen] = useState(false);
+  const [selectedStaffUser, setSelectedStaffUser] = useState(null);
+  const [staffMovType, setStaffMovType] = useState('sueldo'); // 'sueldo' | 'consumo' | 'adelanto' | 'pago'
+  const [staffMovAmount, setStaffMovAmount] = useState('');
+  const [staffMovConcept, setStaffMovConcept] = useState('');
+  const [isStaffHistoryModalOpen, setIsStaffHistoryModalOpen] = useState(false);
+  const [selectedStaffForHistory, setSelectedStaffForHistory] = useState(null);
+
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
@@ -55,6 +67,8 @@ export default function CuentasCorrientesManager() {
         setIsCustPaymentModalOpen(false);
         setIsCustHistoryModalOpen(false);
         setIsSupPaymentModalOpen(false);
+        setIsStaffMovementModalOpen(false);
+        setIsStaffHistoryModalOpen(false);
       }
     };
     window.addEventListener('keydown', onKeyDown);
@@ -233,18 +247,57 @@ export default function CuentasCorrientesManager() {
     }
   };
 
+  const handleOpenStaffMovement = (u = null, type = 'sueldo') => {
+    setSelectedStaffUser(u || users[0] || null);
+    setStaffMovType(type);
+    setStaffMovAmount('');
+    setStaffMovConcept('');
+    setIsStaffMovementModalOpen(true);
+  };
+
+  const handleSaveStaffMovement = async (e) => {
+    e.preventDefault();
+    if (!selectedStaffUser) {
+      showToast('Seleccioná un empleado', 'error');
+      return;
+    }
+    const amt = Number(staffMovAmount);
+    if (isNaN(amt) || amt <= 0) {
+      showToast('Ingresá un importe válido mayor a cero', 'error');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      await api.addStaffCcMovement({
+        userId: selectedStaffUser.id,
+        userName: selectedStaffUser.name,
+        type: staffMovType,
+        amount: amt,
+        concept: staffMovConcept.trim() || `Movimiento de ${staffMovType}`,
+        recordedBy: currentUser?.name || 'Admin'
+      });
+      showToast(`Movimiento registrado a ${selectedStaffUser.name}`);
+      await refreshData();
+      setIsStaffMovementModalOpen(false);
+    } catch (err) {
+      showToast(err.message || 'Error al guardar movimiento', 'error');
+    } finally {
+      setSubmitting(false);
+    }
+  };
+
   return (
     <div className="space-y-4">
       {/* Top Header & Subtab Bar */}
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 border-b border-[var(--border-subtle)] pb-3">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 overflow-x-auto pb-1 sm:pb-0">
           <div className="flex rounded border border-[var(--border-strong)] p-0.5 bg-[var(--bg-subtle)]" role="tablist">
             <button
               type="button"
               role="tab"
               aria-selected={mainTab === 'customers'}
               onClick={() => { setMainTab('customers'); setSearchQuery(''); }}
-              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 mainTab === 'customers'
                   ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -259,7 +312,7 @@ export default function CuentasCorrientesManager() {
               role="tab"
               aria-selected={mainTab === 'suppliers'}
               onClick={() => { setMainTab('suppliers'); setSearchQuery(''); }}
-              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 ${
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
                 mainTab === 'suppliers'
                   ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold shadow-sm'
                   : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
@@ -267,6 +320,21 @@ export default function CuentasCorrientesManager() {
             >
               <i className="fa-solid fa-truck text-xs" aria-hidden="true"></i>
               <span>Proveedores ({suppliers.length})</span>
+            </button>
+
+            <button
+              type="button"
+              role="tab"
+              aria-selected={mainTab === 'staff'}
+              onClick={() => { setMainTab('staff'); setSearchQuery(''); }}
+              className={`px-3 py-1.5 rounded text-xs font-semibold transition-colors flex items-center gap-1.5 whitespace-nowrap ${
+                mainTab === 'staff'
+                  ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold shadow-sm'
+                  : 'text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+              }`}
+            >
+              <i className="fa-solid fa-user-tie text-xs" aria-hidden="true"></i>
+              <span>Personal y Sueldos ({users.length})</span>
             </button>
           </div>
         </div>
@@ -283,6 +351,17 @@ export default function CuentasCorrientesManager() {
             </button>
           )}
 
+          {mainTab === 'staff' && (
+            <button
+              type="button"
+              onClick={() => handleOpenStaffMovement()}
+              className="pos-btn-primary text-xs px-3.5"
+            >
+              <i className="fa-solid fa-plus text-xs mr-1" aria-hidden="true"></i>
+              <span>Nuevo movimiento personal</span>
+            </button>
+          )}
+
           <div className="flex items-center gap-1.5">
             <label htmlFor="cta-search" className="text-xs font-semibold text-[var(--text-secondary)] shrink-0 inline-flex items-center gap-1.5">
               <i className="fa-solid fa-magnifying-glass text-xs text-[var(--text-muted)]" aria-hidden="true"></i>
@@ -291,7 +370,7 @@ export default function CuentasCorrientesManager() {
             <input
               id="cta-search"
               type="search"
-              placeholder={mainTab === 'customers' ? 'Cliente, teléfono, DNI...' : 'Proveedor, CUIT, rubro...'}
+              placeholder={mainTab === 'customers' ? 'Cliente, teléfono...' : mainTab === 'staff' ? 'Nombre o rol...' : 'Proveedor, CUIT...'}
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               className="pos-input text-xs py-1.5 w-48 sm:w-60"
@@ -638,6 +717,153 @@ export default function CuentasCorrientesManager() {
                 })
               )}
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= VISTA PRINCIPAL: PERSONAL Y RENDICIÓN DE SUELDOS ======================= */}
+      {mainTab === 'staff' && (
+        <div className="space-y-4">
+          {/* Top KPI Cards for Staff */}
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+            <div className="pos-panel p-3.5 border-l-4 border-l-[var(--accent-brand)]">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] block">Personal Registrado</span>
+              <span className="font-mono font-black text-xl text-[var(--text-primary)]">{users.length}</span>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">Admin, cajeros y mozos</span>
+            </div>
+
+            <div className="pos-panel p-3.5 border-l-4 border-l-emerald-500">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] block">Total Sueldos Asignados</span>
+              <span className="font-mono font-black text-xl text-emerald-500">
+                ${(staffCcMovements || []).filter(m => m.type === 'sueldo').reduce((acc, m) => acc + Number(m.amount || 0), 0).toLocaleString('es-AR')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">Haberes brutos del mes</span>
+            </div>
+
+            <div className="pos-panel p-3.5 border-l-4 border-l-amber-500">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] block">Consumos de Empleados</span>
+              <span className="font-mono font-black text-xl text-amber-500">
+                -${(staffCcMovements || []).filter(m => m.type === 'consumo').reduce((acc, m) => acc + Number(m.amount || 0), 0).toLocaleString('es-AR')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">Mesas, delivery y mostrador</span>
+            </div>
+
+            <div className="pos-panel p-3.5 border-l-4 border-l-sky-500">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] block">Adelantos y Pagos</span>
+              <span className="font-mono font-black text-xl text-sky-400">
+                -${(staffCcMovements || []).filter(m => m.type === 'adelanto' || m.type === 'pago').reduce((acc, m) => acc + Number(m.amount || 0), 0).toLocaleString('es-AR')}
+              </span>
+              <span className="text-[11px] text-[var(--text-muted)] block mt-0.5">Entregados en efectivo/transf.</span>
+            </div>
+          </div>
+
+          {/* Staff Accounts Cards Grid */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3.5">
+            {users
+              .filter(u => {
+                if (!searchQuery.trim()) return true;
+                const q = searchQuery.toLowerCase();
+                return u.name?.toLowerCase().includes(q) || u.role?.toLowerCase().includes(q) || String(u.pin).includes(q);
+              })
+              .map(u => {
+                const uMovs = (staffCcMovements || []).filter(m => m.userId === u.id);
+                const netBal = uMovs.reduce((acc, m) => acc + (m.impact * Number(m.amount || 0)), 0);
+                const sueldoTotal = uMovs.filter(m => m.type === 'sueldo').reduce((acc, m) => acc + Number(m.amount || 0), 0);
+                const consumosTotal = uMovs.filter(m => m.type === 'consumo').reduce((acc, m) => acc + Number(m.amount || 0), 0);
+                const adelantosTotal = uMovs.filter(m => m.type === 'adelanto').reduce((acc, m) => acc + Number(m.amount || 0), 0);
+                const pagosTotal = uMovs.filter(m => m.type === 'pago').reduce((acc, m) => acc + Number(m.amount || 0), 0);
+
+                return (
+                  <article key={u.id} className="pos-panel p-4 flex flex-col justify-between space-y-3">
+                    <div>
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="flex items-center gap-2.5">
+                          <span className="w-9 h-9 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--accent-brand)] flex items-center justify-center text-sm">
+                            <i className={u.role === 'admin' ? 'fa-solid fa-user-shield' : u.role === 'cajero' ? 'fa-solid fa-cash-register' : 'fa-solid fa-user-tie'} aria-hidden="true"></i>
+                          </span>
+                          <div>
+                            <h3 className="font-display font-bold text-base text-[var(--text-primary)] leading-tight">{u.name}</h3>
+                            <span className="pos-badge pos-badge-brand text-[10px] mt-0.5">{u.role} · PIN: {u.pin}</span>
+                          </div>
+                        </div>
+
+                        <div className="text-right">
+                          <span className="text-[10px] text-[var(--text-muted)] block uppercase font-bold">Saldo Neto</span>
+                          <span className={`font-mono font-black text-base ${
+                            netBal > 0 ? 'text-emerald-500' : netBal < 0 ? 'text-[var(--status-danger-fg)]' : 'text-[var(--text-secondary)]'
+                          }`}>
+                            {netBal > 0 ? `+$${netBal.toLocaleString('es-AR')}` : netBal < 0 ? `-$${Math.abs(netBal).toLocaleString('es-AR')}` : '$0'}
+                          </span>
+                        </div>
+                      </div>
+
+                      {/* Financial Breakdown */}
+                      <div className="mt-3 p-2.5 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] space-y-1.5 text-xs font-mono">
+                        <div className="flex justify-between text-[var(--text-secondary)]">
+                          <span>(+) Sueldo mensual:</span>
+                          <span className="font-bold text-emerald-500">${sueldoTotal.toLocaleString('es-AR')}</span>
+                        </div>
+                        <div className="flex justify-between text-[var(--text-secondary)]">
+                          <span>(-) Consumos mesa/mostrador:</span>
+                          <span className="font-bold text-amber-500">-${consumosTotal.toLocaleString('es-AR')}</span>
+                        </div>
+                        <div className="flex justify-between text-[var(--text-secondary)]">
+                          <span>(-) Adelantos entregados:</span>
+                          <span className="font-bold text-rose-500">-${adelantosTotal.toLocaleString('es-AR')}</span>
+                        </div>
+                        {pagosTotal > 0 && (
+                          <div className="flex justify-between text-[var(--text-secondary)]">
+                            <span>(-) Liquidaciones pagadas:</span>
+                            <span className="font-bold text-sky-400">-${pagosTotal.toLocaleString('es-AR')}</span>
+                          </div>
+                        )}
+                        <div className="pt-1.5 border-t border-[var(--border-subtle)] flex justify-between font-bold text-xs text-[var(--text-primary)]">
+                          <span>A liquidar neto:</span>
+                          <span className={netBal >= 0 ? 'text-emerald-500' : 'text-[var(--status-danger-fg)]'}>
+                            ${netBal.toLocaleString('es-AR')}
+                          </span>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Actions */}
+                    <div className="pt-2 border-t border-[var(--border-subtle)] flex items-center justify-between gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedStaffForHistory(u);
+                          setIsStaffHistoryModalOpen(true);
+                        }}
+                        className="pos-btn-secondary text-xs px-2.5 py-1"
+                      >
+                        <i className="fa-solid fa-list-check text-xs mr-1" aria-hidden="true"></i>
+                        <span>Ver Ficha ({uMovs.length})</span>
+                      </button>
+
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => handleOpenStaffMovement(u, 'consumo')}
+                          className="pos-btn-secondary text-xs px-2 py-1 text-amber-500"
+                          title="Cargar consumo de salón o mostrador"
+                        >
+                          <i className="fa-solid fa-burger text-xs mr-1" aria-hidden="true"></i>
+                          <span>Consumo</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenStaffMovement(u, 'adelanto')}
+                          className="pos-btn-primary text-xs px-2.5 py-1"
+                          title="Otorgar adelanto de sueldo"
+                        >
+                          <i className="fa-solid fa-hand-holding-dollar text-xs mr-1" aria-hidden="true"></i>
+                          <span>Adelanto</span>
+                        </button>
+                      </div>
+                    </div>
+                  </article>
+                );
+              })}
           </div>
         </div>
       )}
@@ -1068,6 +1294,195 @@ export default function CuentasCorrientesManager() {
           </div>
         </div>
       )}
+
+      {/* ======================= MODAL: NUEVO MOVIMIENTO DE PERSONAL / CC ======================= */}
+      {isStaffMovementModalOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3" role="dialog" aria-modal="true">
+          <div className="pos-panel w-full max-w-md overflow-hidden shadow-2xl">
+            <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between">
+              <div>
+                <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                  Asentar Movimiento en Cuenta Corriente de Personal
+                </h3>
+                <span className="text-xs text-[var(--text-muted)]">
+                  Rendición de haberes, consumos y adelantos
+                </span>
+              </div>
+              <button type="button" onClick={() => setIsStaffMovementModalOpen(false)} className="pos-btn-ghost">
+                <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+              </button>
+            </div>
+
+            <form onSubmit={handleSaveStaffMovement} className="p-4 space-y-3.5">
+              <div>
+                <label className="pos-label">Empleado / Personal *</label>
+                <select
+                  value={selectedStaffUser?.id || ''}
+                  onChange={(e) => {
+                    const u = users.find(x => x.id === e.target.value);
+                    setSelectedStaffUser(u || null);
+                  }}
+                  className="pos-input text-xs"
+                >
+                  {users.map(u => (
+                    <option key={u.id} value={u.id}>
+                      {u.name} ({u.role})
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <div>
+                <label className="pos-label">Tipo de movimiento *</label>
+                <select
+                  value={staffMovType}
+                  onChange={(e) => setStaffMovType(e.target.value)}
+                  className="pos-input text-xs font-semibold"
+                >
+                  <option value="sueldo">(+) Sueldo mensual / Asignación base</option>
+                  <option value="consumo">(-) Consumo en salón / mostrador / delivery</option>
+                  <option value="adelanto">(-) Adelanto de sueldo en efectivo</option>
+                  <option value="pago">(-) Liquidación / Pago restante de sueldo</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="pos-label">Importe ($) *</label>
+                <input
+                  type="number"
+                  required
+                  min="1"
+                  placeholder="Ej. 50000"
+                  value={staffMovAmount}
+                  onChange={(e) => setStaffMovAmount(e.target.value)}
+                  className="pos-input text-base font-mono font-bold"
+                />
+              </div>
+
+              <div>
+                <label className="pos-label">Concepto explicativo *</label>
+                <input
+                  type="text"
+                  required
+                  placeholder={
+                    staffMovType === 'sueldo'
+                      ? 'Ej. Sueldo mes en curso'
+                      : staffMovType === 'adelanto'
+                      ? 'Ej. Adelanto de sueldo en efectivo'
+                      : staffMovType === 'consumo'
+                      ? 'Ej. Consumo Mesa 1 o cerveza artesanal'
+                      : 'Ej. Liquidación final transferida'
+                  }
+                  value={staffMovConcept}
+                  onChange={(e) => setStaffMovConcept(e.target.value)}
+                  className="pos-input text-xs"
+                />
+              </div>
+
+              <div className="pt-2 border-t border-[var(--border-subtle)] flex gap-2 justify-end">
+                <button type="button" onClick={() => setIsStaffMovementModalOpen(false)} className="pos-btn-secondary text-xs">
+                  Cancelar
+                </button>
+                <button type="submit" disabled={submitting} className="pos-btn-primary text-xs">
+                  {submitting ? 'Guardando...' : 'Asentar movimiento'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* ======================= MODAL: FICHA DE MOVIMIENTOS DE PERSONAL ======================= */}
+      {isStaffHistoryModalOpen && selectedStaffForHistory && (() => {
+        const u = selectedStaffForHistory;
+        const uMovs = (staffCcMovements || []).filter(m => m.userId === u.id);
+        const netBal = uMovs.reduce((acc, m) => acc + (m.impact * Number(m.amount || 0)), 0);
+
+        return (
+          <div className="fixed inset-0 z-50 flex items-center justify-center bg-[var(--backdrop-overlay)] p-3" role="dialog" aria-modal="true">
+            <div className="pos-panel w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden shadow-2xl">
+              <div className="px-4 py-3 bg-[var(--bg-subtle)] border-b border-[var(--border-subtle)] flex items-center justify-between shrink-0">
+                <div className="flex items-center gap-2.5">
+                  <span className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] text-[var(--accent-brand)] flex items-center justify-center text-xs">
+                    <i className="fa-solid fa-file-invoice text-xs" aria-hidden="true"></i>
+                  </span>
+                  <div>
+                    <h3 className="font-display font-bold text-base text-[var(--text-primary)]">
+                      Ficha de Cuenta Corriente: {u.name}
+                    </h3>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      {u.role} · Saldo a liquidar: <strong className={netBal >= 0 ? 'text-emerald-500 font-mono' : 'text-rose-500 font-mono'}>${netBal.toLocaleString('es-AR')}</strong>
+                    </p>
+                  </div>
+                </div>
+                <button type="button" onClick={() => setIsStaffHistoryModalOpen(false)} className="pos-btn-ghost">
+                  <i className="fa-solid fa-xmark text-sm" aria-hidden="true"></i>
+                </button>
+              </div>
+
+              <div className="p-4 flex-1 overflow-y-auto space-y-2">
+                {uMovs.length === 0 ? (
+                  <p className="text-xs text-[var(--text-muted)] text-center py-8">
+                    No hay movimientos registrados para este empleado.
+                  </p>
+                ) : (
+                  uMovs.map(m => {
+                    const isCredit = m.impact > 0;
+                    return (
+                      <div key={m.id} className="p-3 rounded bg-[var(--bg-subtle)] border border-[var(--border-subtle)] flex items-center justify-between gap-3 text-xs">
+                        <div className="space-y-0.5">
+                          <div className="flex items-center gap-2">
+                            <span className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase font-mono ${
+                              m.type === 'sueldo'
+                                ? 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30'
+                                : m.type === 'consumo'
+                                ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border border-amber-500/30'
+                                : m.type === 'adelanto'
+                                ? 'bg-rose-500/10 text-rose-600 dark:text-rose-400 border border-rose-500/30'
+                                : 'bg-sky-500/10 text-sky-400 border border-sky-500/30'
+                            }`}>
+                              {m.type === 'sueldo' ? '+ Sueldo' : m.type === 'consumo' ? '- Consumo' : m.type === 'adelanto' ? '- Adelanto' : '- Liquidación'}
+                            </span>
+                            <span className="text-[11px] text-[var(--text-muted)] font-mono">
+                              {new Date(m.date).toLocaleDateString()} {new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                            </span>
+                          </div>
+                          <p className="font-semibold text-[var(--text-primary)]">{m.concept}</p>
+                          <span className="text-[10px] text-[var(--text-muted)] block">Registrado por: {m.recordedBy}</span>
+                        </div>
+
+                        <span className={`font-mono font-bold text-sm shrink-0 ${
+                          isCredit ? 'text-emerald-500' : 'text-[var(--status-danger-fg)]'
+                        }`}>
+                          {isCredit ? '+' : '-'}${Number(m.amount).toLocaleString('es-AR')}
+                        </span>
+                      </div>
+                    );
+                  })
+                )}
+              </div>
+
+              <div className="p-3 bg-[var(--bg-subtle)] border-t border-[var(--border-subtle)] flex justify-between items-center shrink-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsStaffHistoryModalOpen(false);
+                    handleOpenStaffMovement(u, 'consumo');
+                  }}
+                  className="pos-btn-secondary text-xs"
+                >
+                  <i className="fa-solid fa-plus text-xs mr-1" aria-hidden="true"></i>
+                  <span>Cargar movimiento</span>
+                </button>
+
+                <button type="button" onClick={() => setIsStaffHistoryModalOpen(false)} className="pos-btn-primary text-xs">
+                  Cerrar ficha
+                </button>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
     </div>
   );
 }

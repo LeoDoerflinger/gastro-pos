@@ -6,15 +6,20 @@ import { getTableCode } from '../mozo/MozoSalonView';
 import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
-  const { currentUser, tables, users, customers, showToast, refreshData } = useApp();
+  const { currentUser, tables, users, customers, staffCcMovements, showToast, refreshData } = useApp();
 
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashTendered, setCashTendered] = useState('');
   const [discountAmount, setDiscountAmount] = useState(order?.discount || 0);
   const [tipAmount, setTipAmount] = useState(order?.tip || 0);
+  const [cardAuthCode, setCardAuthCode] = useState('');
   const [splitCash, setSplitCash] = useState('');
+  const [splitDebito, setSplitDebito] = useState('');
+  const [splitCredito, setSplitCredito] = useState('');
   const [splitDigital, setSplitDigital] = useState('');
+  const [ccTargetType, setCcTargetType] = useState('customer'); // 'customer' | 'employee'
   const [selectedCustomerId, setSelectedCustomerId] = useState('');
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState('');
   const [isQuickCustomerOpen, setIsQuickCustomerOpen] = useState(false);
   const [quickCustName, setQuickCustName] = useState('');
   const [quickCustPhone, setQuickCustPhone] = useState('');
@@ -51,10 +56,12 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const changeDue = tenderedNum >= totalToPay ? tenderedNum - totalToPay : 0;
 
   const splitCashNum = Number(splitCash) || 0;
+  const splitDebitoNum = Number(splitDebito) || 0;
+  const splitCreditoNum = Number(splitCredito) || 0;
   const splitDigitalNum = Number(splitDigital) || 0;
-  const splitSum = splitCashNum + splitDigitalNum;
+  const splitSum = splitCashNum + splitDebitoNum + splitCreditoNum + splitDigitalNum;
   const isSplitValid = paymentMethod === 'mixto'
-    ? (splitSum === totalToPay && totalToPay > 0 && (splitCashNum > 0 || splitDigitalNum > 0))
+    ? (splitSum === totalToPay && totalToPay > 0 && splitSum > 0)
     : true;
 
   const presetBills = [
@@ -99,8 +106,8 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
     }
 
     if (paymentMethod === 'mixto') {
-      if (splitCashNum === 0 && splitDigitalNum === 0) {
-        showToast('Ingresá los montos de efectivo y digital para el pago mixto', 'error');
+      if (splitSum === 0) {
+        showToast('Ingresá los importes para el pago mixto', 'error');
         return;
       }
       if (splitSum !== totalToPay) {
@@ -109,12 +116,19 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
       }
     }
 
-    if (paymentMethod === 'cuenta_corriente' && !selectedCustomerId) {
-      showToast('Seleccioná un cliente de cuenta corriente para registrar el consumo', 'error');
-      return;
+    if (paymentMethod === 'cuenta_corriente') {
+      if (ccTargetType === 'customer' && !selectedCustomerId) {
+        showToast('Seleccioná un cliente de cuenta corriente para registrar el consumo', 'error');
+        return;
+      }
+      if (ccTargetType === 'employee' && !selectedEmployeeId) {
+        showToast('Seleccioná un empleado o personal del local para registrar el consumo', 'error');
+        return;
+      }
     }
 
     const selectedCust = customers?.find(c => c.id === selectedCustomerId);
+    const selectedEmp = users?.find(u => u.id === selectedEmployeeId);
 
     setSubmitting(true);
     try {
@@ -125,21 +139,35 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
         paymentDetails: {
           cashTendered: paymentMethod === 'efectivo' ? tenderedNum : null,
           changeDue: paymentMethod === 'efectivo' ? changeDue : 0,
-          splitCash: paymentMethod === 'mixto' ? Number(splitCash) : null,
-          splitDigital: paymentMethod === 'mixto' ? Number(splitDigital) : null,
-          splitDetails: paymentMethod === 'mixto' ? { cash: Number(splitCash), digital: Number(splitDigital), method: 'qr_transferencia' } : null,
-          customerId: paymentMethod === 'cuenta_corriente' ? selectedCustomerId : null,
-          customerName: paymentMethod === 'cuenta_corriente' ? selectedCust?.name : null
+          cardAuthCode: (paymentMethod === 'debito' || paymentMethod === 'credito') ? cardAuthCode.trim() : null,
+          splitCash: paymentMethod === 'mixto' ? splitCashNum : null,
+          splitDebito: paymentMethod === 'mixto' ? splitDebitoNum : null,
+          splitCredito: paymentMethod === 'mixto' ? splitCreditoNum : null,
+          splitDigital: paymentMethod === 'mixto' ? splitDigitalNum : null,
+          splitDetails: paymentMethod === 'mixto'
+            ? {
+                cash: splitCashNum,
+                debito: splitDebitoNum,
+                credito: splitCreditoNum,
+                digital: splitDigitalNum
+              }
+            : null,
+          customerId: (paymentMethod === 'cuenta_corriente' && ccTargetType === 'customer') ? selectedCustomerId : null,
+          customerName: (paymentMethod === 'cuenta_corriente' && ccTargetType === 'customer') ? selectedCust?.name : null,
+          employeeId: (paymentMethod === 'cuenta_corriente' && ccTargetType === 'employee') ? selectedEmployeeId : null,
+          employeeName: (paymentMethod === 'cuenta_corriente' && ccTargetType === 'employee') ? selectedEmp?.name : null
         },
         closedBy: currentUser
       };
 
       const closed = await api.closeOrder(order.id, payload);
-      showToast(
-        paymentMethod === 'cuenta_corriente'
-          ? `Comanda #${order.orderNumber} cargada a cuenta corriente de ${selectedCust?.name || 'cliente'}.`
-          : `Comanda #${order.orderNumber} cobrada y cerrada.`
-      );
+      let successMsg = `Comanda #${order.orderNumber} cobrada y cerrada.`;
+      if (paymentMethod === 'cuenta_corriente') {
+        successMsg = ccTargetType === 'customer'
+          ? `Comanda #${order.orderNumber} cargada a cuenta corriente de cliente ${selectedCust?.name || ''}.`
+          : `Comanda #${order.orderNumber} cargada a consumos de ${selectedEmp?.name || 'empleado'}.`;
+      }
+      showToast(successMsg);
       await refreshData();
       onOrderClosed?.();
       setClosedOrderReceipt(closed);
@@ -151,7 +179,9 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
   const paymentOptions = [
     { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
-    { id: 'qr_transferencia', label: 'QR / Transferencia', icon: 'fa-qrcode' },
+    { id: 'debito', label: 'Débito', icon: 'fa-credit-card' },
+    { id: 'credito', label: 'Crédito', icon: 'fa-credit-card' },
+    { id: 'qr_transferencia', label: 'QR / Transf.', icon: 'fa-qrcode' },
     { id: 'cuenta_corriente', label: 'Cta. Cte.', icon: 'fa-book-bookmark' },
     { id: 'mixto', label: 'Mixto', icon: 'fa-scale-balanced' }
   ];
@@ -355,17 +385,46 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
               </div>
             )}
 
-            {paymentMethod === 'mercadopago' && (
+            {(paymentMethod === 'debito' || paymentMethod === 'credito') && (
+              <div className="pos-subpanel p-3.5 space-y-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex items-center justify-center text-[var(--accent-brand)] text-base shrink-0">
+                    <i className="fa-solid fa-credit-card" aria-hidden="true"></i>
+                  </div>
+                  <div className="space-y-0.5">
+                    <div className="font-bold text-sm text-[var(--text-primary)]">
+                      Terminal de cobro · Tarjeta de {paymentMethod === 'debito' ? 'Débito' : 'Crédito'}
+                    </div>
+                    <p className="text-xs text-[var(--text-secondary)]">
+                      Total a cobrar en terminal: <strong className="font-mono text-[var(--text-primary)]">${totalToPay.toLocaleString('es-AR')}</strong>
+                    </p>
+                  </div>
+                </div>
+                <div>
+                  <label htmlFor="card-auth-code" className="pos-label">Número de cupón o lote posnet (opcional):</label>
+                  <input
+                    id="card-auth-code"
+                    type="text"
+                    placeholder="Ej. Cupón #4829"
+                    value={cardAuthCode}
+                    onChange={(e) => setCardAuthCode(e.target.value)}
+                    className="pos-input font-mono text-sm"
+                  />
+                </div>
+              </div>
+            )}
+
+            {paymentMethod === 'qr_transferencia' && (
               <div className="pos-subpanel p-4 flex items-center gap-4">
-                <div className="w-16 h-16 bg-white p-2 rounded border border-[#cfc9be] flex items-center justify-center shrink-0">
-                  <i className="fa-solid fa-qrcode text-3xl text-[#18191b]" aria-hidden="true"></i>
+                <div className="w-14 h-14 bg-white p-2 rounded border border-[var(--border-subtle)] flex items-center justify-center shrink-0">
+                  <i className="fa-solid fa-qrcode text-2xl text-[#18191b]" aria-hidden="true"></i>
                 </div>
                 <div className="space-y-0.5">
-                  <div className="font-bold text-sm text-[var(--text-primary)]">QR interoperable listo</div>
+                  <div className="font-bold text-sm text-[var(--text-primary)]">QR Interoperable y Transferencia</div>
                   <p className="text-xs text-[var(--text-secondary)]">
                     Importe a cobrar: <strong className="font-mono text-[var(--text-primary)]">${totalToPay.toLocaleString('es-AR')}</strong>
                   </p>
-                  <p className="text-xs text-[var(--text-muted)]">Compatible con cualquier billetera o banco.</p>
+                  <p className="text-xs text-[var(--text-muted)]">Alias y QR disponibles para transferencias inmediatas.</p>
                 </div>
               </div>
             )}
@@ -374,7 +433,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
               <div className="pos-subpanel p-3.5 space-y-3">
                 <div className="flex items-center justify-between gap-2">
                   <p className="text-xs font-semibold text-[var(--text-secondary)]">
-                    Dividí el cobro entre efectivo y medio digital:
+                    Desglosá los importes cobrados por medio:
                   </p>
                   <span className={`text-xs font-mono font-bold px-2 py-0.5 rounded border ${
                     splitSum === totalToPay
@@ -389,7 +448,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                   </span>
                 </div>
 
-                <div className="grid grid-cols-2 gap-3">
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-2.5">
                   <div>
                     <label htmlFor="split-cash-input" className="pos-label">Efectivo ($):</label>
                     <input
@@ -399,18 +458,38 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                       max={totalToPay}
                       placeholder="0"
                       value={splitCash}
-                      onChange={(e) => {
-                        const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
-                        setSplitCash(val);
-                        if (val !== '') {
-                          setSplitDigital(String(Math.max(0, totalToPay - Number(val))));
-                        }
-                      }}
-                      className="pos-input font-mono font-bold"
+                      onChange={(e) => setSplitCash(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                      className="pos-input font-mono font-bold text-xs"
                     />
                   </div>
                   <div>
-                    <label htmlFor="split-digital-input" className="pos-label">QR / Transferencia ($):</label>
+                    <label htmlFor="split-debito-input" className="pos-label">Débito ($):</label>
+                    <input
+                      id="split-debito-input"
+                      type="number"
+                      min="0"
+                      max={totalToPay}
+                      placeholder="0"
+                      value={splitDebito}
+                      onChange={(e) => setSplitDebito(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                      className="pos-input font-mono font-bold text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="split-credito-input" className="pos-label">Crédito ($):</label>
+                    <input
+                      id="split-credito-input"
+                      type="number"
+                      min="0"
+                      max={totalToPay}
+                      placeholder="0"
+                      value={splitCredito}
+                      onChange={(e) => setSplitCredito(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                      className="pos-input font-mono font-bold text-xs"
+                    />
+                  </div>
+                  <div>
+                    <label htmlFor="split-digital-input" className="pos-label">QR / Transf. ($):</label>
                     <input
                       id="split-digital-input"
                       type="number"
@@ -418,48 +497,60 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                       max={totalToPay}
                       placeholder="0"
                       value={splitDigital}
-                      onChange={(e) => {
-                        const val = e.target.value === '' ? '' : Math.max(0, Number(e.target.value));
-                        setSplitDigital(val);
-                      }}
-                      className="pos-input font-mono font-bold"
+                      onChange={(e) => setSplitDigital(e.target.value === '' ? '' : Math.max(0, Number(e.target.value)))}
+                      className="pos-input font-mono font-bold text-xs"
                     />
                   </div>
                 </div>
 
                 {/* Quick Split Buttons */}
                 <div className="flex items-center gap-1.5 flex-wrap pt-2 border-t border-[var(--border-subtle)]">
-                  <span className="text-[11px] text-[var(--text-muted)] mr-1">División rápida:</span>
+                  <span className="text-[11px] text-[var(--text-muted)] mr-1">Rápido:</span>
                   <button
                     type="button"
                     onClick={() => {
                       const half = Math.round(totalToPay / 2);
                       setSplitCash(String(half));
-                      setSplitDigital(String(totalToPay - half));
-                    }}
-                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
-                  >
-                    50% / 50%
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      setSplitCash(String(totalToPay));
+                      setSplitDebito(String(totalToPay - half));
+                      setSplitCredito('0');
                       setSplitDigital('0');
                     }}
-                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
+                    className="pos-btn-secondary text-[11px] font-mono px-2 py-0.5"
                   >
-                    Todo efectivo
+                    50% Efvo / 50% Déb
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setSplitCash('0');
-                      setSplitDigital(String(totalToPay));
+                      const half = Math.round(totalToPay / 2);
+                      setSplitCash(String(half));
+                      setSplitDebito('0');
+                      setSplitCredito('0');
+                      setSplitDigital(String(totalToPay - half));
                     }}
-                    className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
+                    className="pos-btn-secondary text-[11px] font-mono px-2 py-0.5"
                   >
-                    Todo QR / Transf.
+                    50% Efvo / 50% QR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const covered = splitCashNum + splitDebitoNum + splitCreditoNum;
+                      setSplitDigital(String(Math.max(0, totalToPay - covered)));
+                    }}
+                    className="pos-btn-secondary text-[11px] font-mono px-2 py-0.5"
+                  >
+                    Resto a QR
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      const covered = splitCashNum + splitCreditoNum + splitDigitalNum;
+                      setSplitDebito(String(Math.max(0, totalToPay - covered)));
+                    }}
+                    className="pos-btn-secondary text-[11px] font-mono px-2 py-0.5"
+                  >
+                    Resto a Débito
                   </button>
                 </div>
               </div>
@@ -467,93 +558,147 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
             {paymentMethod === 'cuenta_corriente' && (
               <div className="pos-subpanel p-3.5 space-y-3">
-                <div className="flex items-center justify-between">
-                  <span className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
-                    <i className="fa-solid fa-book-bookmark text-[var(--accent-brand)]" aria-hidden="true"></i>
-                    <span>Cargar a cuenta corriente de cliente:</span>
-                  </span>
-                  <button
-                    type="button"
-                    onClick={() => setIsQuickCustomerOpen(!isQuickCustomerOpen)}
-                    className="pos-btn-secondary text-xs px-2.5"
-                  >
-                    <i className={`fa-solid ${isQuickCustomerOpen ? 'fa-xmark' : 'fa-plus'} text-xs`} aria-hidden="true"></i>
-                    <span>{isQuickCustomerOpen ? 'Cancelar' : 'Nuevo cliente'}</span>
-                  </button>
+                {/* Switch Cliente vs Personal */}
+                <div className="flex items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5">
+                  <div className="flex items-center gap-1.5">
+                    <button
+                      type="button"
+                      onClick={() => setCcTargetType('customer')}
+                      className={`text-xs px-3 py-1.5 rounded font-semibold transition-colors ${
+                        ccTargetType === 'customer'
+                          ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <i className="fa-solid fa-user-check text-xs mr-1" aria-hidden="true"></i>
+                      <span>Cliente Habitual</span>
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setCcTargetType('employee')}
+                      className={`text-xs px-3 py-1.5 rounded font-semibold transition-colors ${
+                        ccTargetType === 'employee'
+                          ? 'bg-[var(--btn-primary-bg)] text-[var(--btn-primary-fg)] font-bold'
+                          : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] hover:text-[var(--text-primary)]'
+                      }`}
+                    >
+                      <i className="fa-solid fa-user-tie text-xs mr-1" aria-hidden="true"></i>
+                      <span>Personal / Empleado</span>
+                    </button>
+                  </div>
+
+                  {ccTargetType === 'customer' && (
+                    <button
+                      type="button"
+                      onClick={() => setIsQuickCustomerOpen(!isQuickCustomerOpen)}
+                      className="pos-btn-secondary text-xs px-2.5"
+                    >
+                      <i className={`fa-solid ${isQuickCustomerOpen ? 'fa-xmark' : 'fa-plus'} text-xs`} aria-hidden="true"></i>
+                      <span>{isQuickCustomerOpen ? 'Cancelar' : 'Nuevo cliente'}</span>
+                    </button>
+                  )}
                 </div>
 
-                {isQuickCustomerOpen ? (
-                  <form onSubmit={handleCreateQuickCustomer} className="p-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded space-y-2.5">
-                    <div className="text-xs font-bold text-[var(--text-primary)]">
-                      Alta rápida de cliente para cuenta corriente
+                {ccTargetType === 'customer' ? (
+                  isQuickCustomerOpen ? (
+                    <form onSubmit={handleCreateQuickCustomer} className="p-3 bg-[var(--bg-elevated)] border border-[var(--border-subtle)] rounded space-y-2.5">
+                      <div className="text-xs font-bold text-[var(--text-primary)]">
+                        Alta rápida de cliente para cuenta corriente
+                      </div>
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                        <div>
+                          <label className="pos-label">Nombre / Razón Social *</label>
+                          <input
+                            type="text"
+                            required
+                            placeholder="Ej. Estudio Jurídico..."
+                            value={quickCustName}
+                            onChange={(e) => setQuickCustName(e.target.value)}
+                            className="pos-input text-xs"
+                          />
+                        </div>
+                        <div>
+                          <label className="pos-label">Teléfono (WhatsApp)</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. 351 512-3456"
+                            value={quickCustPhone}
+                            onChange={(e) => setQuickCustPhone(e.target.value)}
+                            className="pos-input text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="pos-label">DNI o CUIT</label>
+                          <input
+                            type="text"
+                            placeholder="Ej. 20-33445566-7"
+                            value={quickCustDni}
+                            onChange={(e) => setQuickCustDni(e.target.value)}
+                            className="pos-input text-xs font-mono"
+                          />
+                        </div>
+                        <div>
+                          <label className="pos-label">Límite de crédito ($)</label>
+                          <input
+                            type="number"
+                            placeholder="100000"
+                            value={quickCustLimit}
+                            onChange={(e) => setQuickCustLimit(e.target.value)}
+                            className="pos-input text-xs font-mono"
+                          />
+                        </div>
+                      </div>
+                      <button type="submit" className="pos-btn-primary text-xs w-full">
+                        Guardar y seleccionar cliente
+                      </button>
+                    </form>
+                  ) : (
+                    <div>
+                      <label htmlFor="customer-select" className="pos-label">
+                        Seleccionar cliente registrado:
+                      </label>
+                      <select
+                        id="customer-select"
+                        value={selectedCustomerId}
+                        onChange={(e) => setSelectedCustomerId(e.target.value)}
+                        className="pos-input text-xs"
+                      >
+                        <option value="">-- Seleccioná un cliente con cuenta corriente --</option>
+                        {(customers || [])
+                          .filter(c => c.status !== 'inactivo')
+                          .map(c => (
+                            <option key={c.id} value={c.id}>
+                              {c.name} {c.phone ? `(${c.phone})` : ''} · Saldo: ${Number(c.currentBalance || 0).toLocaleString('es-AR')}
+                            </option>
+                          ))}
+                      </select>
                     </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <div>
-                        <label className="pos-label">Nombre / Razón Social *</label>
-                        <input
-                          type="text"
-                          required
-                          placeholder="Ej. Estudio Jurídico..."
-                          value={quickCustName}
-                          onChange={(e) => setQuickCustName(e.target.value)}
-                          className="pos-input text-xs"
-                        />
-                      </div>
-                      <div>
-                        <label className="pos-label">Teléfono (WhatsApp)</label>
-                        <input
-                          type="text"
-                          placeholder="Ej. 351 512-3456"
-                          value={quickCustPhone}
-                          onChange={(e) => setQuickCustPhone(e.target.value)}
-                          className="pos-input text-xs font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="pos-label">DNI o CUIT</label>
-                        <input
-                          type="text"
-                          placeholder="Ej. 20-33445566-7"
-                          value={quickCustDni}
-                          onChange={(e) => setQuickCustDni(e.target.value)}
-                          className="pos-input text-xs font-mono"
-                        />
-                      </div>
-                      <div>
-                        <label className="pos-label">Límite de crédito ($)</label>
-                        <input
-                          type="number"
-                          placeholder="100000"
-                          value={quickCustLimit}
-                          onChange={(e) => setQuickCustLimit(e.target.value)}
-                          className="pos-input text-xs font-mono"
-                        />
-                      </div>
-                    </div>
-                    <button type="submit" className="pos-btn-primary text-xs w-full">
-                      Guardar y seleccionar cliente
-                    </button>
-                  </form>
+                  )
                 ) : (
                   <div>
-                    <label htmlFor="customer-select" className="pos-label">
-                      Seleccionar cliente registrado:
+                    <label htmlFor="employee-select" className="pos-label">
+                      Seleccionar empleado para imputar consumo:
                     </label>
                     <select
-                      id="customer-select"
-                      value={selectedCustomerId}
-                      onChange={(e) => setSelectedCustomerId(e.target.value)}
+                      id="employee-select"
+                      value={selectedEmployeeId}
+                      onChange={(e) => setSelectedEmployeeId(e.target.value)}
                       className="pos-input text-xs"
                     >
-                      <option value="">-- Seleccioná un cliente con cuenta corriente --</option>
-                      {(customers || [])
-                        .filter(c => c.status !== 'inactivo')
-                        .map(c => (
-                          <option key={c.id} value={c.id}>
-                            {c.name} {c.phone ? `(${c.phone})` : ''} · Saldo actual: ${Number(c.currentBalance || 0).toLocaleString('es-AR')}
+                      <option value="">-- Seleccioná el personal correspondiente --</option>
+                      {(users || []).map(u => {
+                        const uMovs = (staffCcMovements || []).filter(m => m.userId === u.id);
+                        const netBal = uMovs.reduce((acc, m) => acc + (m.impact * Number(m.amount || 0)), 0);
+                        return (
+                          <option key={u.id} value={u.id}>
+                            {u.name} ({u.role}) · Saldo CC: ${netBal.toLocaleString('es-AR')}
                           </option>
-                        ))}
+                        );
+                      })}
                     </select>
+                    <p className="text-[11px] text-[var(--text-muted)] mt-1.5">
+                      Este importe (${totalToPay.toLocaleString('es-AR')}) se descontará automáticamente de la liquidación de sueldo del empleado.
+                    </p>
                   </div>
                 )}
 
