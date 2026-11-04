@@ -343,9 +343,7 @@ export const api = {
       return await rawFetchJson('/tenants');
     } catch {
       return [
-        { id: 'prueba1', slug: 'prueba1', name: 'Local 1', domain: 'prueba1.gp.com', email: 'admin@prueba1.gp.com' },
-        { id: 'prueba2', slug: 'prueba2', name: 'Local 2', domain: 'prueba2.gp.com', email: 'admin@prueba2.gp.com' },
-        { id: 'prueba3', slug: 'prueba3', name: 'Local 3', domain: 'prueba3.gp.com', email: 'admin@prueba3.gp.com' }
+        { id: 'prueba1', slug: 'prueba1', name: 'Local 1', domain: 'prueba1.gp.com', email: 'admin@prueba1.gp.com' }
       ];
     }
   },
@@ -746,6 +744,10 @@ export const api = {
     return newIng;
   },
 
+  addIngredient: async (ingData) => {
+    return await api.createIngredient(ingData);
+  },
+
   updateIngredient: async (id, updates) => {
     const db = await ensureDbInitialized();
     rawFetchJson(`/ingredients/${id}`, { method: 'PUT', body: JSON.stringify(updates) }).catch(() => {});
@@ -1061,6 +1063,26 @@ export const api = {
     if (updates.kitchenStatus !== undefined) order.kitchenStatus = updates.kitchenStatus;
     if (updates.status !== undefined) order.status = updates.status;
     if (updates.driverName !== undefined) order.driverName = updates.driverName;
+
+    saveLocalDb(db);
+    return { ...order };
+  },
+
+  updateOrderDiscount: async (orderId, discountAmount) => {
+    const db = await ensureDbInitialized();
+    const discount = Math.max(0, Number(discountAmount) || 0);
+    rawFetchJson(`/orders/${orderId}/discount`, {
+      method: 'PUT',
+      body: JSON.stringify({ discount })
+    }).catch(() => {});
+
+    const order = (db.orders || []).find(o => o.id === orderId);
+    if (!order) throw new Error('Comanda no encontrada');
+
+    order.discount = discount;
+    const subtotal = Number(order.subtotal) || 0;
+    const deliveryFee = Number(order.deliveryFee) || 0;
+    order.total = Math.max(0, subtotal + deliveryFee - discount);
 
     saveLocalDb(db);
     return { ...order };
@@ -1496,14 +1518,24 @@ export const api = {
 
     const salesByMethod = {
       efectivo: 0,
-      debito: 0,
-      credito: 0,
-      mercadopago: 0,
-      transferencia: 0
+      qr_transferencia: 0,
+      cuenta_corriente: 0
     };
     shiftOrders.forEach(o => {
-      const pm = o.paymentMethod || 'efectivo';
-      salesByMethod[pm] = (salesByMethod[pm] || 0) + (o.total || 0);
+      const pm = (o.paymentMethod || 'efectivo').toLowerCase();
+      const tot = Number(o.total) || 0;
+      if (pm === 'efectivo') {
+        salesByMethod.efectivo += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
+        salesByMethod.efectivo += c;
+        salesByMethod.qr_transferencia += d;
+      } else if (pm === 'cuenta_corriente') {
+        salesByMethod.cuenta_corriente += tot;
+      } else {
+        salesByMethod.qr_transferencia += tot;
+      }
     });
 
     const cashSales = salesByMethod.efectivo || 0;

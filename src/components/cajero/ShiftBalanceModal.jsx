@@ -9,10 +9,8 @@ export default function ShiftBalanceModal() {
   const s = lastClosedShiftReport;
   const salesByMethod = s.salesByMethod || {
     efectivo: s.cashSales || 0,
-    debito: 0,
-    credito: 0,
-    mercadopago: 0,
-    transferencia: 0
+    qr_transferencia: 0,
+    cuenta_corriente: 0
   };
   const totalSales =
     s.totalSales !== undefined
@@ -198,13 +196,11 @@ export default function ShiftBalanceModal() {
               </span>
             </div>
 
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-2 text-xs">
               {[
-                { key: 'efectivo', label: 'Efectivo' },
-                { key: 'debito', label: 'Débito' },
-                { key: 'credito', label: 'Crédito' },
-                { key: 'mercadopago', label: 'QR / MP' },
-                { key: 'transferencia', label: 'Transferencia' }
+                { key: 'efectivo', label: 'Efectivo en caja' },
+                { key: 'qr_transferencia', label: 'QR / Transferencia' },
+                { key: 'cuenta_corriente', label: 'Cuenta Corriente' }
               ].map(m => (
                 <div key={m.key} className="pos-subpanel px-3 py-2 flex items-center justify-between">
                   <span className="text-[var(--text-secondary)]">{m.label}</span>

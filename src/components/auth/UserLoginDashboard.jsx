@@ -292,13 +292,11 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
             {/* Quick Test Chips */}
             <div className="space-y-1.5 bg-[var(--bg-subtle)] p-3 rounded border border-[var(--border-subtle)]">
               <span className="text-[11px] font-semibold text-[var(--text-secondary)] block">
-                Accesos preconfigurados para prueba inmediata:
+                Acceso preconfigurado para prueba inmediata:
               </span>
               <div className="flex flex-wrap gap-1.5">
                 {[
-                  { label: 'Local 1 (admin)', email: 'admin@prueba1.gp.com', pass: 'admin123' },
-                  { label: 'Local 2 (admin)', email: 'admin@prueba2.gp.com', pass: 'admin123' },
-                  { label: 'Local 3 (admin)', email: 'admin@prueba3.gp.com', pass: 'admin123' }
+                  { label: 'Local 1 (admin)', email: 'admin@prueba1.gp.com', pass: 'admin123' }
                 ].map(demo => (
                   <button
                     key={demo.email}
@@ -368,9 +366,9 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
         {/* 2. SELECTOR DE LOCALES DEMO & PIN TÁCTIL */}
         {loginMode === 'selector' && (
           <div className="space-y-5">
-            {/* 3 Demo Venues Cards */}
-            <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-              {[
+            {/* Venue Cards */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+              {(tenantsList && tenantsList.length > 0 ? tenantsList : [
                 {
                   id: 'prueba1',
                   name: 'Local 1',
@@ -378,25 +376,14 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                   specialty: 'Bar, tapas y salón principal',
                   adminEmail: 'admin@prueba1.gp.com',
                   icon: 'fa-store'
-                },
-                {
-                  id: 'prueba2',
-                  name: 'Local 2',
-                  zone: 'Sucursal 2',
-                  specialty: 'Restó y cafetería',
-                  adminEmail: 'admin@prueba2.gp.com',
-                  icon: 'fa-utensils'
-                },
-                {
-                  id: 'prueba3',
-                  name: 'Local 3',
-                  zone: 'Sucursal 3',
-                  specialty: 'Fast casual y delivery',
-                  adminEmail: 'admin@prueba3.gp.com',
-                  icon: 'fa-mug-hot'
                 }
-              ].map(venue => {
+              ]).map(venue => {
                 const isActive = activeTenantId === venue.id;
+                const venueIcon = venue.icon || 'fa-store';
+                const adminEmail = venue.adminEmail || `admin@${venue.slug || venue.id}.gp.com`;
+                const subtitle = venue.specialty
+                  ? `${venue.zone ? venue.zone + ' · ' : ''}${venue.specialty}`
+                  : (venue.address || 'Córdoba Capital');
                 return (
                   <button
                     key={venue.id}
@@ -416,17 +403,17 @@ export default function UserLoginDashboard({ isMobileComandera = false }) {
                     <div>
                       <div className="flex items-center justify-between pb-2">
                         <span className={`w-8 h-8 rounded flex items-center justify-center text-xs ${isActive ? 'bg-[var(--accent-brand)] text-white' : 'bg-[var(--bg-subtle)] text-[var(--text-secondary)]'}`}>
-                          <i className={`fa-solid ${venue.icon}`} aria-hidden="true"></i>
+                          <i className={`fa-solid ${venueIcon}`} aria-hidden="true"></i>
                         </span>
                         {isActive && (
                           <span className="pos-badge pos-badge-brand text-[10px]">Activo</span>
                         )}
                       </div>
                       <h3 className="font-display font-bold text-sm text-[var(--text-primary)]">{venue.name}</h3>
-                      <p className="text-xs text-[var(--text-secondary)]">{venue.zone} · {venue.specialty}</p>
+                      <p className="text-xs text-[var(--text-secondary)]">{subtitle}</p>
                     </div>
                     <div className="pt-2 mt-2 border-t border-[var(--border-subtle)] text-[11px] font-mono text-[var(--text-muted)] truncate">
-                      {venue.adminEmail}
+                      {adminEmail}
                     </div>
                   </button>
                 );

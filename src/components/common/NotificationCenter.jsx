@@ -54,7 +54,8 @@ export default function NotificationCenter() {
     setIsNotificationsOpen,
     orders,
     refreshData,
-    showToast
+    showToast,
+    currentUser
   } = useApp();
 
   const [selectedOrderForReceipt, setSelectedOrderForReceipt] = useState(null);
@@ -66,6 +67,7 @@ export default function NotificationCenter() {
   const [exitingIds, setExitingIds] = useState(() => new Set());
   const seenIdsRef = useRef(new Set());
   const isInitialMount = useRef(true);
+  const initializedPopupsRef = useRef(false);
 
   useEffect(() => {
     if (!isNotificationsOpen) return;
@@ -78,13 +80,23 @@ export default function NotificationCenter() {
     return () => window.removeEventListener('keydown', onKeyDown);
   }, [isNotificationsOpen, setIsNotificationsOpen]);
 
-  // Sonido exclusivamente al llegar una nueva notificacion no leida
+  // Al montar o refrescar la pantalla, evitar que las notificaciones historicas vuelvan a saltar como popups
   useEffect(() => {
+    if (!initializedPopupsRef.current && Array.isArray(notifications) && notifications.length > 0) {
+      const existingIds = new Set(notifications.map(n => n.id));
+      setDismissedFromScreen(existingIds);
+      notifications.forEach(n => seenIdsRef.current.add(n.id));
+      initializedPopupsRef.current = true;
+      isInitialMount.current = false;
+      return;
+    }
+
     if (isInitialMount.current) {
       (notifications || []).forEach(n => seenIdsRef.current.add(n.id));
       isInitialMount.current = false;
       return;
     }
+
     const unread = (notifications || []).filter(n => !n.read);
     const brandNew = unread.filter(n => !seenIdsRef.current.has(n.id));
 
@@ -116,10 +128,12 @@ export default function NotificationCenter() {
     });
   }, [notifications, dismissedFromScreen, exitingIds]);
 
-  // Active floating popups: unread and not dismissed from screen (max 3 at a time)
-  const floatingPopups = (notifications || [])
-    .filter(n => !n.read && !dismissedFromScreen.has(n.id))
-    .slice(0, 3);
+  // Active floating popups: solo si el usuario inicio sesion (nunca en pantalla de login) y no vistas previamente
+  const floatingPopups = !currentUser
+    ? []
+    : (notifications || [])
+        .filter(n => !n.read && !dismissedFromScreen.has(n.id))
+        .slice(0, 3);
 
   const filteredList = (notifications || []).filter(n => {
     if (filterType === 'todas') return true;

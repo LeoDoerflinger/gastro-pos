@@ -20,6 +20,8 @@ export default function AdminDashboard() {
 
   // Modal para ver/reimprimir ticket
   const [selectedTicketOrder, setSelectedTicketOrder] = useState(null);
+  // Expandir detalles de mesa y consumos en historial
+  const [expandedOrderId, setExpandedOrderId] = useState(null);
 
   if (!analytics) return null;
 
@@ -44,17 +46,16 @@ export default function AdminDashboard() {
     switch (method?.toLowerCase()) {
       case 'efectivo':
         return 'text-emerald-400 bg-emerald-500/10 border-emerald-500/25';
+      case 'qr_transferencia':
       case 'mercadopago':
-        return 'text-sky-400 bg-sky-500/10 border-sky-500/25';
+      case 'transferencia':
       case 'debito':
       case 'credito':
-        return 'text-amber-400 bg-amber-500/10 border-amber-500/25';
-      case 'transferencia':
-        return 'text-purple-400 bg-purple-500/10 border-purple-500/25';
+        return 'text-sky-400 bg-sky-500/10 border-sky-500/25';
       case 'cuenta_corriente':
         return 'text-teal-400 bg-teal-500/10 border-teal-500/25';
       case 'mixto':
-        return 'text-orange-400 bg-orange-500/10 border-orange-500/25';
+        return 'text-purple-400 bg-purple-500/10 border-purple-500/25';
       default:
         return 'text-gray-400 bg-gray-500/10 border-gray-500/25';
     }
@@ -62,10 +63,7 @@ export default function AdminDashboard() {
 
   const paymentOptions = [
     { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
-    { id: 'debito', label: 'Débito', icon: 'fa-credit-card' },
-    { id: 'credito', label: 'Crédito', icon: 'fa-credit-card' },
-    { id: 'mercadopago', label: 'QR / MP', icon: 'fa-qrcode' },
-    { id: 'transferencia', label: 'Transfer.', icon: 'fa-building-columns' },
+    { id: 'qr_transferencia', label: 'QR / Transfer.', icon: 'fa-qrcode' },
     { id: 'cuenta_corriente', label: 'Cta. Cte.', icon: 'fa-book-bookmark' },
     { id: 'mixto', label: 'Mixto', icon: 'fa-scale-balanced' }
   ];
@@ -323,65 +321,142 @@ export default function AdminDashboard() {
                 filteredClosedOrders.map(ord => {
                   const hasCorrections = Array.isArray(ord.paymentCorrections) && ord.paymentCorrections.length > 0;
                   return (
-                    <tr key={ord.id} className="hover:bg-[var(--bg-hover)] transition-colors">
-                      <td className="py-3 px-4 font-bold text-[var(--text-primary)] font-mono">
-                        <div>#{ord.orderNumber} {ord.tableNumber ? `(Mesa ${ord.tableNumber})` : ''}</div>
-                        {hasCorrections && (
-                          <span className="text-[10px] font-sans font-bold text-amber-500 inline-block bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded mt-0.5">
-                            Corregido ({ord.paymentCorrections.length})
+                    <React.Fragment key={ord.id}>
+                      <tr className="hover:bg-[var(--bg-hover)] transition-colors">
+                        <td className="py-3 px-4 font-bold text-[var(--text-primary)] font-mono">
+                          <div>#{ord.orderNumber} {ord.tableNumber ? `(Mesa ${ord.tableNumber})` : ''}</div>
+                          {hasCorrections && (
+                            <span className="text-[10px] font-sans font-bold text-amber-500 inline-block bg-amber-500/10 border border-amber-500/30 px-1.5 py-0.2 rounded mt-0.5">
+                              Corregido ({ord.paymentCorrections.length})
+                            </span>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 capitalize text-xs font-semibold text-[var(--text-secondary)]">
+                          {ord.channel?.replace('_', ' ')}
+                        </td>
+                        <td className="py-3 px-4 text-[var(--text-primary)]">
+                          <div>{formatUserRoleDisplay(ord.waiterName || 'Personal', 'mozo', users)}</div>
+                          <span className="text-[11px] text-[var(--text-muted)]">Caja: {ord.closedBy || 'Cajero'}</span>
+                        </td>
+                        <td className="py-3 px-4">
+                          <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${getPaymentBadgeClass(ord.paymentMethod)}`}>
+                            {ord.paymentMethod === 'qr_transferencia' ? 'QR / Transfer.' : (ord.paymentMethod || 'Efectivo')}
                           </span>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 capitalize text-xs font-semibold text-[var(--text-secondary)]">
-                        {ord.channel?.replace('_', ' ')}
-                      </td>
-                      <td className="py-3 px-4 text-[var(--text-primary)]">
-                        <div>{formatUserRoleDisplay(ord.waiterName || 'Personal', 'mozo', users)}</div>
-                        <span className="text-[11px] text-[var(--text-muted)]">Caja: {ord.closedBy || 'Cajero'}</span>
-                      </td>
-                      <td className="py-3 px-4">
-                        <span className={`px-2 py-0.5 rounded text-[11px] font-mono font-semibold border ${getPaymentBadgeClass(ord.paymentMethod)}`}>
-                          {ord.paymentMethod || 'Efectivo'}
-                        </span>
-                        {ord.paymentMethod === 'cuenta_corriente' && ord.customerName && (
-                          <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{ord.customerName}</div>
-                        )}
-                      </td>
-                      <td className="py-3 px-4 text-[var(--text-muted)] text-xs font-mono">
-                        {new Date(ord.closedAt || ord.createdAt).toLocaleString([], {
-                          hour: '2-digit',
-                          minute: '2-digit',
-                          day: '2-digit',
-                          month: '2-digit'
-                        })}
-                      </td>
-                      <td className="py-3 px-4 text-right font-mono font-extrabold text-emerald-500">
-                        ${ord.total?.toLocaleString('es-AR')}
-                      </td>
-                      <td className="py-3 px-4 text-center">
-                        <div className="flex items-center justify-center gap-1.5">
-                          <button
-                            type="button"
-                            onClick={() => handleOpenCorrection(ord)}
-                            className="pos-btn-secondary text-xs px-2.5 py-1 text-[var(--accent-brand)]"
-                            title="Rectificar medio de pago"
-                          >
-                            <i className="fa-solid fa-pen-to-square text-xs mr-1" aria-hidden="true"></i>
-                            <span>Corregir</span>
-                          </button>
+                          {ord.paymentMethod === 'cuenta_corriente' && ord.customerName && (
+                            <div className="text-[11px] text-[var(--text-muted)] mt-0.5">{ord.customerName}</div>
+                          )}
+                        </td>
+                        <td className="py-3 px-4 text-[var(--text-muted)] text-xs font-mono">
+                          {new Date(ord.closedAt || ord.createdAt).toLocaleString([], {
+                            hour: '2-digit',
+                            minute: '2-digit',
+                            day: '2-digit',
+                            month: '2-digit'
+                          })}
+                        </td>
+                        <td className="py-3 px-4 text-right font-mono font-extrabold text-emerald-500">
+                          ${ord.total?.toLocaleString('es-AR')}
+                        </td>
+                        <td className="py-3 px-4 text-center">
+                          <div className="flex items-center justify-center gap-1.5">
+                            <button
+                              type="button"
+                              onClick={() => setExpandedOrderId(expandedOrderId === ord.id ? null : ord.id)}
+                              className={`pos-btn-secondary text-xs px-2.5 py-1 ${expandedOrderId === ord.id ? 'bg-[var(--accent-brand)] text-white' : 'text-[var(--text-primary)]'}`}
+                              title="Ver consumos y detalles de la mesa"
+                            >
+                              <i className={`fa-solid ${expandedOrderId === ord.id ? 'fa-chevron-up' : 'fa-list-check'} text-xs mr-1`} aria-hidden="true"></i>
+                              <span>Mesa</span>
+                            </button>
 
-                          <button
-                            type="button"
-                            onClick={() => setSelectedTicketOrder(ord)}
-                            className="pos-btn-secondary text-xs px-2.5 py-1 text-[var(--text-secondary)]"
-                            title="Ver o imprimir comprobante"
-                          >
-                            <i className="fa-solid fa-receipt text-xs mr-1" aria-hidden="true"></i>
-                            <span>Ticket</span>
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                            <button
+                              type="button"
+                              onClick={() => handleOpenCorrection(ord)}
+                              className="pos-btn-secondary text-xs px-2.5 py-1 text-[var(--accent-brand)]"
+                              title="Rectificar medio de pago"
+                            >
+                              <i className="fa-solid fa-pen-to-square text-xs mr-1" aria-hidden="true"></i>
+                              <span>Corregir</span>
+                            </button>
+
+                            <button
+                              type="button"
+                              onClick={() => setSelectedTicketOrder(ord)}
+                              className="pos-btn-secondary text-xs px-2.5 py-1 text-[var(--text-secondary)]"
+                              title="Ver o imprimir comprobante"
+                            >
+                              <i className="fa-solid fa-receipt text-xs mr-1" aria-hidden="true"></i>
+                              <span>Ticket</span>
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+
+                      {expandedOrderId === ord.id && (
+                        <tr className="bg-[var(--bg-subtle)]">
+                          <td colSpan="7" className="p-3 sm:p-4 border-b border-[var(--border-subtle)]">
+                            <div className="pos-subpanel p-3.5 space-y-3 bg-[var(--bg-surface)] rounded-md border border-[var(--border-subtle)]">
+                              <div className="flex flex-wrap items-center justify-between gap-2 border-b border-[var(--border-subtle)] pb-2.5">
+                                <div className="flex items-center gap-2.5">
+                                  <span className="w-8 h-8 rounded bg-[var(--accent-brand-bg)] border border-[var(--accent-brand-border)] text-[var(--accent-brand)] flex items-center justify-center text-xs font-bold font-mono">
+                                    {ord.tableNumber ? `M${ord.tableNumber}` : 'DIR'}
+                                  </span>
+                                  <div>
+                                    <h4 className="font-display font-bold text-sm text-[var(--text-primary)]">
+                                      {ord.tableNumber ? `Detalle consumido en Mesa #${ord.tableNumber}` : `Detalle de comanda #${ord.orderNumber}`}
+                                    </h4>
+                                    <span className="text-xs text-[var(--text-secondary)]">
+                                      {ord.diners ? `${ord.diners} comensales / cubiertos` : 'Consumo'} · Mozo: {formatUserRoleDisplay(ord.waiterName || 'Personal', 'mozo', users)}
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="text-right text-[11px] text-[var(--text-muted)] font-mono">
+                                  <div>Alta pedido: {new Date(ord.createdAt).toLocaleTimeString()}</div>
+                                  <div>Cobro: {new Date(ord.closedAt || ord.createdAt).toLocaleTimeString()}</div>
+                                </div>
+                              </div>
+
+                              <div className="space-y-1.5">
+                                <span className="text-xs font-semibold text-[var(--text-secondary)] block">
+                                  Platos y adiciones de la mesa ({ord.items?.length || 0}):
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 text-xs">
+                                  {(ord.items || []).map((it, idx) => (
+                                    <div key={idx} className="p-2.5 rounded bg-[var(--bg-elevated)] border border-[var(--border-subtle)] flex justify-between items-start gap-2">
+                                      <div>
+                                        <span className="font-bold font-mono text-[var(--text-primary)]">{it.quantity}x </span>
+                                        <span className="font-medium text-[var(--text-primary)]">{it.productName}</span>
+                                        {it.notes && <p className="text-[11px] text-[var(--text-secondary)] italic mt-0.5">{it.notes}</p>}
+                                      </div>
+                                      <span className="font-mono font-semibold text-[var(--text-primary)] shrink-0">
+                                        ${it.subtotal?.toLocaleString('es-AR')}
+                                      </span>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+
+                              <div className="flex flex-wrap items-center justify-between gap-3 pt-2.5 border-t border-[var(--border-subtle)] text-xs">
+                                <div className="flex items-center gap-4 text-[var(--text-secondary)] flex-wrap">
+                                  <span>Subtotal mesa: <strong className="font-mono text-[var(--text-primary)]">${(ord.subtotal || 0).toLocaleString('es-AR')}</strong></span>
+                                  {ord.discount > 0 && (
+                                    <span className="text-emerald-500 font-semibold">
+                                      Descuento: -${Number(ord.discount).toLocaleString('es-AR')}
+                                    </span>
+                                  )}
+                                  {ord.tip > 0 && (
+                                    <span>Propina: ${Number(ord.tip).toLocaleString('es-AR')}</span>
+                                  )}
+                                </div>
+                                <div className="text-sm font-bold text-[var(--text-primary)]">
+                                  Total abonado: <span className="font-mono font-extrabold text-emerald-500">${Number(ord.total).toLocaleString('es-AR')}</span>
+                                </div>
+                              </div>
+                            </div>
+                          </td>
+                        </tr>
+                      )}
+                    </React.Fragment>
                   );
                 })
               )}

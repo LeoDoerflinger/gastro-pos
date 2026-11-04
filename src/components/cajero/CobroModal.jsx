@@ -10,7 +10,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
   const [paymentMethod, setPaymentMethod] = useState('efectivo');
   const [cashTendered, setCashTendered] = useState('');
-  const [discountAmount, setDiscountAmount] = useState(0);
+  const [discountAmount, setDiscountAmount] = useState(order?.discount || 0);
   const [tipAmount, setTipAmount] = useState(order?.tip || 0);
   const [splitCash, setSplitCash] = useState('');
   const [splitDigital, setSplitDigital] = useState('');
@@ -22,6 +22,12 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
   const [quickCustLimit, setQuickCustLimit] = useState('100000');
   const [submitting, setSubmitting] = useState(false);
   const [closedOrderReceipt, setClosedOrderReceipt] = useState(null);
+
+  useEffect(() => {
+    if (order?.discount !== undefined) {
+      setDiscountAmount(order.discount || 0);
+    }
+  }, [order]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -119,7 +125,9 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
         paymentDetails: {
           cashTendered: paymentMethod === 'efectivo' ? tenderedNum : null,
           changeDue: paymentMethod === 'efectivo' ? changeDue : 0,
-          splitDetails: paymentMethod === 'mixto' ? { cash: Number(splitCash), digital: Number(splitDigital) } : null,
+          splitCash: paymentMethod === 'mixto' ? Number(splitCash) : null,
+          splitDigital: paymentMethod === 'mixto' ? Number(splitDigital) : null,
+          splitDetails: paymentMethod === 'mixto' ? { cash: Number(splitCash), digital: Number(splitDigital), method: 'qr_transferencia' } : null,
           customerId: paymentMethod === 'cuenta_corriente' ? selectedCustomerId : null,
           customerName: paymentMethod === 'cuenta_corriente' ? selectedCust?.name : null
         },
@@ -143,10 +151,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
 
   const paymentOptions = [
     { id: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
-    { id: 'debito', label: 'Débito', icon: 'fa-credit-card' },
-    { id: 'credito', label: 'Crédito', icon: 'fa-credit-card' },
-    { id: 'mercadopago', label: 'QR / MP', icon: 'fa-qrcode' },
-    { id: 'transferencia', label: 'Transfer.', icon: 'fa-building-columns' },
+    { id: 'qr_transferencia', label: 'QR / Transferencia', icon: 'fa-qrcode' },
     { id: 'cuenta_corriente', label: 'Cta. Cte.', icon: 'fa-book-bookmark' },
     { id: 'mixto', label: 'Mixto', icon: 'fa-scale-balanced' }
   ];
@@ -405,7 +410,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                     />
                   </div>
                   <div>
-                    <label htmlFor="split-digital-input" className="pos-label">Tarjeta / QR / Digital ($):</label>
+                    <label htmlFor="split-digital-input" className="pos-label">QR / Transferencia ($):</label>
                     <input
                       id="split-digital-input"
                       type="number"
@@ -454,7 +459,7 @@ export default function CobroModal({ isOpen, onClose, order, onOrderClosed }) {
                     }}
                     className="pos-btn-secondary text-xs font-mono px-2.5 py-1"
                   >
-                    Todo digital
+                    Todo QR / Transf.
                   </button>
                 </div>
               </div>

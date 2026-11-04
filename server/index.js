@@ -231,6 +231,13 @@ app.put('/api/orders/:id/status', (req, res) => {
   res.json(updated);
 });
 
+// Aplicar descuento a la comanda antes de imprimir cuenta
+app.put('/api/orders/:id/discount', (req, res) => {
+  const updated = store.updateOrderDiscount(req.params.id, req.body?.discount, req.tenantId);
+  if (!updated) return res.status(404).json({ error: 'Comanda no encontrada' });
+  res.json(updated);
+});
+
 // Cajero cobra y cierra comanda/mesa
 app.post('/api/orders/:id/close', (req, res) => {
   const { paymentMethod, paymentDetails, discount, tip, closedBy } = req.body || {};

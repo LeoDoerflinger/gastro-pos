@@ -1,11 +1,22 @@
-import React, { useRef, useEffect } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
 import { useApp } from '../../context/AppContext';
+import { api } from '../../api/client';
 import { getTableCode } from '../mozo/MozoSalonView';
 import { formatUserRoleDisplay } from '../../utils/userRoleHelper';
 
 export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta' }) {
-  const { tables, users, businessConfig, activeTenant } = useApp();
+  const { tables, users, businessConfig, activeTenant, refreshData } = useApp();
   const printRef = useRef(null);
+
+  const [discountValue, setDiscountValue] = useState(order?.discount || 0);
+  const [customDiscountInput, setCustomDiscountInput] = useState(order?.discount ? String(order.discount) : '');
+
+  useEffect(() => {
+    if (order?.discount !== undefined) {
+      setDiscountValue(order.discount || 0);
+      setCustomDiscountInput(order.discount > 0 ? String(order.discount) : '');
+    }
+  }, [order]);
 
   useEffect(() => {
     if (!isOpen) return;
@@ -22,11 +33,35 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
     window.print();
   };
 
+  const handleApplyDiscount = async (val) => {
+    const num = Math.max(0, Number(val) || 0);
+    setDiscountValue(num);
+    setCustomDiscountInput(num > 0 ? String(num) : '');
+    try {
+      await api.updateOrderDiscount(order.id, num);
+      order.discount = num;
+      order.total = Math.max(0, (order.subtotal || 0) + (order.deliveryFee || 0) - num);
+      await refreshData();
+    } catch (e) {}
+  };
+
+  const handleCustomDiscountChange = (strVal) => {
+    setCustomDiscountInput(strVal);
+    const num = Math.max(0, Number(strVal) || 0);
+    setDiscountValue(num);
+    api.updateOrderDiscount(order.id, num).then(async () => {
+      order.discount = num;
+      order.total = Math.max(0, (order.subtotal || 0) + (order.deliveryFee || 0) - num);
+      await refreshData();
+    }).catch(() => {});
+  };
+
   const table = tables.find(t => t.id === order.tableId);
   const tableCode = table ? getTableCode(table) : (order.tableNumber ? `M${order.tableNumber}` : null);
 
   const isPrecuenta = type === 'precuenta';
   const tip10 = Math.round((order.subtotal || 0) * 0.1);
+  const finalTotal = Math.max(0, (order.subtotal || 0) + (order.deliveryFee || 0) - discountValue + (isPrecuenta ? tip10 : 0));
 
   return (
     <div
@@ -53,6 +88,57 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
             <i className="fa-solid fa-xmark text-base" aria-hidden="true"></i>
           </button>
         </div>
+
+        {/* Discount Selector Bar (Pre-cuenta de control) */}
+        {isPrecuenta && (
+          <div className="p-3 bg-[var(--bg-elevated)] border-b border-[var(--border-subtle)] space-y-2 shrink-0">
+            <div className="flex items-center justify-between">
+              <span className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">
+                <i className="fa-solid fa-percent text-[var(--accent-brand)]" aria-hidden="true"></i>
+                Descuento antes de imprimir:
+              </span>
+              {discountValue > 0 && (
+                <span className="pos-badge pos-badge-open text-[11px] font-mono">
+                  -${discountValue.toLocaleString('es-AR')}
+                </span>
+              )}
+            </div>
+
+            <div className="flex items-center gap-1.5 flex-wrap">
+              {[
+                { label: '0%', val: 0 },
+                { label: '10%', val: Math.round((order.subtotal || 0) * 0.1) },
+                { label: '15%', val: Math.round((order.subtotal || 0) * 0.15) },
+                { label: '20%', val: Math.round((order.subtotal || 0) * 0.2) },
+                { label: '25%', val: Math.round((order.subtotal || 0) * 0.25) }
+              ].map(preset => (
+                <button
+                  key={preset.label}
+                  type="button"
+                  onClick={() => handleApplyDiscount(preset.val)}
+                  className={`text-xs px-2.5 py-1 rounded font-semibold transition-colors ${
+                    discountValue === preset.val
+                      ? 'bg-[var(--accent-brand)] text-white'
+                      : 'bg-[var(--bg-subtle)] hover:bg-[var(--bg-hover)] text-[var(--text-primary)] border border-[var(--border-subtle)]'
+                  }`}
+                >
+                  {preset.label}
+                </button>
+              ))}
+
+              <div className="flex items-center gap-1 ml-auto">
+                <span className="text-xs text-[var(--text-muted)]">$</span>
+                <input
+                  type="number"
+                  placeholder="Monto $"
+                  value={customDiscountInput}
+                  onChange={(e) => handleCustomDiscountChange(e.target.value)}
+                  className="w-20 text-xs py-1 px-1.5 rounded bg-[var(--bg-surface)] border border-[var(--border-subtle)] text-[var(--text-primary)] font-mono text-right"
+                />
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* Thermal Ticket Slip */}
         <div className="p-4 overflow-y-auto flex-1 bg-[var(--bg-subtle)] flex justify-center">
@@ -122,10 +208,10 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
                   <span>${order.deliveryFee.toLocaleString('es-AR')}</span>
                 </div>
               )}
-              {order.discount > 0 && (
-                <div className="flex justify-between text-[#185936] font-semibold">
-                  <span>Descuento:</span>
-                  <span>-${order.discount.toLocaleString('es-AR')}</span>
+              {discountValue > 0 && (
+                <div className="flex justify-between text-[#185936] font-bold">
+                  <span>Descuento aplicado:</span>
+                  <span>-${discountValue.toLocaleString('es-AR')}</span>
                 </div>
               )}
               {isPrecuenta && (
@@ -136,7 +222,7 @@ export default function ReceiptModal({ isOpen, onClose, order, type = 'precuenta
               )}
               <div className="flex justify-between font-bold text-sm pt-1.5 border-t border-[#cfc9be] text-[#18191b]">
                 <span>TOTAL:</span>
-                <span>${(isPrecuenta ? (order.subtotal + tip10) : order.total).toLocaleString('es-AR')}</span>
+                <span>${finalTotal.toLocaleString('es-AR')}</span>
               </div>
             </div>
 

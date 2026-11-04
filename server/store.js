@@ -995,6 +995,19 @@ class Store {
     return order;
   }
 
+  updateOrderDiscount(orderId, discountAmount, tenantId) {
+    const t = this.getTenant(tenantId);
+    const order = (t.orders || []).find(o => o.id === orderId);
+    if (!order) return null;
+    const discount = Math.max(0, Number(discountAmount) || 0);
+    order.discount = discount;
+    const subtotal = Number(order.subtotal) || 0;
+    const deliveryFee = Number(order.deliveryFee) || 0;
+    order.total = Math.max(0, subtotal + deliveryFee - discount);
+    this.save();
+    return order;
+  }
+
   closeAndChargeOrder(orderId, { paymentMethod, paymentDetails, discount = 0, tip = 0, closedBy }, tenantId) {
     const t = this.getTenant(tenantId);
     const order = (t.orders || []).find(o => o.id === orderId);
@@ -1422,22 +1435,23 @@ class Store {
 
     const salesByMethod = {
       efectivo: 0,
-      debito: 0,
-      credito: 0,
-      mercadopago: 0,
-      transferencia: 0,
-      cuenta_corriente: 0,
-      mixto: 0
+      qr_transferencia: 0,
+      cuenta_corriente: 0
     };
     shiftOrders.forEach(o => {
-      const pm = o.paymentMethod || 'efectivo';
-      if (pm === 'mixto') {
-        const c = Number(o.paymentDetails?.splitDetails?.cash) || 0;
-        const d = Number(o.paymentDetails?.splitDetails?.digital) || 0;
-        salesByMethod.efectivo = (salesByMethod.efectivo || 0) + c;
-        salesByMethod.mercadopago = (salesByMethod.mercadopago || 0) + d;
+      const pm = (o.paymentMethod || 'efectivo').toLowerCase();
+      const tot = Number(o.total) || 0;
+      if (pm === 'efectivo') {
+        salesByMethod.efectivo += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
+        salesByMethod.efectivo += c;
+        salesByMethod.qr_transferencia += d;
+      } else if (pm === 'cuenta_corriente') {
+        salesByMethod.cuenta_corriente += tot;
       } else {
-        salesByMethod[pm] = (salesByMethod[pm] || 0) + (o.total || 0);
+        salesByMethod.qr_transferencia += tot;
       }
     });
 
@@ -1500,10 +1514,22 @@ class Store {
       ventasPorCanal[ch] = (ventasPorCanal[ch] || 0) + (o.total || 0);
     });
 
-    const ventasPorMetodo = { efectivo: 0, debito: 0, credito: 0, mercadopago: 0, transferencia: 0, cuenta_corriente: 0, mixto: 0 };
+    const ventasPorMetodo = { efectivo: 0, qr_transferencia: 0, cuenta_corriente: 0 };
     [...closedOrders, ...historical].forEach(o => {
-      const pm = o.paymentMethod || 'efectivo';
-      ventasPorMetodo[pm] = (ventasPorMetodo[pm] || 0) + (o.total || 0);
+      const pm = (o.paymentMethod || 'efectivo').toLowerCase();
+      const tot = Number(o.total) || 0;
+      if (pm === 'efectivo') {
+        ventasPorMetodo.efectivo += tot;
+      } else if (pm === 'mixto') {
+        const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+        const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
+        ventasPorMetodo.efectivo += c;
+        ventasPorMetodo.qr_transferencia += d;
+      } else if (pm === 'cuenta_corriente') {
+        ventasPorMetodo.cuenta_corriente += tot;
+      } else {
+        ventasPorMetodo.qr_transferencia += tot;
+      }
     });
 
     const platoCount = {};

@@ -43,16 +43,26 @@ export default function ArqueoCaja() {
 
   const salesByMethod = {
     efectivo: 0,
-    debito: 0,
-    credito: 0,
-    mercadopago: 0,
-    transferencia: 0,
-    mixto: 0
+    qr_transferencia: 0,
+    cuenta_corriente: 0
   };
 
   closedShiftOrders.forEach(o => {
-    const pm = o.paymentMethod || 'efectivo';
-    salesByMethod[pm] = (salesByMethod[pm] || 0) + (o.total || 0);
+    const pm = (o.paymentMethod || 'efectivo').toLowerCase();
+    const tot = Number(o.total) || 0;
+    if (pm === 'efectivo') {
+      salesByMethod.efectivo += tot;
+    } else if (pm === 'mixto') {
+      const c = Number(o.paymentDetails?.splitCash ?? o.paymentDetails?.splitDetails?.cash ?? 0);
+      const d = Number(o.paymentDetails?.splitDigital ?? o.paymentDetails?.splitDetails?.digital ?? (tot - c));
+      salesByMethod.efectivo += c;
+      salesByMethod.qr_transferencia += d;
+    } else if (pm === 'cuenta_corriente') {
+      salesByMethod.cuenta_corriente += tot;
+    } else {
+      // qr_transferencia, mercadopago, transferencia, debito, credito
+      salesByMethod.qr_transferencia += tot;
+    }
   });
 
   const totalSales = Object.values(salesByMethod).reduce((a, b) => a + b, 0);
@@ -302,11 +312,9 @@ export default function ArqueoCaja() {
 
               <div className="divide-y divide-[var(--border-subtle)] px-4 text-sm">
                 {[
-                  { key: 'efectivo', label: 'Efectivo', icon: 'fa-money-bill-wave' },
-                  { key: 'debito', label: 'Tarjeta Débito', icon: 'fa-credit-card' },
-                  { key: 'credito', label: 'Tarjeta Crédito', icon: 'fa-credit-card' },
-                  { key: 'mercadopago', label: 'QR / Mercado Pago', icon: 'fa-qrcode' },
-                  { key: 'transferencia', label: 'Transferencia', icon: 'fa-building-columns' }
+                  { key: 'efectivo', label: 'Efectivo en caja', icon: 'fa-money-bill-wave' },
+                  { key: 'qr_transferencia', label: 'QR / Transferencia', icon: 'fa-qrcode' },
+                  { key: 'cuenta_corriente', label: 'Cuenta Corriente', icon: 'fa-book-bookmark' }
                 ].map(item => (
                   <div key={item.key} className="py-2.5 flex justify-between items-center text-[var(--text-secondary)]">
                     <span className="flex items-center gap-2">
