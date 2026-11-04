@@ -319,6 +319,7 @@ class Store {
     if (!Array.isArray(t.supplierPayments)) t.supplierPayments = [];
     if (!Array.isArray(t.suppliers)) t.suppliers = [];
     if (!Array.isArray(t.purchases)) t.purchases = [];
+    if (!Array.isArray(t.staffCcMovements)) t.staffCcMovements = [];
     if (Array.isArray(t.cashShifts)) {
       t.cashShifts.forEach(s => {
         if (s.status === 'abierto') s.status = 'abierta';
@@ -459,6 +460,7 @@ class Store {
       t.supplierPayments = Array.isArray(clientState.supplierPayments) ? clientState.supplierPayments : (t.supplierPayments || []);
       t.stockLog = Array.isArray(clientState.stockLog) ? clientState.stockLog : (t.stockLog || []);
       t.notifications = Array.isArray(clientState.notifications) ? clientState.notifications : (t.notifications || []);
+      t.staffCcMovements = Array.isArray(clientState.staffCcMovements) ? clientState.staffCcMovements : (t.staffCcMovements || []);
       t.historicalSales = Array.isArray(clientState.historicalSales) ? clientState.historicalSales : (t.historicalSales || []);
       t.lastUpdated = Number(clientState.lastUpdated);
       this.normalizeSingleTenant(t);
@@ -1620,6 +1622,9 @@ class Store {
   addStaffCcMovement(data, tenantId) {
     const t = this.getTenant(tenantId);
     if (!Array.isArray(t.staffCcMovements)) t.staffCcMovements = [];
+    const paymentMethod = data.paymentMethod || ((data.type === 'adelanto' || data.type === 'pago') ? 'efectivo' : null);
+    const affectCashShift = data.affectCashShift === true;
+
     const newMov = {
       id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
       userId: data.userId,
@@ -1627,12 +1632,34 @@ class Store {
       type: data.type || 'consumo',
       impact: data.type === 'sueldo' ? 1 : -1,
       amount: Number(data.amount) || 0,
+      paymentMethod: (data.type === 'adelanto' || data.type === 'pago') ? paymentMethod : null,
+      affectCashShift: (data.type === 'adelanto' || data.type === 'pago') ? affectCashShift : false,
       concept: data.concept || 'Movimiento cuenta corriente',
       orderId: data.orderId || null,
       date: data.date || new Date().toISOString(),
       recordedBy: data.recordedBy || 'Admin'
     };
     t.staffCcMovements.unshift(newMov);
+
+    if (affectCashShift && paymentMethod === 'efectivo' && (newMov.type === 'adelanto' || newMov.type === 'pago')) {
+      const activeShift = (t.cashShifts || []).find(s => s.status === 'abierta');
+      if (activeShift) {
+        if (!Array.isArray(activeShift.movements)) activeShift.movements = [];
+        activeShift.movements.push({
+          id: 'mov_' + Date.now(),
+          type: 'egreso',
+          amount: newMov.amount,
+          reason: `${newMov.type === 'adelanto' ? 'Adelanto de sueldo' : 'Liquidación sueldo'}: ${newMov.userName} (${newMov.concept})`,
+          user: newMov.recordedBy || 'Admin',
+          createdAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
+          date: formatDateAr(new Date()),
+          time: formatTimeAr(new Date())
+        });
+      }
+    }
+
+    t.lastUpdated = Date.now();
     this.save();
     return newMov;
   }

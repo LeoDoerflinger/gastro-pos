@@ -1665,6 +1665,42 @@ export const initialData = {
       "lastUpdated": 1700000000000,
       "staffCcMovements": [
         {
+          "id": "smov_admin_1",
+          "userId": "u_qp_admin",
+          "userName": "Admin",
+          "type": "sueldo",
+          "impact": 1,
+          "amount": 1500000,
+          "concept": "Sueldo mes en curso",
+          "orderId": null,
+          "date": "2026-11-01T09:00:00.000Z",
+          "recordedBy": "Admin"
+        },
+        {
+          "id": "smov_cajero_1",
+          "userId": "u_qp_cajero",
+          "userName": "Cajero",
+          "type": "sueldo",
+          "impact": 1,
+          "amount": 1000000,
+          "concept": "Sueldo mes en curso",
+          "orderId": null,
+          "date": "2026-11-01T09:00:00.000Z",
+          "recordedBy": "Admin"
+        },
+        {
+          "id": "smov_mozo2_1",
+          "userId": "u_qp_mozo2",
+          "userName": "Mozo 2",
+          "type": "sueldo",
+          "impact": 1,
+          "amount": 1700000,
+          "concept": "Sueldo mes en curso",
+          "orderId": null,
+          "date": "2026-11-01T09:00:00.000Z",
+          "recordedBy": "Admin"
+        },
+        {
           "id": "smov_1",
           "userId": "u_qp_mozo1",
           "userName": "Mozo 1",
@@ -1696,6 +1732,8 @@ export const initialData = {
           "impact": -1,
           "amount": 300000,
           "concept": "Adelanto de sueldo en efectivo",
+          "paymentMethod": "efectivo",
+          "affectCashShift": false,
           "orderId": null,
           "date": "2026-11-02T18:00:00.000Z",
           "recordedBy": "Admin"

@@ -54,6 +54,8 @@ export default function CuentasCorrientesManager() {
   const [staffMovType, setStaffMovType] = useState('sueldo'); // 'sueldo' | 'consumo' | 'adelanto' | 'pago'
   const [staffMovAmount, setStaffMovAmount] = useState('');
   const [staffMovConcept, setStaffMovConcept] = useState('');
+  const [staffPaymentMethod, setStaffPaymentMethod] = useState('efectivo'); // 'efectivo' | 'transferencia'
+  const [staffAffectCashShift, setStaffAffectCashShift] = useState(true);
   const [isStaffHistoryModalOpen, setIsStaffHistoryModalOpen] = useState(false);
   const [selectedStaffForHistory, setSelectedStaffForHistory] = useState(null);
 
@@ -252,6 +254,8 @@ export default function CuentasCorrientesManager() {
     setStaffMovType(type);
     setStaffMovAmount('');
     setStaffMovConcept('');
+    setStaffPaymentMethod('efectivo');
+    setStaffAffectCashShift(true);
     setIsStaffMovementModalOpen(true);
   };
 
@@ -268,15 +272,22 @@ export default function CuentasCorrientesManager() {
     }
     setSubmitting(true);
     try {
+      const isOutflow = staffMovType === 'adelanto' || staffMovType === 'pago';
       await api.addStaffCcMovement({
         userId: selectedStaffUser.id,
         userName: selectedStaffUser.name,
         type: staffMovType,
         amount: amt,
+        paymentMethod: isOutflow ? staffPaymentMethod : null,
+        affectCashShift: isOutflow && staffPaymentMethod === 'efectivo' ? staffAffectCashShift : false,
         concept: staffMovConcept.trim() || `Movimiento de ${staffMovType}`,
         recordedBy: currentUser?.name || 'Admin'
       });
-      showToast(`Movimiento registrado a ${selectedStaffUser.name}`);
+      if (isOutflow && staffPaymentMethod === 'efectivo' && staffAffectCashShift) {
+        showToast(`Movimiento registrado e impactado como egreso en el arqueo del turno`);
+      } else {
+        showToast(`Movimiento registrado a ${selectedStaffUser.name}`);
+      }
       await refreshData();
       setIsStaffMovementModalOpen(false);
     } catch (err) {
@@ -1336,15 +1347,122 @@ export default function CuentasCorrientesManager() {
                 <label className="pos-label">Tipo de movimiento *</label>
                 <select
                   value={staffMovType}
-                  onChange={(e) => setStaffMovType(e.target.value)}
+                  onChange={(e) => {
+                    const nextType = e.target.value;
+                    setStaffMovType(nextType);
+                    if (nextType === 'adelanto' || nextType === 'pago') {
+                      setStaffPaymentMethod('efectivo');
+                      setStaffAffectCashShift(true);
+                    }
+                  }}
                   className="pos-input text-xs font-semibold"
                 >
                   <option value="sueldo">(+) Sueldo mensual / Asignación base</option>
                   <option value="consumo">(-) Consumo en salón / mostrador / delivery</option>
-                  <option value="adelanto">(-) Adelanto de sueldo en efectivo</option>
+                  <option value="adelanto">(-) Adelanto de sueldo</option>
                   <option value="pago">(-) Liquidación / Pago restante de sueldo</option>
                 </select>
               </div>
+
+              {(staffMovType === 'adelanto' || staffMovType === 'pago') && (
+                <div className="space-y-3 p-3 rounded border border-[var(--border-subtle)] bg-[var(--bg-subtle)]">
+                  <div>
+                    <label className="pos-label mb-1.5 block">Medio de pago / entrega *</label>
+                    <div className="grid grid-cols-2 gap-2">
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStaffPaymentMethod('efectivo');
+                          setStaffAffectCashShift(true);
+                        }}
+                        className={`px-3 py-2 text-xs font-semibold rounded border transition-colors flex items-center justify-center gap-1.5 ${
+                          staffPaymentMethod === 'efectivo'
+                            ? 'bg-[var(--accent-brand)] text-[var(--accent-brand-contrast)] border-[var(--accent-brand)] shadow-sm'
+                            : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+                        }`}
+                      >
+                        <i className="fa-solid fa-money-bill-wave text-xs" aria-hidden="true"></i>
+                        <span>Efectivo</span>
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setStaffPaymentMethod('transferencia');
+                          setStaffAffectCashShift(false);
+                        }}
+                        className={`px-3 py-2 text-xs font-semibold rounded border transition-colors flex items-center justify-center gap-1.5 ${
+                          staffPaymentMethod === 'transferencia'
+                            ? 'bg-[var(--accent-brand)] text-[var(--accent-brand-contrast)] border-[var(--accent-brand)] shadow-sm'
+                            : 'bg-[var(--bg-elevated)] text-[var(--text-secondary)] border-[var(--border-subtle)] hover:border-[var(--border-strong)]'
+                        }`}
+                      >
+                        <i className="fa-solid fa-arrow-right-arrow-left text-xs" aria-hidden="true"></i>
+                        <span>Transferencia</span>
+                      </button>
+                    </div>
+                  </div>
+
+                  {staffPaymentMethod === 'efectivo' && (
+                    <div className="pt-2 border-t border-[var(--border-subtle)] space-y-2">
+                      <span className="text-xs font-bold text-[var(--text-primary)] block">
+                        Origen del efectivo e impacto en arqueo:
+                      </span>
+                      <div className="space-y-2">
+                        <label className={`flex items-start gap-2.5 p-2 rounded border cursor-pointer transition-colors ${
+                          staffAffectCashShift
+                            ? 'bg-[var(--bg-elevated)] border-[var(--accent-brand)]'
+                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)]'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="affectCashShift"
+                            checked={staffAffectCashShift === true}
+                            onChange={() => setStaffAffectCashShift(true)}
+                            className="mt-0.5"
+                          />
+                          <div className="text-xs">
+                            <span className="font-semibold text-[var(--text-primary)] block">
+                              Caja de turno (Impacta en el arqueo)
+                            </span>
+                            <span className="text-[11px] text-[var(--text-muted)] block">
+                              El dinero sale de la caja del cajero actual. Se registrará un egreso en el turno activo.
+                            </span>
+                          </div>
+                        </label>
+
+                        <label className={`flex items-start gap-2.5 p-2 rounded border cursor-pointer transition-colors ${
+                          !staffAffectCashShift
+                            ? 'bg-[var(--bg-elevated)] border-[var(--accent-brand)]'
+                            : 'bg-[var(--bg-card)] border-[var(--border-subtle)]'
+                        }`}>
+                          <input
+                            type="radio"
+                            name="affectCashShift"
+                            checked={staffAffectCashShift === false}
+                            onChange={() => setStaffAffectCashShift(false)}
+                            className="mt-0.5"
+                          />
+                          <div className="text-xs">
+                            <span className="font-semibold text-[var(--text-primary)] block">
+                              Caja grande / Fondos centrales (NO impacta en arqueo)
+                            </span>
+                            <span className="text-[11px] text-[var(--text-muted)] block">
+                              El adelanto se abonó de una caja fuerte o fondos externos. Se descuenta del empleado sin alterar el efectivo del turno del cajero.
+                            </span>
+                          </div>
+                        </label>
+                      </div>
+                    </div>
+                  )}
+
+                  {staffPaymentMethod === 'transferencia' && (
+                    <div className="p-2.5 rounded border border-[var(--border-subtle)] bg-[var(--bg-elevated)] text-xs text-[var(--text-secondary)] flex items-center gap-2">
+                      <i className="fa-solid fa-circle-info text-xs text-[var(--accent-brand)]" aria-hidden="true"></i>
+                      <span>Pago bancario. Se descuenta de la cuenta del personal sin restar billetes del arqueo físico de caja.</span>
+                    </div>
+                  )}
+                </div>
+              )}
 
               <div>
                 <label className="pos-label">Importe ($) *</label>
@@ -1368,10 +1486,14 @@ export default function CuentasCorrientesManager() {
                     staffMovType === 'sueldo'
                       ? 'Ej. Sueldo mes en curso'
                       : staffMovType === 'adelanto'
-                      ? 'Ej. Adelanto de sueldo en efectivo'
+                      ? staffPaymentMethod === 'transferencia'
+                        ? 'Ej. Adelanto transferido a cuenta bancaria'
+                        : staffAffectCashShift
+                        ? 'Ej. Adelanto en efectivo retirado de caja'
+                        : 'Ej. Adelanto abonado desde caja grande'
                       : staffMovType === 'consumo'
                       ? 'Ej. Consumo Mesa 1 o cerveza artesanal'
-                      : 'Ej. Liquidación final transferida'
+                      : 'Ej. Liquidación final de haberes'
                   }
                   value={staffMovConcept}
                   onChange={(e) => setStaffMovConcept(e.target.value)}
@@ -1443,6 +1565,15 @@ export default function CuentasCorrientesManager() {
                             }`}>
                               {m.type === 'sueldo' ? '+ Sueldo' : m.type === 'consumo' ? '- Consumo' : m.type === 'adelanto' ? '- Adelanto' : '- Liquidación'}
                             </span>
+                            {m.paymentMethod && (
+                              <span className="px-1.5 py-0.5 rounded text-[10px] font-mono bg-[var(--bg-elevated)] border border-[var(--border-subtle)] text-[var(--text-secondary)]">
+                                {m.paymentMethod === 'transferencia'
+                                  ? 'Transferencia'
+                                  : m.affectCashShift
+                                  ? 'Efectivo · Caja turno'
+                                  : 'Efectivo · Caja grande'}
+                              </span>
+                            )}
                             <span className="text-[11px] text-[var(--text-muted)] font-mono">
                               {new Date(m.date).toLocaleDateString()} {new Date(m.date).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>

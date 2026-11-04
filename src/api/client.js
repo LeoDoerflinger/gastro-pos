@@ -62,6 +62,12 @@ function normalizeClientDb(db) {
   if (!Array.isArray(db.users)) db.users = [];
   normalizeUsersRoleNames(db.users);
   if (!Array.isArray(db.notifications)) db.notifications = [];
+  if (!Array.isArray(db.staffCcMovements)) db.staffCcMovements = [];
+  if (!Array.isArray(db.customers)) db.customers = [];
+  if (!Array.isArray(db.customerPayments)) db.customerPayments = [];
+  if (!Array.isArray(db.supplierPayments)) db.supplierPayments = [];
+  if (!Array.isArray(db.suppliers)) db.suppliers = [];
+  if (!Array.isArray(db.purchases)) db.purchases = [];
   if (Array.isArray(db.tables)) {
     db.tables.forEach(t => {
       if (t.status === 'cuenta_pedida') t.status = 'pendiente_cobro';
@@ -206,7 +212,11 @@ async function ensureDbInitialized() {
         cashShifts,
         suppliers,
         purchases,
-        stockLog
+        stockLog,
+        customers,
+        customerPayments,
+        supplierPayments,
+        staffCcMovements
       ] = await Promise.all([
         rawFetchJson('/users'),
         rawFetchJson('/tables'),
@@ -216,7 +226,11 @@ async function ensureDbInitialized() {
         rawFetchJson('/cash-shifts'),
         rawFetchJson('/suppliers'),
         rawFetchJson('/purchases'),
-        rawFetchJson('/stock-log')
+        rawFetchJson('/stock-log'),
+        rawFetchJson('/customers').catch(() => []),
+        rawFetchJson('/customer-payments').catch(() => []),
+        rawFetchJson('/supplier-payments').catch(() => []),
+        rawFetchJson('/staff-cc').catch(() => [])
       ]);
 
       const db = {
@@ -229,6 +243,10 @@ async function ensureDbInitialized() {
         suppliers: suppliers || [],
         purchases: purchases || [],
         stockLog: stockLog || [],
+        customers: customers || [],
+        customerPayments: customerPayments || [],
+        supplierPayments: supplierPayments || [],
+        staffCcMovements: staffCcMovements || [],
         notifications: [],
         lastUpdated: Date.now(),
         historicalSales: [
@@ -1393,23 +1411,24 @@ export const api = {
   // --- Cuentas Corrientes de Personal / Empleados (Rendición y Sueldos) ---
   getStaffCcMovements: async () => {
     const db = await ensureDbInitialized();
-    try {
-      const remote = await rawFetchJson('/staff-cc');
-      if (Array.isArray(remote)) {
-        db.staffCcMovements = remote;
-        saveLocalDb(db, { touch: false, broadcast: false });
-        return remote;
-      }
-    } catch (e) {}
-    return [...(db.staffCcMovements || [])];
+    if (!Array.isArray(db.staffCcMovements)) db.staffCcMovements = [];
+    if (db.staffCcMovements.length === 0) {
+      try {
+        const remote = await rawFetchJson('/staff-cc');
+        if (Array.isArray(remote) && remote.length > 0) {
+          db.staffCcMovements = remote;
+          saveLocalDb(db, { touch: false, broadcast: false });
+          return [...db.staffCcMovements];
+        }
+      } catch (e) {}
+    }
+    return [...db.staffCcMovements];
   },
 
   addStaffCcMovement: async (movData) => {
     const db = await ensureDbInitialized();
-    rawFetchJson('/staff-cc', {
-      method: 'POST',
-      body: JSON.stringify(movData)
-    }).catch(() => {});
+    const paymentMethod = movData.paymentMethod || ((movData.type === 'adelanto' || movData.type === 'pago') ? 'efectivo' : null);
+    const affectCashShift = movData.affectCashShift === true;
 
     const newMov = {
       id: 'smov_' + Date.now() + '_' + Math.random().toString(36).substring(2, 6),
@@ -1418,6 +1437,8 @@ export const api = {
       type: movData.type || 'consumo',
       impact: movData.type === 'sueldo' ? 1 : -1,
       amount: Number(movData.amount) || 0,
+      paymentMethod: (movData.type === 'adelanto' || movData.type === 'pago') ? paymentMethod : null,
+      affectCashShift: (movData.type === 'adelanto' || movData.type === 'pago') ? affectCashShift : false,
       concept: movData.concept || 'Movimiento cuenta corriente',
       orderId: movData.orderId || null,
       date: movData.date || new Date().toISOString(),
@@ -1426,7 +1447,32 @@ export const api = {
 
     if (!Array.isArray(db.staffCcMovements)) db.staffCcMovements = [];
     db.staffCcMovements.unshift(newMov);
+
+    if (affectCashShift && paymentMethod === 'efectivo' && (newMov.type === 'adelanto' || newMov.type === 'pago')) {
+      const activeShift = (db.cashShifts || []).find(isShiftActive);
+      if (activeShift) {
+        if (!Array.isArray(activeShift.movements)) activeShift.movements = [];
+        activeShift.movements.push({
+          id: 'mov_' + Date.now(),
+          type: 'egreso',
+          amount: newMov.amount,
+          reason: `${newMov.type === 'adelanto' ? 'Adelanto de sueldo' : 'Liquidación sueldo'}: ${newMov.userName} (${newMov.concept})`,
+          user: newMov.recordedBy || 'Admin',
+          createdAt: new Date().toISOString(),
+          timestamp: new Date().toISOString(),
+          date: formatDateAr(new Date()),
+          time: formatTimeAr(new Date())
+        });
+      }
+    }
+
     saveLocalDb(db);
+
+    rawFetchJson('/staff-cc', {
+      method: 'POST',
+      body: JSON.stringify(movData)
+    }).catch(() => {});
+
     return newMov;
   },
 
@@ -1661,6 +1707,12 @@ export const api = {
         Array.isArray(remote.tables) &&
         Number(remote.lastUpdated || 0) > Number(db.lastUpdated || 0)
       ) {
+        if (Array.isArray(db.staffCcMovements) && db.staffCcMovements.length > 0) {
+          const map = new Map();
+          (remote.staffCcMovements || []).forEach(m => map.set(m.id, m));
+          db.staffCcMovements.forEach(m => map.set(m.id, m));
+          remote.staffCcMovements = Array.from(map.values()).sort((a, b) => new Date(b.date || 0) - new Date(a.date || 0));
+        }
         saveLocalDb(remote, { touch: false, broadcast: false });
         return { changed: true, lastUpdated: remote.lastUpdated };
       }
