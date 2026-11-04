@@ -1,88 +1,115 @@
-# GastroGestión POS · Sistema Integral de Gestión Gastronómica
+# GastroPOS · Plataforma SaaS de Gestión Gastronómica Multi-Local
 
-Sistema web dinámico para restaurantes, bares y locales gastronómicos con gestión multicanal (**Salón / Mesas**, **Mostrador**, **Take Away** y **Delivery**), control de acceso por roles (Mozo, Cajero, Encargado/Admin), arqueos de caja, ingreso de facturas/remitos de proveedores y recetario con escandallo y descuento automático de stock por porción.
+Sistema web integral y en tiempo real para bares, restaurantes y cafeterías. Diseñado para centralizar la operación completa del negocio: atención en salón y mesas, comanda móvil independiente para mozos vía QR, mostrador, take away y delivery, control de arqueos de caja, directorio de proveedores, registro de facturas/comprobantes, recetario con escandallo estandarizado (`g`, `ml`, `u`) y módulo avanzado de cuentas corrientes para clientes, proveedores y personal (rendición de sueldos, adelantos y consumos).
 
-Diseñado bajo la identidad **Arquitectura Gastronómica Táctil** documentada en [`DESIGN.md`](./DESIGN.md): sistema dual de temas (**Grafito Táctil** y **Papel Técnico**), botones estilo tecla física con área táctil mínima de `44x44px`, tipografía editorial y técnica (`Bricolage Grotesque`, `Plus Jakarta Sans`, `IBM Plex Mono` tabular), contraste verificado WCAG AA e iconografía vectorial Font Awesome 6.
+Diseñado bajo la identidad de interfaz táctil documentada en [`DESIGN.md`](./DESIGN.md), con tipografía tabular (`IBM Plex Mono`), jerarquía visual clara (`Bricolage Grotesque`, `Plus Jakarta Sans`), iconografía Font Awesome 6 y cumplimiento de contraste WCAG AA.
 
 ---
 
-## Puesta en Marcha
+## Características Principales
 
-El proyecto cuenta con un entorno fullstack listo para correr:
+### 1. Arquitectura Multi-Local y Acceso por Establecimiento
+* **Acceso corporativo e inicio de sesión por local:** Selección dinámica de sucursal (ej. Local 1, Local 2, Local 3) y credenciales por establecimiento (`admin@prueba1.gp.com`).
+* **Control de acceso por roles y PIN táctil:** Autenticación rápida de 4 dígitos para agilizar la rotación de turnos entre Administradores, Cajeros y Mozos.
+* **Persistencia local y remota sincronizada:** Todo el estado operativo (pedidos, stock, arqueos y movimientos de cuentas corrientes) se almacena y sincroniza de forma transparente.
+
+### 2. Comanda Móvil Independiente para Mozos (QR / Smartphone)
+* **PWA / Web Mobile desacoplada:** Los mozos acceden desde sus propios teléfonos escaneando el código QR de vinculación en cabecera o mediante URL directa.
+* **Toma de pedidos en mesa:** Apertura de mesas, selección de comensales, adicionales tarifados y aclaraciones a cocina en tiempo real.
+* **Solicitud de cuenta:** El mozo puede pedir la precuenta desde el celular, actualizando instantáneamente el estado de la mesa en el puesto de caja y emitiendo una notificación sonora y visual.
+
+### 3. Ciclo de Vida del Salón y Notificaciones en Vivo
+* **Estados de mesa:**
+  * **Cerrada / Libre:** Mesa disponible para apertura.
+  * **Abierta:** En servicio, con comensales y adiciones activas.
+  * **Cuenta solicitada (Celeste):** El cliente solicitó la precuenta. Si luego se agrega un nuevo ítem (ej. postre o café), la mesa regresa automáticamente a estado abierta.
+  * **Pendiente de cobro (Rojo):** Mesa lista para abonar en caja con opción directa de emisión de ticket/precuenta con descuentos aplicables.
+* **Notificaciones sonoras y de pantalla:** Reemplazo de impresión física innecesaria mediante avisos interactivos que tras unos segundos se trasladan a la barra de avisos para su atención diferida.
+
+### 4. Multicanal: Mostrador, Take Away y Delivery
+* **Mostrador y Take Away:** Cobro rápido y emisión de comandas para consumo al paso.
+* **Delivery con integración a WhatsApp:** Validación de número telefónico argentino (código de área, remoción automática de 0 y 15) y botón directo de contacto por WhatsApp para notificar "Pedido en camino" o "Pedido listo para retirar".
+* **Categorías y buscador en comanda:** Filtro rápido por rubros (Pizzas, Lomitos, Hamburguesas, Bebidas, etc.) para acelerar la carga de pedidos.
+
+### 5. Arqueo y Turnos de Caja
+* **Apertura de turno:** Registro de usuario responsable, fecha y hora exacta, con efectivo inicial predeterminado en cero.
+* **Desglose unificado de métodos de pago:**
+  * Efectivo en caja
+  * Tarjeta Débito
+  * Tarjeta Crédito
+  * QR / Transferencia bancaria
+  * Cuenta Corriente
+* **Control de movimientos manuales:** Ingresos de cambio y egresos de caja justificados.
+* **Cierre y balance detallado:** Comparación automática entre efectivo esperado y conteo real físico (sobrante/faltante) y finalización segura de sesión.
+
+### 6. Cuentas Corrientes: Clientes, Proveedores y Personal
+* **Cuentas Corrientes de Clientes:** Límite de crédito asignable, registro de cobranzas y cobro diferido desde mesas o mostrador.
+* **Cuentas Corrientes de Proveedores:** Estado de deuda consolidado por compras de insumos, historial de remitos/facturas y registro de pagos.
+* **Personal, Sueldos y Consumos:**
+  * **Asignación de sueldo (+):** Haber bruto mensual fijado para cada miembro del equipo.
+  * **Descuento por consumos (-):** Imputación automática desde la mesa o comanda cuando el personal consume en el local.
+  * **Adelantos de sueldo (-):**
+    * Discriminación por **Efectivo** o **Transferencia bancaria**.
+    * En caso de efectivo, selección de origen: **Caja de turno** (genera egreso automático en el arqueo activo) o **Caja grande / Fondos centrales** (descuenta del sueldo sin alterar la caja física del cajero).
+  * **Liquidación de haberes (-):** Pago final del saldo neto resultante.
+  * **Ficha individual:** Historial pormenorizado de movimientos y saldo a liquidar por empleado.
+
+### 7. Directorio de Proveedores vs Facturas y Pagos
+* **Módulo de Proveedores:** Gestión de contactos comerciales, CUIT, rubros de abastecimiento, teléfonos, bajas/reactivaciones y seguimiento de saldo adeudado.
+* **Facturas y Pagos:** Carga de comprobantes (Factura A, B, C o Remito), actualización inmediata de existencias en depósito y cálculo de pasivos.
+
+### 8. Recetario, Insumos y Escandallo Estandarizado
+* **Unidades de medida exactas:** Estandarización estricta a gramos (`g`), mililitros (`ml`) y unidades (`u`), eliminando discrepancias de escala.
+* **Edición de insumos:** Corrección de materias primas, costos unitarios, stock actual y puntos de reposición mínima.
+* **Escandallo y costeo en tiempo real:** Descuento automático de stock según las recetas de cada plato al comandar y cálculo del margen bruto porcentual.
+
+---
+
+## Puesta en Marcha Local
+
+### Requisitos Previos
+* Node.js 18 o superior.
+* npm 9 o superior.
+
+### Instalación y Ejecución
 
 ```bash
+# Clonar el repositorio
+git clone https://github.com/LeoDoerflinger/gastro-pos.git
 cd gastro-pos
+
+# Instalar dependencias
+npm install
+
+# Iniciar backend y frontend en paralelo
 npm run dev
 ```
 
-Esto inicia simultáneamente:
-- **Backend API (Express + JSON Store persistente):** `http://localhost:3001`
-- **Frontend Web SPA (React 19 + Vite + Tailwind CSS):** `http://localhost:5173`
+* **Frontend SPA:** `http://localhost:5173`
+* **API REST Backend:** `http://localhost:3001/api`
 
-> Acceso desde celulares y tablets en la misma red Wi-Fi:
-> Ejecuta `npm run client -- --host` o accede directamente a `http://<IP-DE-TU-PC>:5173`. La aplicación incluye un botón en la cabecera (**Simulador Celular**) para evaluar la experiencia táctil móvil directamente en el navegador de escritorio.
-
----
-
-## Roles de Usuario y Permisos (RBAC con PIN Numérico)
-
-En el entorno gastronómico, la alternancia de personal en terminales compartidas requiere inmediatez y seguridad. El sistema implementa un teclado numérico PIN de 4 dígitos con persistencia de sesión:
-
-| Personal | Rol | PIN | Alcance y Permisos |
-| :--- | :--- | :---: | :--- |
-| **Lucas / Sofía** | **Mozo** | `1111` / `1112` | Acceso exclusivo a Salón y Mesas. Apertura de mesas, selección de comensales, comanda de platos con notas a cocina y adicionales tarifados. Consulta de tiempo transcurrido desde la última comanda. No tiene acceso a precuenta, cobros ni inventario. |
-| **Martín** | **Cajero** | `2222` | Caja y cobros de todos los canales (Mesas, Mostrador, Take Away, Delivery). Indicadores en tiempo real de puntos de venta activos. Múltiples medios de pago (Efectivo con cálculo de vuelto, Débito, Crédito, Mercado Pago QR y Transferencia). Historial en lista vertical con estado, mozo y saldo. Arqueo ciego con detección de sobrantes/faltantes y registro de movimientos (ingresos y gastos). Carga de comprobantes de compras y stock. |
-| **Rodrigo** | **Encargado / Admin** | `9999` | Acceso global: Tablero de métricas y analítica de ventas, gestión de recetas y escandallos, control de stock con alertas críticas y mermas, configuración de plano de mesas y administración de personal. |
+### Acceso Móvil en Red Local
+Para vincular celulares de mozos o terminales secundarias en la misma red Wi-Fi:
+```bash
+npm run client -- --host
+```
+Accedé desde el navegador del celular a `http://<IP-LOCAL>:5173` o escaneá el código QR visible en la barra superior del sistema.
 
 ---
 
-## Recetario, Escandallos y Descuento Automático de Stock
+## Credenciales y Perfiles de Demostración
 
-Cada producto del menú se vincula a su composición exacta de materia prima e insumos:
-
-- **Pizza Muzzarella Grande (8 porciones):**
-  - Descuenta `0.25 kg` (250g) de Queso Muzzarella.
-  - Descuenta `0.08 kg` (80g) de Salsa de Tomate Pomodoro.
-  - Descuenta `1 u` de Bollo de Masa Madre.
-  - Descuenta `8 u` de Aceitunas Verdes.
-- **Pizza Muzzarella Individual (4 porciones):**
-  - Descuenta `0.125 kg` (125g) de Muzzarella.
-  - Descuenta `0.04 kg` (40g) de Salsa de Tomate.
-  - Descuenta `0.5 u` (1/2 bollo) de Masa Madre.
-  - Descuenta `4 u` de Aceitunas Verdes.
-- **Hamburguesa Doble Smash Cheddar & Bacon:**
-  - Descuenta `2 u` de Medallones Smash (160g de carne).
-  - Descuenta `4 u` de Fetas de Cheddar Americano.
-  - Descuenta `1 u` de Pan Brioche.
-  - Descuenta `0.04 kg` (40g) de Panceta crocante.
-
-### Cálculo de Costo y Margen Bruto
-En la sección **Recetario & Escandallos**, el sistema evalúa dinámicamente el costo unitario de producción según los precios vigentes de compras y expone el margen bruto porcentual exacto: `((Precio - Costo) / Precio) * 100`.
+| Local / Sucursal | Usuario | Rol | PIN de Acceso | Correo Corporativo |
+| :--- | :--- | :--- | :---: | :--- |
+| **Local 1** | **Admin** | Encargado / Admin | `1234` | `admin@prueba1.gp.com` |
+| **Local 1** | **Cajero** | Cajero | `2222` | `cajero@prueba1.gp.com` |
+| **Local 1** | **Mozo 1** | Mozo de Salón | `1111` | `mozo1@prueba1.gp.com` |
+| **Local 1** | **Mozo 2** | Mozo de Salón | `1112` | `mozo2@prueba1.gp.com` |
 
 ---
 
-## Módulo de Delivery y Zonas de Reparto con Maps
+## Tecnologías Utilizadas
 
-El gestor de entregas cuenta con:
-- Integración directa con **OpenStreetMap / Google Maps** para geo-localización y cálculo de distancia real en kilómetros.
-- Tarifación dinámica escalonada por distancia con tope operativo máximo (radio no infinito) para evitar pedidos fuera de cobertura.
-- Estados de comanda en cocina, despacho y entrega sin redirecciones forzadas de vista.
-
----
-
-## Control de Insumos y Comprobantes de Proveedores
-
-1. Carga de comprobantes oficiales (Factura A, B, C o Remito Oficial).
-2. Selección de materias primas recibidas, cantidades y costos unitarios.
-3. Actualización inmediata del inventario y recalculo automático de los escandallos del menú.
-4. Registro de auditoría con trazabilidad de usuario, fecha y variaciones de inventario.
-
----
-
-## Estándares de Diseño e Interfaz (`DESIGN.md`)
-
-- **Sistema Dual de Temas:** **Grafito Táctil** (`#17191c` / `#1f2226`) predeterminado para salones con luz tenue y **Papel Técnico** (`#eeebe4` / `#faf9f5`) para mostradores diurnos, con selector persistente en cabecera y acento terracota cobre (`#eb855e` / `#9e3c16`).
-- **Superficies y Teclas Físicas:** Micro-radio de `4px` a `6px`, bordes estructurales con contraste `>= 3:1` y objetivos táctiles mínimos de `44x44px` en todos los controles.
-- **Iconografía:** Font Awesome 6 Solid (`fa-solid`) con `aria-hidden="true"`, cero emojis en código y datos.
-- **Tipografía:** `Bricolage Grotesque` para jerarquía visual, `Plus Jakarta Sans` para lectura operativa e `IBM Plex Mono` (`tabular-nums`) para importes, códigos de mesa (`S1`, `T5`) y tiempos.
-- **Accesibilidad y Responsive:** Navegación completa por teclado (`Tab`, `Enter`, `Escape`), estados vacíos/carga/error explícitos, cajón lateral accesible y vista adaptable entre escritorio y celulares.
+* **Frontend:** React 19, Vite, Tailwind CSS, Font Awesome 6.
+* **Backend:** Node.js, Express, Base de datos JSON con persistencia dual (memoria, disco y sincronización en cliente).
+* **Diseño y UX:** Sistema de diseño táctil con modo oscuro (Grafito Táctil) y modo claro (Papel Técnico / Blanco), diseño responsive adaptativo y sin dependencias superfluas.
